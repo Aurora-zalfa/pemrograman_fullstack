@@ -5,19 +5,9 @@ const path = require('path');
 // Konfigurasi storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Tentukan folder berdasarkan jenis file
-    let uploadPath = 'uploads/';
-    
-    if (file.fieldname === 'surat_jalan') {
-      uploadPath = 'uploads/surat_jalan/';
-    } else if (file.fieldname === 'bukti_timbang') {
-      uploadPath = 'uploads/bukti_timbang/';
-    }
-    
-    cb(null, uploadPath);
+    cb(null, 'uploads/');
   },
   filename: function (req, file, cb) {
-    // Buat nama file unik: timestamp + nama asli
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
