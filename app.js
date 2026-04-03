@@ -1,19 +1,20 @@
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require('./routes/authRoutes');
+const distribusiRoutes = require("./routes/distribusiRoutes");
 
-// import routes dari Rum
-const uploadRoutes = require('./routes/uploadRoutes');
+
+// const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
+app.use("/api/distribusi", distribusiRoutes);
 
-// biar file upload bisa diakses
-app.use('/uploads', express.static('uploads'));
-
-// daftarin endpoint upload
-app.use('/api/upload', uploadRoutes);
+// app.use('/uploads', express.static('uploads'));
+// app.use('/api/upload', uploadRoutes);
 
 app.get("/", (req,res)=>{
   res.send("API Monitoring Sawit Running");
