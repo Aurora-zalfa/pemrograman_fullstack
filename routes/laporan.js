@@ -10,7 +10,6 @@ router.get('/', (req, res) => {
   let query = `SELECT * FROM distribusi`;
   let params = [];
 
-  // kalau ada filter tanggal
   if (tanggal) {
     query += ` WHERE DATE(tanggal_kirim) = ?`;
     params.push(tanggal);
