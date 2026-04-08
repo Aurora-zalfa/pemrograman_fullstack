@@ -1,15 +1,12 @@
 const express = require("express");
-const cors = require("cors");
-
 const app = express();
 
-app.use(cors());
+const masterRoutes = require("./routes/master");
+
 app.use(express.json());
 
-app.get("/", (req,res)=>{
-  res.send("API Monitoring Sawit Running");
-});
+app.use("/master", masterRoutes);
 
-app.listen(3000, ()=>{
-  console.log("Server running on port 3000");
+app.listen(3000, () => {
+  console.log("Server berjalan di port 3000");
 });
