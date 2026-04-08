@@ -1,15 +1,30 @@
-const express = require("express");
-const cors = require("cors");
-
+// app.js
+const express = require('express');
 const app = express();
+const cors = require('cors');
+require('dotenv').config();
 
+// ⚠️ IMPORT ROUTES - HURUF KECIL SESUAI NAMA FILE
+const distribusiRoutes = require('./routes/distribusi');
+
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req,res)=>{
-  res.send("API Monitoring Sawit Running");
+// ⚠️ MOUNT ROUTES
+app.use('/api/distribusi', distribusiRoutes);
+
+// Test endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Server Monitoring Sawit Berjalan!',
+    timestamp: new Date().toISOString()
+  });
 });
 
-app.listen(3000, ()=>{
-  console.log("Server running on port 3000");
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
