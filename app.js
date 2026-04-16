@@ -1,4 +1,3 @@
-// app.js
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -7,6 +6,7 @@ require("dotenv").config();
 // Import Routes
 const masterRoutes = require("./routes/master");
 const distribusiRoutes = require("./routes/distribusi");
+const laporanRoutes = require("./routes/laporan"); // ✅ TAMBAHAN
 
 // Middleware
 app.use(cors());
@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/master", masterRoutes);
 app.use("/distribusi", distribusiRoutes);
+app.use("/laporan", laporanRoutes); // ✅ TAMBAHAN
 
 // Test endpoint
 app.get("/", (req, res) => {
@@ -25,9 +26,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// --- BAGIAN TUGAS KAMU: ERROR HANDLING ---
-
-// 1. Middleware untuk menangani Route yang tidak terdaftar (404 Not Found)
+// 404 Handler
 app.use((req, res, next) => {
   res.status(404).json({
     status: "Error",
@@ -35,19 +34,17 @@ app.use((req, res, next) => {
   });
 });
 
-// 2. Global Error Handling Middleware (Menangkap error dari query atau logic yang crash)
+// Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("Fatal Error:", err.stack); // Log error di konsol untuk debugging
+  console.error("Fatal Error:", err.stack);
 
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     status: "Error",
     message: "Terjadi kesalahan internal pada server",
-    error: process.env.NODE_ENV === "development" ? err.message : {} // Detail error hanya muncul di mode dev
+    error: process.env.NODE_ENV === "development" ? err.message : {}
   });
 });
-
-// ------------------------------------------
 
 // Start server
 const PORT = process.env.PORT || 3000;
