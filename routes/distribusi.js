@@ -22,68 +22,93 @@ router.get('/test', (req, res) => {
  * CREATE DISTRIBUSI + UPLOAD
  * ============================================
  */
-router.post('/', upload.fields([
-  { name: 'surat_jalan', maxCount: 1 },
-  { name: 'bukti_timbang', maxCount: 1 }
-]), async (req, res) => {
-  try {
+router.post(
+  '/',
+  upload.fields([
+    { name: 'surat_jalan', maxCount: 1 },
+    { name: 'bukti_timbang', maxCount: 1 }
+  ]),
+  async (req, res) => {
+    try {
+      const {
+        tanggal_kirim,
+        berat_tbs,
+        users_idusers,
+        supir_idsupir,
+        truk_idtruk,
+        kebun_idkebun,
+        pabrik_idpabrik,
+        status = 'menunggu_memuat'
+      } = req.body;
 
-    const {
-      tanggal_kirim,
-      berat_tbs,
-      users_idusers,
-      supir_idsupir,
-      truk_idtruk,
-      kebun_idkebun,
-      pabrik_idpabrik,
-      status = 'menunggu_memuat'
-    } = req.body;
+      // VALIDASI WAJIB
+      if (
+        !tanggal_kirim ||
+        !berat_tbs ||
+        !users_idusers ||
+        !supir_idsupir ||
+        !truk_idtruk ||
+        !kebun_idkebun ||
+        !pabrik_idpabrik
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data wajib tidak lengkap'
+        });
+      }
 
-    const surat_jalan = req.files?.surat_jalan 
-      ? `uploads/surat_jalan/${req.files.surat_jalan[0].filename}` 
-      : null;
+      // Ambil file upload jika ada
+      const surat_jalan = req.files?.surat_jalan
+        ? `uploads/surat_jalan/${req.files.surat_jalan[0].filename}`
+        : null;
 
-    const bukti_timbang = req.files?.bukti_timbang 
-      ? `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}` 
-      : null;
+      const bukti_timbang = req.files?.bukti_timbang
+        ? `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}`
+        : null;
 
-    const query = `
-      INSERT INTO distribusi 
-      (tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status, 
-      users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+      const query = `
+        INSERT INTO distribusi 
+        (tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status,
+         users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      `;
 
-    const values = [
-      tanggal_kirim,
-      berat_tbs,
-      surat_jalan,
-      bukti_timbang,
-      status,
-      users_idusers,
-      supir_idsupir,
-      truk_idtruk,
-      kebun_idkebun,
-      pabrik_idpabrik
-    ];
+      const values = [
+        tanggal_kirim,
+        berat_tbs,
+        surat_jalan,
+        bukti_timbang,
+        status,
+        users_idusers,
+        supir_idsupir,
+        truk_idtruk,
+        kebun_idkebun,
+        pabrik_idpabrik
+      ];
 
-    const [result] = await db.query(query, values);
+      const [result] = await db.query(query, values);
 
-    res.json({
-      success: true,
-      message: 'Distribusi berhasil dibuat',
-      id: result.insertId
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal membuat distribusi',
-      error: error.message
-    });
+      res.status(201).json({
+        success: true,
+        message: 'Distribusi berhasil dibuat',
+        data: {
+          iddistribusi: result.insertId,
+          tanggal_kirim,
+          berat_tbs,
+          status,
+          surat_jalan,
+          bukti_timbang
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Gagal membuat distribusi',
+        error: error.message
+      });
+    }
   }
-});
+);
 
 
 /**
