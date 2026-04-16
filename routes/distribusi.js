@@ -4,6 +4,12 @@ const router = express.Router();
 const upload = require('../config/multer');
 const db = require('../config/database');
 
+// ============================================
+// ✅ TAMBAHKAN KODE INI DI SINI:
+// ============================================
+const { validateFileUpload, validateId } = require('../utils/validator');
+const errorHandler = require('../utils/errorhandler');
+
 /**
  * ============================================
  * ENDPOINT 1: CREATE DISTRIBUSI + UPLOAD
@@ -46,6 +52,40 @@ router.post('/', upload.fields([
       });
     }
 
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI FILE UPLOAD DI SINI:
+    // ============================================
+    const fileErrors = [];
+    
+    // Validasi surat_jalan jika ada file
+    if (req.files?.surat_jalan) {
+      const errors = validateFileUpload(req.files.surat_jalan, 'Surat Jalan');
+      if (errors) {
+        fileErrors.push(...errors);
+      }
+    }
+    
+    // Validasi bukti_timbang jika ada file
+    if (req.files?.bukti_timbang) {
+      const errors = validateFileUpload(req.files.bukti_timbang, 'Bukti Timbang');
+      if (errors) {
+        fileErrors.push(...errors);
+      }
+    }
+    
+    // Jika ada error validasi file, return response
+    if (fileErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Validasi file gagal",
+        errors: fileErrors,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
+    // AKHIR VALIDASI FILE
+    // ============================================
+
     // 4. Insert ke database
     const query = `
       INSERT INTO distribusi 
@@ -85,12 +125,10 @@ router.post('/', upload.fields([
     });
 
   } catch (error) {
-    console.error('Create distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal membuat data distribusi',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal membuat data distribusi");
   }
 });
 
@@ -130,12 +168,10 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal mengambil data distribusi',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal mengambil data distribusi");
   }
 });
 
@@ -149,6 +185,19 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
 
     const query = `
       SELECT 
@@ -183,12 +232,10 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Get distribusi by ID error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal mengambil data distribusi',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal mengambil data distribusi");
   }
 });
 
@@ -203,6 +250,19 @@ router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
 
     // Validasi status
     const validStatus = ['menunggu_memuat', 'dalam_perjalanan', 'tiba_di_pabrik', 'selesai', 'ditolak'];
@@ -239,12 +299,10 @@ router.put('/:id/status', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal update status',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal update status");
   }
 });
 
@@ -272,6 +330,19 @@ router.put('/:id', upload.fields([
       pabrik_idpabrik
     } = req.body;
 
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
+
     // Cek apakah data ada
     const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ?';
     const [existing] = await db.query(checkQuery, [id]);
@@ -285,6 +356,33 @@ router.put('/:id', upload.fields([
 
     // Ambil file lama dari database
     const oldData = existing[0];
+
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI FILE UPLOAD DI SINI:
+    // ============================================
+    const fileErrors = [];
+    
+    if (req.files?.surat_jalan) {
+      const errors = validateFileUpload(req.files.surat_jalan, 'Surat Jalan');
+      if (errors) fileErrors.push(...errors);
+    }
+    
+    if (req.files?.bukti_timbang) {
+      const errors = validateFileUpload(req.files.bukti_timbang, 'Bukti Timbang');
+      if (errors) fileErrors.push(...errors);
+    }
+    
+    if (fileErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Validasi file gagal",
+        errors: fileErrors,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
+    // AKHIR VALIDASI FILE
+    // ============================================
 
     // Handle upload file baru (jika ada)
     let surat_jalan = oldData.surat_jalan;
@@ -344,12 +442,10 @@ router.put('/:id', upload.fields([
     });
 
   } catch (error) {
-    console.error('Update distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal update data distribusi',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal update data distribusi");
   }
 });
 
@@ -363,6 +459,19 @@ router.put('/:id', upload.fields([
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
 
     // Cek apakah data ada
     const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ?';
@@ -388,12 +497,10 @@ router.delete('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal hapus data distribusi',
-      error: error.message
-    });
+    // ============================================
+    // ✅ GANTI DENGAN ERROR HANDLER:
+    // ============================================
+    return errorHandler(res, error, 500, "Gagal hapus data distribusi");
   }
 });
 
