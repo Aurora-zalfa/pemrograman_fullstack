@@ -7,10 +7,10 @@ const db = require("../config/database");
  */
 const handleError = (res, err) => {
   console.error("Database Error:", err);
-  return res.status(500).json({ 
-    status: "Error", 
-    message: "Terjadi kesalahan pada server", 
-    details: err.message 
+  return res.status(500).json({
+    status: "Error",
+    message: "Terjadi kesalahan pada server",
+    details: err.message
   });
 };
 
@@ -34,10 +34,16 @@ router.post("/supir", async (req, res) => {
     const { nama_supir, no_telp } = req.body;
 
     if (!nama_supir || !no_telp) {
-      return res.status(400).json({ message: "Nama supir dan nomor telepon wajib diisi" });
+      return res.status(400).json({
+        message: "Nama supir dan nomor telepon wajib diisi"
+      });
     }
 
-    await db.query("INSERT INTO supir (nama_supir, no_telp) VALUES (?, ?)", [nama_supir, no_telp]);
+    await db.query(
+      "INSERT INTO supir (nama_supir, no_telp) VALUES (?, ?)",
+      [nama_supir, no_telp]
+    );
+
     res.status(201).json({ message: "Supir berhasil ditambahkan" });
   } catch (err) {
     handleError(res, err);
@@ -51,15 +57,20 @@ router.put("/supir/:id", async (req, res) => {
     const { nama_supir, no_telp } = req.body;
 
     if (!nama_supir || !no_telp) {
-      return res.status(400).json({ message: "Data update tidak boleh kosong" });
+      return res.status(400).json({
+        message: "Data update tidak boleh kosong"
+      });
     }
 
     const [result] = await db.query(
-      "UPDATE supir SET nama_supir = ?, no_telp = ? WHERE idsupir = ?", 
+      "UPDATE supir SET nama_supir = ?, no_telp = ? WHERE idsupir = ?",
       [nama_supir, no_telp, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Supir tidak ditemukan" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Supir tidak ditemukan" });
+    }
+
     res.json({ message: "Supir berhasil diupdate" });
   } catch (err) {
     handleError(res, err);
@@ -70,9 +81,16 @@ router.put("/supir/:id", async (req, res) => {
 router.delete("/supir/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query("DELETE FROM supir WHERE idsupir=?", [id]);
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
+    const [result] = await db.query(
+      "DELETE FROM supir WHERE idsupir=?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Data tidak ditemukan" });
+    }
+
     res.json({ message: "Supir berhasil dihapus" });
   } catch (err) {
     handleError(res, err);
@@ -94,10 +112,17 @@ router.get("/truk", async (req, res) => {
 
 router.post("/truk", async (req, res) => {
   try {
-    const { plat_nomor, jenis_truk } = req.body;
-    if (!plat_nomor) return res.status(400).json({ message: "Plat nomor wajib diisi" });
+    const { no_polisi } = req.body;
 
-    await db.query("INSERT INTO truk (plat_nomor, jenis_truk) VALUES (?, ?)", [plat_nomor, jenis_truk]);
+    if (!no_polisi) {
+      return res.status(400).json({ message: "No polisi wajib diisi" });
+    }
+
+    await db.query(
+      "INSERT INTO truk (no_polisi) VALUES (?)",
+      [no_polisi]
+    );
+
     res.status(201).json({ message: "Truk berhasil ditambahkan" });
   } catch (err) {
     handleError(res, err);
@@ -107,14 +132,21 @@ router.post("/truk", async (req, res) => {
 router.put("/truk/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { plat_nomor, jenis_truk } = req.body;
+    const { no_polisi } = req.body;
+
+    if (!no_polisi) {
+      return res.status(400).json({ message: "No polisi wajib diisi" });
+    }
 
     const [result] = await db.query(
-      "UPDATE truk SET plat_nomor = ?, jenis_truk = ? WHERE idtruk = ?", 
-      [plat_nomor, jenis_truk, id]
+      "UPDATE truk SET no_polisi = ? WHERE idtruk = ?",
+      [no_polisi, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Truk tidak ditemukan" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Truk tidak ditemukan" });
+    }
+
     res.json({ message: "Truk berhasil diupdate" });
   } catch (err) {
     handleError(res, err);
@@ -124,8 +156,16 @@ router.put("/truk/:id", async (req, res) => {
 router.delete("/truk/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query("DELETE FROM truk WHERE idtruk=?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Truk tidak ditemukan" });
+
+    const [result] = await db.query(
+      "DELETE FROM truk WHERE idtruk=?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Truk tidak ditemukan" });
+    }
+
     res.json({ message: "Truk berhasil dihapus" });
   } catch (err) {
     handleError(res, err);
@@ -147,10 +187,19 @@ router.get("/kebun", async (req, res) => {
 
 router.post("/kebun", async (req, res) => {
   try {
-    const { nama_kebun, lokasi } = req.body;
-    if (!nama_kebun) return res.status(400).json({ message: "Nama kebun wajib diisi" });
+    const { nama_kebun, lokasi, luas_hektar } = req.body;
 
-    await db.query("INSERT INTO kebun (nama_kebun, lokasi) VALUES (?, ?)", [nama_kebun, lokasi]);
+    if (!nama_kebun || !lokasi || !luas_hektar) {
+      return res.status(400).json({
+        message: "Nama kebun, lokasi, dan luas hektar wajib diisi"
+      });
+    }
+
+    await db.query(
+      "INSERT INTO kebun (nama_kebun, lokasi, luas_hektar) VALUES (?, ?, ?)",
+      [nama_kebun, lokasi, luas_hektar]
+    );
+
     res.status(201).json({ message: "Kebun berhasil ditambahkan" });
   } catch (err) {
     handleError(res, err);
@@ -160,14 +209,17 @@ router.post("/kebun", async (req, res) => {
 router.put("/kebun/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama_kebun, lokasi } = req.body;
+    const { nama_kebun, lokasi, luas_hektar } = req.body;
 
     const [result] = await db.query(
-      "UPDATE kebun SET nama_kebun = ?, lokasi = ? WHERE idkebun = ?", 
-      [nama_kebun, lokasi, id]
+      "UPDATE kebun SET nama_kebun = ?, lokasi = ?, luas_hektar = ? WHERE idkebun = ?",
+      [nama_kebun, lokasi, luas_hektar, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Kebun tidak ditemukan" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Kebun tidak ditemukan" });
+    }
+
     res.json({ message: "Kebun berhasil diupdate" });
   } catch (err) {
     handleError(res, err);
@@ -177,8 +229,16 @@ router.put("/kebun/:id", async (req, res) => {
 router.delete("/kebun/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query("DELETE FROM kebun WHERE idkebun=?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Kebun tidak ditemukan" });
+
+    const [result] = await db.query(
+      "DELETE FROM kebun WHERE idkebun=?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Kebun tidak ditemukan" });
+    }
+
     res.json({ message: "Kebun berhasil dihapus" });
   } catch (err) {
     handleError(res, err);
@@ -201,9 +261,18 @@ router.get("/pabrik", async (req, res) => {
 router.post("/pabrik", async (req, res) => {
   try {
     const { nama_pabrik, alamat } = req.body;
-    if (!nama_pabrik) return res.status(400).json({ message: "Nama pabrik wajib diisi" });
 
-    await db.query("INSERT INTO pabrik (nama_pabrik, alamat) VALUES (?, ?)", [nama_pabrik, alamat]);
+    if (!nama_pabrik || !alamat) {
+      return res.status(400).json({
+        message: "Nama pabrik dan alamat wajib diisi"
+      });
+    }
+
+    await db.query(
+      "INSERT INTO pabrik (nama_pabrik, alamat) VALUES (?, ?)",
+      [nama_pabrik, alamat]
+    );
+
     res.status(201).json({ message: "Pabrik berhasil ditambahkan" });
   } catch (err) {
     handleError(res, err);
@@ -216,11 +285,14 @@ router.put("/pabrik/:id", async (req, res) => {
     const { nama_pabrik, alamat } = req.body;
 
     const [result] = await db.query(
-      "UPDATE pabrik SET nama_pabrik = ?, alamat = ? WHERE idpabrik = ?", 
+      "UPDATE pabrik SET nama_pabrik = ?, alamat = ? WHERE idpabrik = ?",
       [nama_pabrik, alamat, id]
     );
 
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Pabrik tidak ditemukan" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Pabrik tidak ditemukan" });
+    }
+
     res.json({ message: "Pabrik berhasil diupdate" });
   } catch (err) {
     handleError(res, err);
@@ -230,8 +302,16 @@ router.put("/pabrik/:id", async (req, res) => {
 router.delete("/pabrik/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query("DELETE FROM pabrik WHERE idpabrik=?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Pabrik tidak ditemukan" });
+
+    const [result] = await db.query(
+      "DELETE FROM pabrik WHERE idpabrik=?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Pabrik tidak ditemukan" });
+    }
+
     res.json({ message: "Pabrik berhasil dihapus" });
   } catch (err) {
     handleError(res, err);
@@ -244,7 +324,7 @@ router.delete("/pabrik/:id", async (req, res) => {
 
 router.get("/users", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT id, username, role FROM users");
+    const [rows] = await db.query("SELECT idusers, username, role FROM users");
     res.json({ status: "Success", data: rows });
   } catch (err) {
     handleError(res, err);

@@ -1,42 +1,37 @@
 const authModel = require("../models/authModel");
 
-exports.register = (req, res) => {
-  const data = req.body;
+exports.register = async (req, res) => {
+    try {
+        const data = req.body;
+        if (!data.username || !data.password) {
+            return res.status(400).json({ success: false, message: "Username dan password wajib diisi" });
+        }
 
-  authModel.register(data, (err, result)=>{
-    if(err){
-      res.status(500).json(err);
-    }else{
-      res.json({
-        message: "User berhasil register",
-        result: result
-      });
+        // Gunakan await
+        const result = await authModel.register(data);
+        res.json({ success: true, message: "User berhasil register", result });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Register gagal", error: err.message });
     }
-  });
 };
 
-exports.login = (req, res) => {
-  const data = req.body;
+exports.login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) {
+            return res.status(400).json({ success: false, message: "Username dan password wajib diisi" });
+        }
 
-  authModel.login(data, (err, result)=>{
-    if(err){
-      res.status(500).json(err);
-    }else{
-      if(result.length > 0){
+        const result = await authModel.login({ username, password });
 
-        const user = result[0];
-        delete user.password;
-
-        res.json({
-          message: "Login berhasil",
-          user: user
-        });
-
-      }else{
-        res.json({
-          message: "Username atau password salah"
-        });
-      }
+        if (result.length > 0) {
+            const user = result[0];
+            delete user.password;
+            res.json({ success: true, message: "Login berhasil", user });
+        } else {
+            res.status(401).json({ success: false, message: "Username atau password salah" });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Server error", error: err.message });
     }
-  });
 };

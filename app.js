@@ -7,6 +7,10 @@ require("dotenv").config();
 // Import Routes
 const masterRoutes = require("./routes/master");
 const distribusiRoutes = require("./routes/distribusi");
+<<<<<<< HEAD
+=======
+const authRoutes = require("./routes/authRoutes");
+>>>>>>> 65ba645d9de50d0088039516b79dc7a5909bed05
 const laporanRoutes = require("./routes/laporan");
 
 // Middleware
@@ -15,13 +19,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+<<<<<<< HEAD
 // ✅ PERBAIKAN: Tambahkan prefix /api/ untuk konsistensi API
 app.use("/master", masterRoutes);                    // Tetap /master (bisa diubah jadi /api/master jika mau konsisten)
 app.use("/api/distribusi", distribusiRoutes);        // ✅ UBAH: /distribusi → /api/distribusi
 app.use("/api/laporan", laporanRoutes);              // ✅ UBAH: /laporan → /api/laporan
+=======
+app.use("/api/master", masterRoutes);
+app.use("/api/distribusi", distribusiRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/laporan", laporanRoutes);
+>>>>>>> 65ba645d9de50d0088039516b79dc7a5909bed05
 
 // Test endpoint
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.json({
     message: "Server Monitoring Sawit Berjalan!",
     timestamp: new Date().toISOString()
