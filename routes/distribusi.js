@@ -17,12 +17,8 @@ const errorHandler = require('../utils/errorhandler');
  * URL: /api/distribusi
  * ============================================
  */
-router.post('/', upload.fields([
-  { name: 'surat_jalan', maxCount: 1 },
-  { name: 'bukti_timbang', maxCount: 1 }
-]), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    // 1. Ambil data dari request body
     const {
       tanggal_kirim,
       berat_tbs,
@@ -34,18 +30,8 @@ router.post('/', upload.fields([
       status = 'menunggu_memuat'
     } = req.body;
 
-    // 2. Ambil nama file yang diupload (jika ada)
-    const surat_jalan = req.files.surat_jalan 
-      ? `uploads/surat_jalan/${req.files.surat_jalan[0].filename}` 
-      : null;
-    
-    const bukti_timbang = req.files.bukti_timbang 
-      ? `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}` 
-      : null;
-
-    // 3. Validasi data wajib
-    if (!tanggal_kirim || !berat_tbs || !users_idusers || !supir_idsupir || 
-        !truk_idtruk || !kebun_idkebun || !pabrik_idpabrik) {
+    // VALIDASI
+    if (!tanggal_kirim || !berat_tbs || !users_idusers) {
       return res.status(400).json({
         success: false,
         message: 'Data wajib tidak lengkap'
@@ -86,19 +72,16 @@ router.post('/', upload.fields([
     // AKHIR VALIDASI FILE
     // ============================================
 
-    // 4. Insert ke database
     const query = `
       INSERT INTO distribusi 
-      (tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status, 
-       users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      (tanggal_kirim, berat_tbs, status, users_idusers, supir_idsupir, 
+       truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
 
     const values = [
       tanggal_kirim,
       berat_tbs,
-      surat_jalan,
-      bukti_timbang,
       status,
       users_idusers,
       supir_idsupir,
@@ -109,27 +92,17 @@ router.post('/', upload.fields([
 
     const [result] = await db.query(query, values);
 
-    // 5. Return response
     res.status(201).json({
       success: true,
       message: 'Data distribusi berhasil dibuat',
       data: {
-        iddistribusi: result.insertId,
-        tanggal_kirim,
-        berat_tbs,
-        surat_jalan,
-        bukti_timbang,
-        status,
-        created_at: new Date().toISOString()
+        iddistribusi: result.insertId
       }
     });
 
   } catch (error) {
-    // ============================================
-    // ✅ GANTI DENGAN ERROR HANDLER:
-    // ============================================
-    return errorHandler(res, error, 500, "Gagal membuat data distribusi");
-  }
+  return errorHandler(res, error, 500, "Gagal membuat data distribusi");
+}
 });
 
 /**
