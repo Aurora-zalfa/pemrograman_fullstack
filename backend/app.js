@@ -1,3 +1,4 @@
+// app.js
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -6,7 +7,10 @@ require("dotenv").config();
 // Import Routes
 const masterRoutes = require("./routes/master");
 const distribusiRoutes = require("./routes/distribusi");
+<<<<<<< HEAD
+=======
 const authRoutes = require("./routes/authRoutes");
+>>>>>>> 65ba645d9de50d0088039516b79dc7a5909bed05
 const laporanRoutes = require("./routes/laporan");
 
 // Middleware
@@ -15,10 +19,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+<<<<<<< HEAD
+// ✅ PERBAIKAN: Tambahkan prefix /api/ untuk konsistensi API
+app.use("/master", masterRoutes);                    // Tetap /master (bisa diubah jadi /api/master jika mau konsisten)
+app.use("/api/distribusi", distribusiRoutes);        // ✅ UBAH: /distribusi → /api/distribusi
+app.use("/api/laporan", laporanRoutes);              // ✅ UBAH: /laporan → /api/laporan
+=======
 app.use("/api/master", masterRoutes);
 app.use("/api/distribusi", distribusiRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/laporan", laporanRoutes);
+>>>>>>> 65ba645d9de50d0088039516b79dc7a5909bed05
 
 // Test endpoint
 app.get("/api", (req, res) => {
@@ -28,7 +39,7 @@ app.get("/api", (req, res) => {
   });
 });
 
-// 404 Handler
+// 404 Handler - JANGAN DIHAPUS (fitur penting!)
 app.use((req, res, next) => {
   res.status(404).json({
     status: "Error",
@@ -36,7 +47,7 @@ app.use((req, res, next) => {
   });
 });
 
-// Global Error Handler
+// Global Error Handler - JANGAN DIHAPUS (fitur penting!)
 app.use((err, req, res, next) => {
   console.error("Fatal Error:", err.stack);
 

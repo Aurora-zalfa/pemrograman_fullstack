@@ -4,6 +4,12 @@ const router = express.Router();
 const upload = require('../config/multer');
 const db = require('../config/database');
 
+// ============================================
+// ✅ TAMBAHKAN KODE INI DI SINI:
+// ============================================
+const { validateFileUpload, validateId } = require('../utils/validator');
+const errorHandler = require('../utils/errorhandler');
+
 /**
  * ============================================
  * ENDPOINT TEST
@@ -41,21 +47,13 @@ router.post(
         status = 'menunggu_memuat'
       } = req.body;
 
-      // VALIDASI WAJIB
-      if (
-        !tanggal_kirim ||
-        !berat_tbs ||
-        !users_idusers ||
-        !supir_idsupir ||
-        !truk_idtruk ||
-        !kebun_idkebun ||
-        !pabrik_idpabrik
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: 'Data wajib tidak lengkap'
-        });
-      }
+    // VALIDASI
+    if (!tanggal_kirim || !berat_tbs || !users_idusers) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data wajib tidak lengkap'
+      });
+    }
 
       // Ambil file upload jika ada
       const surat_jalan = req.files?.surat_jalan
@@ -88,28 +86,22 @@ router.post(
 
       const [result] = await db.query(query, values);
 
-      res.status(201).json({
-        success: true,
-        message: 'Distribusi berhasil dibuat',
-        data: {
-          iddistribusi: result.insertId,
-          tanggal_kirim,
-          berat_tbs,
-          status,
-          surat_jalan,
-          bukti_timbang
-        }
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Gagal membuat distribusi',
-        error: error.message
-      });
-    }
-  }
-);
+    res.status(201).json({
+      success: true,
+      message: 'Data distribusi berhasil dibuat',
+      data: {
+        iddistribusi: result.insertId
+      }
+    });
 
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Gagal membuat data distribusi',
+      error: error.message
+    });
+  }
+});
 
 /**
  * ============================================
@@ -142,9 +134,11 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Get distribusi error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Gagal mengambil data distribusi',
+      error: error.message
     });
   }
 });
@@ -160,6 +154,19 @@ router.get('/:id', async (req, res) => {
 
     const { id } = req.params;
 
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
+
     const query = `
       SELECT * FROM distribusi
       WHERE iddistribusi = ?
@@ -173,9 +180,11 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Get distribusi by ID error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Gagal mengambil data distribusi',
+      error: error.message
     });
   }
 });
@@ -191,14 +200,6 @@ router.put('/:id/status', async (req, res) => {
 
     const { id } = req.params;
     const { status } = req.body;
-
-    // Validasi ID
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "ID distribusi wajib diisi"
-      });
-    }
 
     // Validasi status
     if (!status) {
@@ -249,9 +250,10 @@ router.put('/:id/status', async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Update status error:', error);
     res.status(500).json({
       success: false,
-      message: "Gagal update status",
+      message: 'Gagal update status',
       error: error.message
     });
   }
@@ -278,13 +280,44 @@ router.put('/:id', upload.fields([
       status
     } = req.body;
 
-    const surat_jalan = req.files?.surat_jalan 
-      ? `uploads/surat_jalan/${req.files.surat_jalan[0].filename}` 
-      : null;
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
 
-    const bukti_timbang = req.files?.bukti_timbang 
-      ? `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}` 
-      : null;
+    // Cek apakah data ada
+    const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ?';
+    const [existing] = await db.query(checkQuery, [id]);
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data distribusi tidak ditemukan'
+      });
+    }
+
+    // Ambil file lama dari database
+    const oldData = existing[0];
+
+    // Handle upload file baru (jika ada)
+    let surat_jalan = oldData.surat_jalan;
+    let bukti_timbang = oldData.bukti_timbang;
+
+    if (req.files.surat_jalan) {
+      surat_jalan = `uploads/surat_jalan/${req.files.surat_jalan[0].filename}`;
+    }
+
+    if (req.files?.bukti_timbang) {
+      bukti_timbang = `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}`;
+    }
 
     const query = `
       UPDATE distribusi 
@@ -312,9 +345,11 @@ router.put('/:id', upload.fields([
     });
 
   } catch (error) {
+    console.error('Update distribusi error:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: 'Gagal update data distribusi',
+      error: error.message
     });
   }
 
@@ -332,6 +367,19 @@ router.delete('/:id', async (req, res) => {
 
     const { id } = req.params;
 
+    // ============================================
+    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
+    // ============================================
+    const idError = validateId(id);
+    if (idError) {
+      return res.status(400).json({
+        success: false,
+        message: idError,
+        timestamp: new Date().toISOString()
+      });
+    }
+    // ============================================
+
     await db.query(
       "DELETE FROM distribusi WHERE iddistribusi = ?",
       [id]
@@ -339,7 +387,88 @@ router.delete('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Data berhasil dihapus'
+      message: 'Data distribusi berhasil dihapus',
+      data: {
+        iddistribusi: id
+      }
+    });
+
+  } catch (error) {
+    console.error('Delete distribusi error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal hapus data distribusi',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * ============================================
+ * ENDPOINT TEST
+ * Method: GET
+ * URL: /api/distribusi/test
+ * ============================================
+ */
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Distribusi routes aktif!',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      create: 'POST /api/distribusi',
+      getAll: 'GET /api/distribusi',
+      getById: 'GET /api/distribusi/:id',
+      updateStatus: 'PUT /api/distribusi/:id/status',
+      update: 'PUT /api/distribusi/:id',
+      delete: 'DELETE /api/distribusi/:id'
+    }
+  });
+});
+
+// ⚠️ WAJIB ADA: Export router
+module.exports = router;
+
+// Tambahkan ini untuk test tanpa file
+router.post('/test-no-upload', async (req, res) => {
+  try {
+    const {
+      tanggal_kirim,
+      berat_tbs,
+      users_idusers,
+      supir_idsupir,
+      truk_idtruk,
+      kebun_idkebun,
+      pabrik_idpabrik,
+      status = 'menunggu_memuat'
+    } = req.body;
+
+    const query = `
+      INSERT INTO distribusi 
+      (tanggal_kirim, berat_tbs, status, users_idusers, supir_idsupir, 
+       truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    `;
+
+    const values = [
+      tanggal_kirim,
+      berat_tbs,
+      status,
+      users_idusers,
+      supir_idsupir,
+      truk_idtruk,
+      kebun_idkebun,
+      pabrik_idpabrik
+    ];
+
+    const [result] = await db.query(query, values);
+
+    res.json({
+      success: true,
+      message: 'Data distribusi berhasil dibuat (tanpa upload)',
+      data: {
+        iddistribusi: result.insertId
+      }
     });
 
   } catch (error) {
