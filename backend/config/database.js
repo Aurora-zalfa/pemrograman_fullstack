@@ -1,4 +1,3 @@
-// config/database.js
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
@@ -7,18 +6,18 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'mydb', // Sesuaikan dengan nama DB kamu
+  // PASTIKAN: Nama database di .env sudah sesuai dengan skema 'no_hp' & 'lokasi'
+  database: process.env.DB_NAME || 'db_sawit', 
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  // Tambahan agar error saat idle tidak mematikan aplikasi secara mendadak
   enableKeepAlive: true,
   keepAliveInitialDelay: 0
 });
 
 /**
- * BAGIAN TUGAS: Error handling pada level koneksi
+ * VALIDASI KONEKSI: Memastikan database siap sebelum CRUD Master dijalankan
  */
 pool.getConnection()
   .then(connection => {
@@ -27,25 +26,18 @@ pool.getConnection()
   })
   .catch(error => {
     console.error('❌ Database connection failed!');
-    console.error('Pesan Error:', error.message);
+    console.error('Detail:', error.message);
     
-    // Memberikan petunjuk spesifik berdasarkan kode error
     if (error.code === 'ECONNREFUSED') {
-      console.error('Tips: Pastikan XAMPP/MySQL Service sudah dinyalakan.');
-    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error('Tips: Cek kembali username dan password database di file .env.');
+      console.error('Tips: Nyalakan MySQL di XAMPP terlebih dahulu.');
+    } else if (error.code === 'ER_BAD_DB_ERROR') {
+      console.error(`Tips: Database '${process.env.DB_NAME}' tidak ditemukan. Buat dulu di PHPMyAdmin.`);
     }
-
-    // Berguna agar proses tidak menggantung jika DB wajib ada
-    // process.exit(1); 
   });
 
-// Menangani error tak terduga pada pool saat aplikasi sedang berjalan
+// Error handling otomatis jika koneksi terputus tiba-tiba
 pool.on('error', (err) => {
-  console.error('⚠️ Unexpected error on idle database connection', err);
-  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-    console.error('Koneksi database terputus. Pool akan mencoba menyambung kembali.');
-  }
+  console.error('⚠️ Database Pool Error:', err.message);
 });
 
 module.exports = pool;
