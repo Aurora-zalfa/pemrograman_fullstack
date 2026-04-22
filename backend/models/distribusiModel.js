@@ -46,8 +46,10 @@ exports.updateStatus = (id, status, callback)=>{
 // FUNGSI BARU YANG DITAMBAHKAN (Sprint 5)
 // ============================================
 
-// GET BY ID dengan JOIN
-exports.getById = (id, callback) => {
+// models/distribusiModel.js
+
+// GET BY ID dengan JOIN (Versi Async/Await)
+exports.getById = async (id) => {
   const query = `
     SELECT 
       d.*,
@@ -64,7 +66,17 @@ exports.getById = (id, callback) => {
     LEFT JOIN users u ON d.users_idusers = u.idusers
     WHERE d.iddistribusi = ?
   `;
-  db.query(query, [id], callback);
+  
+  // Karena pakai mysql2/promise, hasilnya adalah array [rows, fields]
+  const [rows] = await db.query(query, [id]);
+  return rows; 
+};
+
+// UPDATE STATUS (Sangat penting untuk tracking)
+exports.updateStatus = async (id, status) => {
+  const query = "UPDATE distribusi SET status = ? WHERE iddistribusi = ?";
+  const [result] = await db.query(query, [status, id]);
+  return result;
 };
 
 // UPDATE distribusi (termasuk upload ulang)

@@ -3,12 +3,15 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../config/multer');
 const db = require('../config/database');
+const { verifyToken } = require('../middleware/auth');
+console.log("Cek verifyToken:", verifyToken); // Tambahkan ini
 
 // ============================================
 // ✅ TAMBAHKAN KODE INI DI SINI:
 // ============================================
 const { validateFileUpload, validateId } = require('../utils/validator');
 const errorHandler = require('../utils/errorhandler');
+const { verify } = require('jsonwebtoken');
 
 /**
  * ============================================
@@ -30,6 +33,7 @@ router.get('/test', (req, res) => {
  */
 router.post(
   '/',
+  verifyToken,
   upload.fields([
     { name: 'surat_jalan', maxCount: 1 },
     { name: 'bukti_timbang', maxCount: 1 }
@@ -195,67 +199,34 @@ router.get('/:id', async (req, res) => {
  * UPDATE STATUS
  * ============================================
  */
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', verifyToken, async (req, res) => {
   try {
-
     const { id } = req.params;
-    const { status } = req.body;
+    const { status: status_baru } = req.body;
 
-    // Validasi status
-    if (!status) {
-      return res.status(400).json({
-        success: false,
-        message: "Status wajib diisi"
+    // 1. Definisikan Alur
+    const alurStatus = ["menunggu_memuat", "dalam_perjalanan", "tiba_di_pabrik", "selesai"];
+
+    // 2. Ambil status lama dari DB
+    const [rows] = await db.query('SELECT status FROM distribusi WHERE iddistribusi = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
+
+    const status_sekarang = rows[0].status;
+    const indexSekarang = alurStatus.indexOf(status_sekarang);
+    const indexBaru = alurStatus.indexOf(status_baru);
+
+    // 3. Validasi Urutan (Hanya boleh maju 1 langkah atau jadi 'ditolak')
+    if (indexBaru === indexSekarang + 1 || status_baru === 'ditolak') {
+      await db.query('UPDATE distribusi SET status = ? WHERE iddistribusi = ?', [status_baru, id]);
+      res.json({ success: true, message: `Status diupdate ke ${status_baru}` });
+    } else {
+      res.status(400).json({ 
+        success: false, 
+        message: `Gagal! Status saat ini [${status_sekarang}], tidak bisa langsung ke [${status_baru}]` 
       });
     }
-
-    // Validasi status yang diizinkan
-    const validStatus = [
-      "menunggu_memuat",
-      "dalam_perjalanan",
-      "tiba_di_pabrik",
-      "selesai",
-      "ditolak"
-    ];
-
-    if (!validStatus.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Status tidak valid"
-      });
-    }
-
-    const query = `
-      UPDATE distribusi
-      SET status = ?
-      WHERE iddistribusi = ?
-    `;
-
-    const [result] = await db.query(query, [status, id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Data distribusi tidak ditemukan"
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Status berhasil diupdate",
-      data: {
-        iddistribusi: id,
-        status: status
-      }
-    });
-
   } catch (error) {
-    console.error('Update status error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal update status',
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -265,7 +236,7 @@ router.put('/:id/status', async (req, res) => {
  * UPDATE DISTRIBUSI
  * ============================================
  */
-router.put('/:id', upload.fields([
+router.put('/:id', verifyToken, upload.fields([
   { name: 'surat_jalan', maxCount: 1 },
   { name: 'bukti_timbang', maxCount: 1 }
 ]), async (req, res) => {
@@ -361,7 +332,7 @@ router.put('/:id', upload.fields([
  * DELETE
  * ============================================
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken,async (req, res) => {
 
   try {
 

@@ -31,17 +31,17 @@ router.get("/supir", async (req, res) => {
 // POST Supir
 router.post("/supir", async (req, res) => {
   try {
-    const { nama_supir, no_telp } = req.body;
+    const { nama_supir, no_hp } = req.body;
 
-    if (!nama_supir || !no_telp) {
+    if (!nama_supir || !no_hp) {
       return res.status(400).json({
         message: "Nama supir dan nomor telepon wajib diisi"
       });
     }
 
     await db.query(
-      "INSERT INTO supir (nama_supir, no_telp) VALUES (?, ?)",
-      [nama_supir, no_telp]
+      "INSERT INTO supir (nama_supir, no_hp) VALUES (?, ?)",
+      [nama_supir, no_hp]
     );
 
     res.status(201).json({ message: "Supir berhasil ditambahkan" });
@@ -54,17 +54,17 @@ router.post("/supir", async (req, res) => {
 router.put("/supir/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama_supir, no_telp } = req.body;
+    const { nama_supir, no_hp } = req.body;
 
-    if (!nama_supir || !no_telp) {
+    if (!nama_supir || !no_hp) {
       return res.status(400).json({
         message: "Data update tidak boleh kosong"
       });
     }
 
     const [result] = await db.query(
-      "UPDATE supir SET nama_supir = ?, no_telp = ? WHERE idsupir = ?",
-      [nama_supir, no_telp, id]
+      "UPDATE supir SET nama_supir = ?, no_hp = ? WHERE idsupir = ?",
+      [nama_supir, no_hp, id]
     );
 
     if (result.affectedRows === 0) {
@@ -112,15 +112,17 @@ router.get("/truk", async (req, res) => {
 
 router.post("/truk", async (req, res) => {
   try {
-    const { no_polisi } = req.body;
+    // Tambahkan kapasitas_ton jika ingin diinput juga
+    const { no_polisi, kapasitas_ton } = req.body;
 
     if (!no_polisi) {
       return res.status(400).json({ message: "No polisi wajib diisi" });
     }
 
     await db.query(
-      "INSERT INTO truk (no_polisi) VALUES (?)",
-      [no_polisi]
+      // Masukkan status default (misal: 'tersedia') agar tidak error NOT NULL
+      "INSERT INTO truk (no_polisi, kapasitas_ton, status) VALUES (?, ?, 'tersedia')",
+      [no_polisi, kapasitas_ton || 0] 
     );
 
     res.status(201).json({ message: "Truk berhasil ditambahkan" });
@@ -132,15 +134,15 @@ router.post("/truk", async (req, res) => {
 router.put("/truk/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { no_polisi } = req.body;
+    const { no_polisi, kapasitas_ton } = req.body;
 
     if (!no_polisi) {
       return res.status(400).json({ message: "No polisi wajib diisi" });
     }
 
     const [result] = await db.query(
-      "UPDATE truk SET no_polisi = ? WHERE idtruk = ?",
-      [no_polisi, id]
+      "UPDATE truk SET no_polisi = ?, kapasitas_ton = ? WHERE idtruk = ?",
+      [no_polisi, kapasitas_ton || 0, id]
     );
 
     if (result.affectedRows === 0) {
@@ -258,19 +260,20 @@ router.get("/pabrik", async (req, res) => {
   }
 });
 
+// POST Pabrik
 router.post("/pabrik", async (req, res) => {
   try {
-    const { nama_pabrik, alamat } = req.body;
+    const { nama_pabrik, lokasi } = req.body; // Ganti alamat jadi lokasi
 
-    if (!nama_pabrik || !alamat) {
+    if (!nama_pabrik || !lokasi) {
       return res.status(400).json({
-        message: "Nama pabrik dan alamat wajib diisi"
+        message: "Nama pabrik dan lokasi wajib diisi"
       });
     }
 
     await db.query(
-      "INSERT INTO pabrik (nama_pabrik, alamat) VALUES (?, ?)",
-      [nama_pabrik, alamat]
+      "INSERT INTO pabrik (nama_pabrik, lokasi) VALUES (?, ?)", // Gunakan lokasi
+      [nama_pabrik, lokasi]
     );
 
     res.status(201).json({ message: "Pabrik berhasil ditambahkan" });
@@ -279,15 +282,17 @@ router.post("/pabrik", async (req, res) => {
   }
 });
 
+// UPDATE Pabrik
 router.put("/pabrik/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama_pabrik, alamat } = req.body;
+    const { nama_pabrik, lokasi } = req.body; // Ganti alamat jadi lokasi
 
     const [result] = await db.query(
-      "UPDATE pabrik SET nama_pabrik = ?, alamat = ? WHERE idpabrik = ?",
-      [nama_pabrik, alamat, id]
+      "UPDATE pabrik SET nama_pabrik = ?, lokasi = ? WHERE idpabrik = ?",
+      [nama_pabrik, lokasi, id]
     );
+    // ... sisa kode tetap sama
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Pabrik tidak ditemukan" });
