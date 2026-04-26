@@ -1,12 +1,10 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Create connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  // PASTIKAN: Nama database di .env sudah sesuai dengan skema 'no_hp' & 'lokasi'
   database: process.env.DB_NAME || 'db_sawit', 
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
@@ -17,7 +15,26 @@ const pool = mysql.createPool({
 });
 
 /**
- * VALIDASI KONEKSI: Memastikan database siap sebelum CRUD Master dijalankan
+ * HELPER: Cek Relasi Transaksi
+ * Fungsi ini mengecek apakah ID master sedang digunakan di tabel lain.
+ * Digunakan untuk mencegah kerusakan histori transaksi.
+ * * @param {string} table - Nama tabel transaksi (misal: 'pengiriman')
+ * @param {string} column - Nama kolom foreign key (misal: 'idsupir')
+ * @param {number|string} id - Value ID yang dicek
+ */
+pool.checkRelation = async (table, column, id) => {
+  try {
+    const query = `SELECT COUNT(*) as count FROM ${table} WHERE ${column} = ?`;
+    const [rows] = await pool.query(query, [id]);
+    return rows[0].count > 0;
+  } catch (error) {
+    console.error(`Error checking relation on ${table}:`, error.message);
+    throw error;
+  }
+};
+
+/**
+ * VALIDASI KONEKSI
  */
 pool.getConnection()
   .then(connection => {
@@ -26,16 +43,13 @@ pool.getConnection()
   })
   .catch(error => {
     console.error('❌ Database connection failed!');
-    console.error('Detail:', error.message);
-    
     if (error.code === 'ECONNREFUSED') {
       console.error('Tips: Nyalakan MySQL di XAMPP terlebih dahulu.');
     } else if (error.code === 'ER_BAD_DB_ERROR') {
-      console.error(`Tips: Database '${process.env.DB_NAME}' tidak ditemukan. Buat dulu di PHPMyAdmin.`);
+      console.error(`Tips: Database '${process.env.DB_NAME}' tidak ditemukan.`);
     }
   });
 
-// Error handling otomatis jika koneksi terputus tiba-tiba
 pool.on('error', (err) => {
   console.error('⚠️ Database Pool Error:', err.message);
 });
