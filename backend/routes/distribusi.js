@@ -4,31 +4,17 @@ const router = express.Router();
 const upload = require('../config/multer');
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
-console.log("Cek verifyToken:", verifyToken); // Tambahkan ini
-
-// ============================================
-// ✅ TAMBAHKAN KODE INI DI SINI:
-// ============================================
-const { validateFileUpload, validateId } = require('../utils/validator');
-const errorHandler = require('../utils/errorhandler');
-const { verify } = require('jsonwebtoken');
+const { validateId } = require('../utils/validator');
 
 /**
- * ============================================
- * ENDPOINT TEST
- * ============================================
+ * STRATEGI TRANSAKSI:
+ * 1. Saat CREATE: Validasi agar ID Master (Supir, Truk, dll) yang digunakan is_deleted = 0.
+ * 2. Saat DELETE: Gunakan Soft Delete (is_deleted = 1) agar histori pengiriman tidak hilang.
  */
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Distribusi routes aktif!',
-    timestamp: new Date().toISOString()
-  });
-});
 
 /**
  * ============================================
- * CREATE DISTRIBUSI + UPLOAD
+ * CREATE DISTRIBUSI
  * ============================================
  */
 router.post(
@@ -51,15 +37,25 @@ router.post(
         status = 'menunggu_memuat'
       } = req.body;
 
-    // VALIDASI
-    if (!tanggal_kirim || !berat_tbs || !users_idusers) {
-      return res.status(400).json({
-        success: false,
-        message: 'Data wajib tidak lengkap'
-      });
-    }
+      // 1. VALIDASI DATA WAJIB
+      if (!tanggal_kirim || !berat_tbs || !users_idusers || !supir_idsupir || !truk_idtruk) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data wajib tidak lengkap (Tanggal, Berat, User, Supir, dan Truk wajib diisi)'
+        });
+      }
 
-      // Ambil file upload jika ada
+      // 2. VALIDASI DATA MASTER AKTIF (Mencegah penggunaan supir/truk yang sudah dihapus)
+      const [supir] = await db.query("SELECT idsupir FROM supir WHERE idsupir = ? AND is_deleted = 0", [supir_idsupir]);
+      const [truk] = await db.query("SELECT idtruk FROM truk WHERE idtruk = ? AND is_deleted = 0", [truk_idtruk]);
+
+      if (supir.length === 0 || truk.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Supir atau Truk yang dipilih sudah tidak aktif/dihapus dari sistem.'
+        });
+      }
+
       const surat_jalan = req.files?.surat_jalan
         ? `uploads/surat_jalan/${req.files.surat_jalan[0].filename}`
         : null;
@@ -71,158 +67,83 @@ router.post(
       const query = `
         INSERT INTO distribusi 
         (tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status,
-         users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+         users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, 
+         is_deleted, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
       `;
 
-      const values = [
-        tanggal_kirim,
-        berat_tbs,
-        surat_jalan,
-        bukti_timbang,
-        status,
-        users_idusers,
-        supir_idsupir,
-        truk_idtruk,
-        kebun_idkebun,
-        pabrik_idpabrik
-      ];
+      const [result] = await db.query(query, [
+        tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status,
+        users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik
+      ]);
 
-      const [result] = await db.query(query, values);
+      res.status(201).json({
+        success: true,
+        message: 'Data distribusi berhasil dibuat',
+        data: { iddistribusi: result.insertId }
+      });
 
-    res.status(201).json({
-      success: true,
-      message: 'Data distribusi berhasil dibuat',
-      data: {
-        iddistribusi: result.insertId
-      }
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Gagal membuat data distribusi',
-      error: error.message
-    });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Gagal membuat distribusi', error: error.message });
+    }
   }
-});
+);
 
 /**
  * ============================================
- * GET SEMUA DISTRIBUSI
+ * GET SEMUA DISTRIBUSI (Hanya yang tidak di-soft-delete)
  * ============================================
  */
 router.get('/', async (req, res) => {
   try {
-
     const query = `
       SELECT 
-      d.*,
-      k.nama_kebun,
-      s.nama_supir,
-      t.no_polisi,
-      p.nama_pabrik
+        d.*,
+        k.nama_kebun,
+        s.nama_supir,
+        t.no_polisi,
+        p.nama_pabrik
       FROM distribusi d
       LEFT JOIN kebun k ON d.kebun_idkebun = k.idkebun
       LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
       LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
       LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
+      WHERE d.is_deleted = 0
       ORDER BY d.iddistribusi DESC
     `;
 
     const [rows] = await db.query(query);
-
-    res.json({
-      success: true,
-      data: rows
-    });
-
+    res.json({ success: true, data: rows });
   } catch (error) {
-    console.error('Get distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal mengambil data distribusi',
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-
 /**
  * ============================================
- * GET BY ID
- * ============================================
- */
-router.get('/:id', async (req, res) => {
-  try {
-
-    const { id } = req.params;
-
-    // ============================================
-    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
-    // ============================================
-    const idError = validateId(id);
-    if (idError) {
-      return res.status(400).json({
-        success: false,
-        message: idError,
-        timestamp: new Date().toISOString()
-      });
-    }
-    // ============================================
-
-    const query = `
-      SELECT * FROM distribusi
-      WHERE iddistribusi = ?
-    `;
-
-    const [rows] = await db.query(query, [id]);
-
-    res.json({
-      success: true,
-      data: rows[0]
-    });
-
-  } catch (error) {
-    console.error('Get distribusi by ID error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal mengambil data distribusi',
-      error: error.message
-    });
-  }
-});
-
-
-/**
- * ============================================
- * UPDATE STATUS
+ * UPDATE STATUS (Tetap menjaga validasi alur)
  * ============================================
  */
 router.put('/:id/status', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status: status_baru } = req.body;
-
-    // 1. Definisikan Alur
     const alurStatus = ["menunggu_memuat", "dalam_perjalanan", "tiba_di_pabrik", "selesai"];
 
-    // 2. Ambil status lama dari DB
-    const [rows] = await db.query('SELECT status FROM distribusi WHERE iddistribusi = ?', [id]);
-    if (rows.length === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
+    const [rows] = await db.query('SELECT status FROM distribusi WHERE iddistribusi = ? AND is_deleted = 0', [id]);
+    if (rows.length === 0) return res.status(404).json({ message: "Data distribusi tidak ditemukan atau sudah dihapus" });
 
     const status_sekarang = rows[0].status;
     const indexSekarang = alurStatus.indexOf(status_sekarang);
     const indexBaru = alurStatus.indexOf(status_baru);
 
-    // 3. Validasi Urutan (Hanya boleh maju 1 langkah atau jadi 'ditolak')
     if (indexBaru === indexSekarang + 1 || status_baru === 'ditolak') {
       await db.query('UPDATE distribusi SET status = ? WHERE iddistribusi = ?', [status_baru, id]);
       res.json({ success: true, message: `Status diupdate ke ${status_baru}` });
     } else {
       res.status(400).json({ 
         success: false, 
-        message: `Gagal! Status saat ini [${status_sekarang}], tidak bisa langsung ke [${status_baru}]` 
+        message: `Status saat ini [${status_sekarang}], tidak bisa loncat ke [${status_baru}]` 
       });
     }
   } catch (error) {
@@ -230,226 +151,36 @@ router.put('/:id/status', verifyToken, async (req, res) => {
   }
 });
 
-
 /**
  * ============================================
- * UPDATE DISTRIBUSI
+ * DELETE DISTRIBUSI (SOFT DELETE)
  * ============================================
  */
-router.put('/:id', verifyToken, upload.fields([
-  { name: 'surat_jalan', maxCount: 1 },
-  { name: 'bukti_timbang', maxCount: 1 }
-]), async (req, res) => {
-
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
-
     const { id } = req.params;
-
-    const {
-      tanggal_kirim,
-      berat_tbs,
-      status
-    } = req.body;
-
-    // ============================================
-    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
-    // ============================================
     const idError = validateId(id);
-    if (idError) {
-      return res.status(400).json({
-        success: false,
-        message: idError,
-        timestamp: new Date().toISOString()
-      });
-    }
-    // ============================================
+    if (idError) return res.status(400).json({ success: false, message: idError });
 
-    // Cek apakah data ada
-    const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ?';
-    const [existing] = await db.query(checkQuery, [id]);
-
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Data distribusi tidak ditemukan'
-      });
-    }
-
-    // Ambil file lama dari database
-    const oldData = existing[0];
-
-    // Handle upload file baru (jika ada)
-    let surat_jalan = oldData.surat_jalan;
-    let bukti_timbang = oldData.bukti_timbang;
-
-    if (req.files.surat_jalan) {
-      surat_jalan = `uploads/surat_jalan/${req.files.surat_jalan[0].filename}`;
-    }
-
-    if (req.files?.bukti_timbang) {
-      bukti_timbang = `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}`;
-    }
-
-    const query = `
-      UPDATE distribusi 
-      SET 
-      tanggal_kirim = COALESCE(?, tanggal_kirim),
-      berat_tbs = COALESCE(?, berat_tbs),
-      surat_jalan = COALESCE(?, surat_jalan),
-      bukti_timbang = COALESCE(?, bukti_timbang),
-      status = COALESCE(?, status)
-      WHERE iddistribusi = ?
-    `;
-
-    await db.query(query, [
-      tanggal_kirim,
-      berat_tbs,
-      surat_jalan,
-      bukti_timbang,
-      status,
-      id
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Distribusi berhasil diupdate'
-    });
-
-  } catch (error) {
-    console.error('Update distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal update data distribusi',
-      error: error.message
-    });
-  }
-
-});
-
-
-/**
- * ============================================
- * DELETE
- * ============================================
- */
-router.delete('/:id', verifyToken,async (req, res) => {
-
-  try {
-
-    const { id } = req.params;
-
-    // ============================================
-    // ✅ TAMBAHKAN VALIDASI ID DI SINI:
-    // ============================================
-    const idError = validateId(id);
-    if (idError) {
-      return res.status(400).json({
-        success: false,
-        message: idError,
-        timestamp: new Date().toISOString()
-      });
-    }
-    // ============================================
-
-    await db.query(
-      "DELETE FROM distribusi WHERE iddistribusi = ?",
+    // Mengubah is_deleted menjadi 1, bukan menghapus baris secara fisik
+    const [result] = await db.query(
+      "UPDATE distribusi SET is_deleted = 1 WHERE iddistribusi = ?",
       [id]
     );
 
-    res.json({
-      success: true,
-      message: 'Data distribusi berhasil dihapus',
-      data: {
-        iddistribusi: id
-      }
-    });
-
-  } catch (error) {
-    console.error('Delete distribusi error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Gagal hapus data distribusi',
-      error: error.message
-    });
-  }
-});
-
-/**
- * ============================================
- * ENDPOINT TEST
- * Method: GET
- * URL: /api/distribusi/test
- * ============================================
- */
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Distribusi routes aktif!',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      create: 'POST /api/distribusi',
-      getAll: 'GET /api/distribusi',
-      getById: 'GET /api/distribusi/:id',
-      updateStatus: 'PUT /api/distribusi/:id/status',
-      update: 'PUT /api/distribusi/:id',
-      delete: 'DELETE /api/distribusi/:id'
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Data tidak ditemukan' });
     }
-  });
-});
-
-// ⚠️ WAJIB ADA: Export router
-module.exports = router;
-
-// Tambahkan ini untuk test tanpa file
-router.post('/test-no-upload', async (req, res) => {
-  try {
-    const {
-      tanggal_kirim,
-      berat_tbs,
-      users_idusers,
-      supir_idsupir,
-      truk_idtruk,
-      kebun_idkebun,
-      pabrik_idpabrik,
-      status = 'menunggu_memuat'
-    } = req.body;
-
-    const query = `
-      INSERT INTO distribusi 
-      (tanggal_kirim, berat_tbs, status, users_idusers, supir_idsupir, 
-       truk_idtruk, kebun_idkebun, pabrik_idpabrik, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `;
-
-    const values = [
-      tanggal_kirim,
-      berat_tbs,
-      status,
-      users_idusers,
-      supir_idsupir,
-      truk_idtruk,
-      kebun_idkebun,
-      pabrik_idpabrik
-    ];
-
-    const [result] = await db.query(query, values);
 
     res.json({
       success: true,
-      message: 'Data distribusi berhasil dibuat (tanpa upload)',
-      data: {
-        iddistribusi: result.insertId
-      }
+      message: 'Data distribusi berhasil diarsipkan (Soft Delete)',
+      data: { iddistribusi: id }
     });
 
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    res.status(500).json({ success: false, message: 'Gagal hapus data', error: error.message });
   }
-
 });
-
 
 module.exports = router;

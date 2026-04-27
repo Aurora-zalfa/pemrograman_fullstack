@@ -1,54 +1,49 @@
-// models/distribusiModel.js
 const db = require("../config/database");
 
-// ============================================
-// FUNGSI YANG SUDAH ADA (JANGAN DIHAPUS)
-// ============================================
+/**
+ * STRATEGI MODEL:
+ * 1. Filter WHERE is_deleted = 0 pada semua fungsi GET.
+ * 2. Ubah DELETE menjadi Soft Delete (UPDATE is_deleted = 1).
+ * 3. Pastikan kolom is_deleted sudah ada di database.
+ */
 
-// ================= GET semua data =================
+// ================= GET semua data (Filter Aktif) =================
 exports.getDistribusi = (callback) => {
-  const query = "SELECT * FROM distribusi";
+  // Ditambahkan WHERE is_deleted = 0
+  const query = "SELECT * FROM distribusi WHERE is_deleted = 0";
 
   db.query(query, (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-
+    if (err) return callback(err, null);
     return callback(null, result);
   });
 };
 
 // ================= INSERT data =================
 exports.createDistribusi = (data, callback) => {
-  // VALIDASI TAMBAHAN DI MODEL (optional tapi bagus)
-  if (!data.tanggal_kirim || !data.berat_tbs) {
-    return callback(new Error("Data tidak lengkap"), null);
-  }
+  const query = `
+    INSERT INTO distribusi 
+    (tanggal_kirim, berat_tbs, status, users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, is_deleted, created_at) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
+  `;
 
-  const query = "INSERT INTO distribusi (tanggal_kirim, berat_tbs) VALUES (?, ?)";
+  const values = [
+    data.tanggal_kirim,
+    data.berat_tbs,
+    data.status || 'menunggu_memuat',
+    data.users_idusers,
+    data.supir_idsupir,
+    data.truk_idtruk,
+    data.kebun_idkebun,
+    data.pabrik_idpabrik
+  ];
 
-  db.query(query, [data.tanggal_kirim, data.berat_tbs], (err, result) => {
-    if (err) {
-      return callback(err, null);
-    }
-
+  db.query(query, values, (err, result) => {
+    if (err) return callback(err, null);
     return callback(null, result);
   });
 };
 
-// UPDATE STATUS
-exports.updateStatus = (id, status, callback)=>{
-  const query = "UPDATE distribusi SET status=? WHERE iddistribusi=?";
-  db.query(query, [status, id], callback);
-};
-
-// ============================================
-// FUNGSI BARU YANG DITAMBAHKAN (Sprint 5)
-// ============================================
-
-// models/distribusiModel.js
-
-// GET BY ID dengan JOIN (Versi Async/Await)
+// ================= GET BY ID dengan JOIN (Async/Await) =================
 exports.getById = async (id) => {
   const query = `
     SELECT 
@@ -64,73 +59,32 @@ exports.getById = async (id) => {
     LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
     LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
     LEFT JOIN users u ON d.users_idusers = u.idusers
-    WHERE d.iddistribusi = ?
+    WHERE d.iddistribusi = ? AND d.is_deleted = 0
   `;
   
-  // Karena pakai mysql2/promise, hasilnya adalah array [rows, fields]
   const [rows] = await db.query(query, [id]);
   return rows; 
 };
 
-// UPDATE STATUS (Sangat penting untuk tracking)
+// ================= UPDATE STATUS =================
 exports.updateStatus = async (id, status) => {
-  const query = "UPDATE distribusi SET status = ? WHERE iddistribusi = ?";
+  const query = "UPDATE distribusi SET status = ? WHERE iddistribusi = ? AND is_deleted = 0";
   const [result] = await db.query(query, [status, id]);
   return result;
 };
 
-// UPDATE distribusi (termasuk upload ulang)
-exports.updateDistribusi = (id, data, callback) => {
-  const query = `
-    UPDATE distribusi 
-    SET 
-      tanggal_kirim = COALESCE(?, tanggal_kirim),
-      berat_tbs = COALESCE(?, berat_tbs),
-      surat_jalan = COALESCE(?, surat_jalan),
-      bukti_timbang = COALESCE(?, bukti_timbang),
-      status = COALESCE(?, status),
-      users_idusers = COALESCE(?, users_idusers),
-      supir_idsupir = COALESCE(?, supir_idsupir),
-      truk_idtruk = COALESCE(?, truk_idtruk),
-      kebun_idkebun = COALESCE(?, kebun_idkebun),
-      pabrik_idpabrik = COALESCE(?, pabrik_idpabrik),
-      updated_at = NOW()
-    WHERE iddistribusi = ?
-  `;
-
-  const values = [
-    data.tanggal_kirim,
-    data.berat_tbs,
-    data.surat_jalan,
-    data.bukti_timbang,
-    data.status,
-    data.users_idusers,
-    data.supir_idsupir,
-    data.truk_idtruk,
-    data.kebun_idkebun,
-    data.pabrik_idpabrik,
-    id
-  ];
-
-  db.query(query, values, callback);
-};
-
-// DELETE distribusi
+// ================= SOFT DELETE distribusi =================
 exports.deleteDistribusi = (id, callback) => {
-  // Pertama cek data ada
-  const checkQuery = "SELECT surat_jalan, bukti_timbang FROM distribusi WHERE iddistribusi = ?";
+  // Diubah dari DELETE fisik menjadi UPDATE status is_deleted
+  const query = "UPDATE distribusi SET is_deleted = 1 WHERE iddistribusi = ?";
   
-  db.query(checkQuery, [id], (err, results) => {
+  db.query(query, [id], (err, result) => {
     if (err) return callback(err, null);
-    if (results.length === 0) return callback(new Error("Data tidak ditemukan"), null);
-    
-    // Hapus dari database
-    const deleteQuery = "DELETE FROM distribusi WHERE iddistribusi = ?";
-    db.query(deleteQuery, [id], callback);
+    return callback(null, result);
   });
 };
 
-// GET by status
+// ================= GET by status (Filter Aktif) =================
 exports.getByStatus = (status, callback) => {
   const query = `
     SELECT 
@@ -144,13 +98,13 @@ exports.getByStatus = (status, callback) => {
     LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
     LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
     LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
-    WHERE d.status = ?
+    WHERE d.status = ? AND d.is_deleted = 0
     ORDER BY d.created_at DESC
   `;
   db.query(query, [status], callback);
 };
 
-// GET ALL dengan JOIN (untuk response lebih lengkap)
+// ================= GET ALL JOIN (Filter Aktif) =================
 exports.getAllWithJoin = (callback) => {
   const query = `
     SELECT 
@@ -166,6 +120,7 @@ exports.getAllWithJoin = (callback) => {
     LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
     LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
     LEFT JOIN users u ON d.users_idusers = u.idusers
+    WHERE d.is_deleted = 0
     ORDER BY d.created_at DESC
   `;
   db.query(query, callback);

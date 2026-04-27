@@ -1,13 +1,14 @@
 const db = require('../config/database');
 
-// =========================
-// DETAIL LAPORAN HARIAN
-// =========================
+
+// DETAIL LAPORAN HARIAN (JOIN)
 exports.getLaporanHarian = async (req, res) => {
   try {
     const { tanggal, kebun_id, pabrik_id } = req.query;
 
-    // VALIDASI TANGGAL WAJIB
+
+    // VALIDASI INPUT
+
     if (!tanggal) {
       return res.status(400).json({
         status: "error",
@@ -15,7 +16,7 @@ exports.getLaporanHarian = async (req, res) => {
       });
     }
 
-    // VALIDASI FORMAT TANGGAL
+    // format YYYY-MM-DD
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(tanggal)) {
       return res.status(400).json({
@@ -24,7 +25,6 @@ exports.getLaporanHarian = async (req, res) => {
       });
     }
 
-    // VALIDASI TIPE DATA
     if (kebun_id && isNaN(kebun_id)) {
       return res.status(400).json({
         status: "error",
@@ -39,39 +39,60 @@ exports.getLaporanHarian = async (req, res) => {
       });
     }
 
-    // QUERY SEDERHANA (AMAN TANPA JOIN)
+
+    // QUERY JOIN (VERSI FINAL)
     let query = `
-      SELECT *
-      FROM distribusi
-      WHERE DATE(tanggal_kirim) = ?
+      SELECT 
+        d.iddistribusi AS id,
+        DATE(d.tanggal_kirim) AS tanggal,
+        d.berat_tbs,
+        COALESCE(NULLIF(d.status, ''), 'pending') AS status,
+
+        u.username AS user,
+        s.nama_supir AS supir,
+        t.no_polisi AS truk,
+        k.nama_kebun AS kebun,
+        p.nama_pabrik AS pabrik
+
+      FROM distribusi d
+
+      JOIN users u ON d.users_idusers = u.idusers
+      JOIN supir s ON d.supir_idsupir = s.idsupir
+      JOIN truk t ON d.truk_idtruk = t.idtruk
+      JOIN kebun k ON d.kebun_idkebun = k.idkebun
+      JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
+
+      WHERE DATE(d.tanggal_kirim) = ?
     `;
 
     let params = [tanggal];
 
+
+    // FILTER TAMBAHAN
     if (kebun_id) {
-      query += ` AND kebun_id = ?`;
+      query += ` AND d.kebun_idkebun = ?`;
       params.push(kebun_id);
     }
 
     if (pabrik_id) {
-      query += ` AND pabrik_id = ?`;
+      query += ` AND d.pabrik_idpabrik = ?`;
       params.push(pabrik_id);
     }
 
-    query += ` ORDER BY tanggal_kirim DESC`;
+    query += ` ORDER BY d.tanggal_kirim DESC`;
 
+ 
+    // EKSEKUSI QUERY
     const [rows] = await db.query(query, params);
 
-    // JIKA DATA KOSONG
-   if (rows.length === 0) {
-    return res.status(404).json({
+    if (rows.length === 0) {
+      return res.status(404).json({
         status: "error",
         message: "Tidak ada data laporan pada tanggal tersebut",
         data: []
-    });
+      });
     }
 
-    // RESPONSE SUCCESS
     return res.status(200).json({
       status: "success",
       message: "Laporan harian berhasil diambil",
