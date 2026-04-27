@@ -3,14 +3,16 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Pastikan folder uploads ada
+// Pastikan folder uploads ada (manajemen folder auto)
 const uploadDir = 'uploads';
 const suratJalanDir = 'uploads/surat_jalan';
 const buktiTimbangDir = 'uploads/bukti_timbang';
 
+// Auto-create folder jika belum ada
 [uploadDir, suratJalanDir, buktiTimbangDir].forEach(dir => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
+    console.log(`✅ Folder created: ${dir}`);
   }
 });
 
@@ -26,8 +28,9 @@ const storage = multer.diskStorage({
     }
   },
   filename: function (req, file, cb) {
+    // Buat nama file unik: fieldname-timestamp-random.ext
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
   }
 });
 
@@ -40,8 +43,8 @@ const fileFilter = (req, file, cb) => {
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error('Hanya file gambar (jpg, png) dan PDF yang diperbolehkan'));
-  }
+    cb(new Error('Hanya file gambar (jpg, png) dan PDF yang diperbolehkan'), false);
+    }
 };
 
 // Export konfigurasi
