@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/database");
+const { verifyToken } = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authRole");
 
 /**
  * HELPER FUNCTION: Centralized Error Handling
@@ -15,16 +17,18 @@ const handleError = (res, err) => {
 };
 
 /**
- * CATATAN PENTING: 
- * Gunakan Soft Delete (is_deleted = 1) untuk semua data master 
- * agar tidak merusak INTEGRITAS REFERENSI pada tabel transaksi.
+ * CATATAN UTS:
+ * 1. verifyToken: Mengecek identitas user.
+ * 2. authorizeRoles('manajer'): Membatasi fitur hapus hanya untuk Manajer (RBAC).
+ * 3. updated_at = NOW(): Mencatat waktu perubahan untuk audit trail (Tracking).
+ * 4. is_deleted = 1: Strategi Soft Delete agar histori transaksi aman.
  */
 
 /////////////////////////
-// SUPIR
+// 1. SUPIR
 /////////////////////////
 
-router.get("/supir", async (req, res) => {
+router.get("/supir", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM supir WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -33,25 +37,22 @@ router.get("/supir", async (req, res) => {
   }
 });
 
-router.delete("/supir/:id", async (req, res) => {
+router.delete("/supir/:id", verifyToken, authorizeRoles('manajer'), async (req, res) => {
   try {
     const { id } = req.params;
+    const isUsed = await db.checkRelation("distribusi", "supir_idsupir", id);
 
-    // Gunakan Helper checkRelation dari database.js
-    const isUsed = await db.checkRelation("pengiriman", "idsupir", id);
+    // Soft Delete + Tracking Timestamp
+    const [result] = await db.query(
+      "UPDATE supir SET is_deleted = 1, updated_at = NOW() WHERE idsupir = ?", 
+      [id]
+    );
 
-    // Apapun kondisinya, kita gunakan Soft Delete agar data tetap ada di DB
-    const [result] = await db.query("UPDATE supir SET is_deleted = 1 WHERE idsupir = ?", [id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ status: "Fail", message: "Data supir tidak ditemukan" });
-    }
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Data tidak ditemukan" });
 
     res.json({ 
       status: "Success", 
-      message: isUsed 
-        ? "Supir dinonaktifkan (Data tetap tersimpan untuk histori)" 
-        : "Supir berhasil dihapus" 
+      message: isUsed ? "Supir dinonaktifkan untuk menjaga histori transaksi" : "Supir berhasil dihapus" 
     });
   } catch (err) {
     handleError(res, err);
@@ -59,10 +60,10 @@ router.delete("/supir/:id", async (req, res) => {
 });
 
 /////////////////////////
-// TRUK
+// 2. TRUK
 /////////////////////////
 
-router.get("/truk", async (req, res) => {
+router.get("/truk", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM truk WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -71,31 +72,29 @@ router.get("/truk", async (req, res) => {
   }
 });
 
-router.delete("/truk/:id", async (req, res) => {
+router.delete("/truk/:id", verifyToken, authorizeRoles('manajer'), async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Cek relasi di tabel pengiriman
-    const isUsed = await db.checkRelation("pengiriman", "idtruk", id);
+    const isUsed = await db.checkRelation("distribusi", "truk_idtruk", id);
 
-    const [result] = await db.query("UPDATE truk SET is_deleted = 1 WHERE idtruk = ?", [id]);
+    const [result] = await db.query(
+      "UPDATE truk SET is_deleted = 1, updated_at = NOW() WHERE idtruk = ?", 
+      [id]
+    );
 
     if (result.affectedRows === 0) return res.status(404).json({ message: "Truk tidak ditemukan" });
 
-    res.json({ 
-      status: "Success", 
-      message: isUsed ? "Truk dinonaktifkan dari sistem" : "Truk berhasil dihapus" 
-    });
+    res.json({ status: "Success", message: "Data truk berhasil diarsipkan" });
   } catch (err) {
     handleError(res, err);
   }
 });
 
 /////////////////////////
-// KEBUN
+// 3. KEBUN
 /////////////////////////
 
-router.get("/kebun", async (req, res) => {
+router.get("/kebun", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM kebun WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -104,27 +103,21 @@ router.get("/kebun", async (req, res) => {
   }
 });
 
-router.delete("/kebun/:id", async (req, res) => {
+router.delete("/kebun/:id", verifyToken, authorizeRoles('manajer'), async (req, res) => {
   try {
     const { id } = req.params;
-    const isUsed = await db.checkRelation("pengiriman", "idkebun", id);
-
-    await db.query("UPDATE kebun SET is_deleted = 1 WHERE idkebun = ?", [id]);
-    
-    res.json({ 
-      status: "Success", 
-      message: isUsed ? "Kebun diarsipkan" : "Kebun dihapus" 
-    });
+    await db.query("UPDATE kebun SET is_deleted = 1, updated_at = NOW() WHERE idkebun = ?", [id]);
+    res.json({ status: "Success", message: "Kebun dinonaktifkan" });
   } catch (err) {
     handleError(res, err);
   }
 });
 
 /////////////////////////
-// PABRIK
+// 4. PABRIK
 /////////////////////////
 
-router.get("/pabrik", async (req, res) => {
+router.get("/pabrik", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM pabrik WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -133,29 +126,23 @@ router.get("/pabrik", async (req, res) => {
   }
 });
 
-router.delete("/pabrik/:id", async (req, res) => {
+router.delete("/pabrik/:id", verifyToken, authorizeRoles('manajer'), async (req, res) => {
   try {
     const { id } = req.params;
-    const isUsed = await db.checkRelation("pengiriman", "idpabrik", id);
-
-    await db.query("UPDATE pabrik SET is_deleted = 1 WHERE idpabrik = ?", [id]);
-
-    res.json({ 
-      status: "Success", 
-      message: isUsed ? "Pabrik diarsipkan" : "Pabrik dihapus" 
-    });
+    await db.query("UPDATE pabrik SET is_deleted = 1, updated_at = NOW() WHERE idpabrik = ?", [id]);
+    res.json({ status: "Success", message: "Pabrik dinonaktifkan" });
   } catch (err) {
     handleError(res, err);
   }
 });
 
 /////////////////////////
-// USERS
+// 5. USERS (Hanya Manajer yang bisa lihat daftar user)
 /////////////////////////
 
-router.get("/users", async (req, res) => {
+router.get("/users", verifyToken, authorizeRoles('manajer'), async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT idusers, username, role FROM users WHERE status = 'active'");
+    const [rows] = await db.query("SELECT idusers, username, role FROM users");
     res.json({ status: "Success", data: rows });
   } catch (err) {
     handleError(res, err);
