@@ -5,7 +5,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'mydb', 
+  database: process.env.DB_NAME || 'mydb', // Menggunakan db_sawit sebagai default
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
@@ -16,11 +16,6 @@ const pool = mysql.createPool({
 
 /**
  * HELPER: Cek Relasi Transaksi
- * Fungsi ini mengecek apakah ID master sedang digunakan di tabel lain.
- * Digunakan untuk mencegah kerusakan histori transaksi.
- * * @param {string} table - Nama tabel transaksi (misal: 'pengiriman')
- * @param {string} column - Nama kolom foreign key (misal: 'idsupir')
- * @param {number|string} id - Value ID yang dicek
  */
 pool.checkRelation = async (table, column, id) => {
   try {
@@ -46,7 +41,7 @@ pool.getConnection()
     if (error.code === 'ECONNREFUSED') {
       console.error('Tips: Nyalakan MySQL di XAMPP terlebih dahulu.');
     } else if (error.code === 'ER_BAD_DB_ERROR') {
-      console.error(`Tips: Database '${process.env.DB_NAME}' tidak ditemukan.`);
+      console.error(`Tips: Database '${process.env.DB_NAME || 'db_sawit'}' tidak ditemukan.`);
     }
   });
 
@@ -55,4 +50,3 @@ pool.on('error', (err) => {
 });
 
 module.exports = pool;
-
