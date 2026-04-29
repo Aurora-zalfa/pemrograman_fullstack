@@ -125,3 +125,16 @@ exports.getAllWithJoin = (callback) => {
   `;
   db.query(query, callback);
 };
+// ================= CEK STATUS SUPIR (Async) =================
+exports.checkSupirStatus = async (id) => {
+  const query = "SELECT status FROM supir WHERE idsupir = ?";
+  const [rows] = await db.query(query, [id]);
+  return rows[0]; // Mengembalikan { status: '...' }
+};
+
+// ================= CEK STATUS TRUK (Async) =================
+exports.checkTrukStatus = async (id) => {
+  const query = "SELECT status FROM truk WHERE idtruk = ?";
+  const [rows] = await db.query(query, [id]);
+  return rows[0]; // Mengembalikan { status: '...' }
+};
