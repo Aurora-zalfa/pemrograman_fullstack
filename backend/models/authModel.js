@@ -1,21 +1,38 @@
 // models/authModel.js
 const db = require("../config/database");
 
-// Register sudah benar gaya kodingannya
+/**
+ * ============================================
+ * REGISTER
+ * ============================================
+ */
 exports.register = async (data) => {
-  const query = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-  const [result] = await db.query(query, [
-    data.username,
-    data.password,
-    data.role
-  ]);
-  return result;
+    const query = `
+        INSERT INTO users (username, password, role, is_deleted, created_at)
+        VALUES (?, ?, ?, 0, NOW())
+    `;
+    
+    const [result] = await db.query(query, [
+        data.username,
+        data.password,
+        data.role
+    ]);
+    
+    return result;
 };
 
-// Ubah Login jadi seperti ini (Hapus Promise manualnya)
-exports.login = async (data) => {
-  const query = "SELECT * FROM users WHERE username = ?";
-  // Pakai await langsung, jangan campur dengan callback (err, result)
-  const [rows] = await db.query(query, [data.username]);
-  return rows; // rows ini adalah hasil SELECT-nya
+/**
+ * ============================================
+ * LOGIN
+ * ============================================
+ */
+exports.login = async (username) => {
+    const query = `
+        SELECT idusers, username, password, role, is_deleted 
+        FROM users 
+        WHERE username = ?
+    `;
+    
+    const [rows] = await db.query(query, [username]);
+    return rows;
 };
