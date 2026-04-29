@@ -95,7 +95,6 @@ exports.getLaporanHarian = async (req, res) => {
     query += ` ORDER BY d.tanggal_kirim ${order}`;
 
     // EKSEKUSI QUERY
-  
     const [rows] = await db.query(query, params);
 
     if (rows.length === 0) {
