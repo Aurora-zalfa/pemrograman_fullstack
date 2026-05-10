@@ -61,6 +61,34 @@ router.delete("/supir/:id", async (req, res) => {
 /////////////////////////
 // TRUK
 /////////////////////////
+// Simpan data baru (CREATE)
+exports.createData = async (req, res) => {
+    try {
+        const { id_barang, nama_penerima, tanggal_kirim } = req.body;
+        const newData = await db.query("INSERT INTO distribusi SET ?", { id_barang, nama_penerima, tanggal_kirim });
+        
+        res.status(201).json({
+            message: "Data distribusi berhasil ditambahkan!",
+            data: newData
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Gagal tambah data", error });
+    }
+};
+
+// Hapus data (DELETE)
+exports.deleteData = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.query("DELETE FROM distribusi WHERE id = ?", [id]);
+        
+        res.status(200).json({
+            message: `Data dengan ID ${id} berhasil dihapus!`
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Gagal hapus data", error });
+    }
+};
 
 router.get("/truk", async (req, res) => {
   try {

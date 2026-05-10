@@ -20,6 +20,7 @@ router.put("/:id/status", verifyToken, distribusiController.updateStatus);
 
 // Soft Delete: Mengarsipkan data distribusi agar tidak merusak histori laporan
 router.delete("/:id", verifyToken, distribusiController.deleteDistribusi);
+router.get('/distribusi', authMiddleware, distribusiController.getDistribusi);
 
 /**
  * Catatan: Pastikan di distribusiController.js sudah terdapat fungsi deleteDistribusi
