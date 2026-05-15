@@ -5,12 +5,15 @@ const cors = require("cors");
 require("dotenv").config();
 
 // 1. IMPORT ROUTES (Menghubungkan logika CRUD Master yang sudah kamu perbaiki)
+
 const masterRoutes = require("./routes/master");
 const distribusiRoutes = require("./routes/distribusi");
 const laporanRoutes = require("./routes/laporan");
 const authRoutes = require('./routes/authRoutes');
 
 // 2. MIDDLEWARE UTAMA (Krusial untuk Validasi Input)
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 // express.json() sangat penting agar req.body (no_hp, lokasi, dll) bisa terbaca saat divalidasi
 app.use(express.json()); 

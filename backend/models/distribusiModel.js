@@ -138,27 +138,3 @@ exports.checkTrukStatus = async (id) => {
   const [rows] = await db.query(query, [id]);
   return rows[0]; // Mengembalikan { status: '...' }
 };
-// Contoh penambahan pada model
-const getAllDistribusi = (filters) => {
-    const { search, status, limit, offset } = filters;
-    let query = "SELECT * FROM distribusi WHERE 1=1";
-    let params = [];
-
-    // Logika Pencarian (Search)
-    if (search) {
-        query += " AND (nomor_transaksi LIKE ? OR tujuan LIKE ?)";
-        params.push(`%${search}%`, `%${search}%`);
-    }
-
-    // Logika Filter Status
-    if (status) {
-        query += " AND status = ?";
-        params.push(status);
-    }
-
-    // Logika Pagination
-    query += " ORDER BY tanggal DESC LIMIT ? OFFSET ?";
-    params.push(parseInt(limit), parseInt(offset));
-
-    return db.execute(query, params); 
-};

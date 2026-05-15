@@ -78,7 +78,7 @@ exports.updateStatus = async (req, res) => {
       res.json({
         success: true,
         message: `Status berhasil diperbarui dari [${status_sekarang}] menjadi [${status_baru}]`,
-        updatedBy: req.user.username 
+        updatedBy: req.user.username // Bonus: Nama pengubah dari Token
       });
 
     } else {
@@ -148,25 +148,4 @@ exports.createDistribusi = async (req, res) => { // Tambahkan async di sini
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
-export const getDistribusi = async (req, res) => {
-    try {
-        // Ambil parameter dari URL (contoh: /distribusi?search=mebel&status=pending)
-        const search = req.query.search || "";
-        const status = req.query.status || "";
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const offset = (page - 1) * limit;
-
-        const [rows] = await distribusiModel.getAllDistribusi({ search, status, limit, offset });
-        
-        // Sebaiknya kirim juga info total data untuk kebutuhan pagination di frontend
-        res.json({
-            data: rows,
-            page,
-            limit
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Gagal mengambil data" });
-    }
 };

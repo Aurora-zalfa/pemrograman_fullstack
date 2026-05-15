@@ -1,18 +1,19 @@
-// controllers/authController.js
 const authModel = require("../models/authModel");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 /**
- * ============================================
  * REGISTER
- * ============================================
  */
 exports.register = async (req, res) => {
     try {
+        // Cek apakah req.body ada
+        if (!req.body) {
+            return res.status(400).json({ success: false, message: "Body tidak boleh kosong" });
+        }
+
         const { username, password, role } = req.body;
         
-        // Validasi
         if (!username || !password) {
             return res.status(400).json({ 
                 success: false, 
@@ -20,11 +21,9 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Hash password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         
-        // Simpan ke database
         const result = await authModel.register({ 
             username, 
             password: hashedPassword, 
@@ -47,15 +46,20 @@ exports.register = async (req, res) => {
 };
 
 /**
- * ============================================
  * LOGIN
- * ============================================
  */
 exports.login = async (req, res) => {
     try {
+        // PERBAIKAN: Cek apakah req.body terdefinisi sebelum destructuring
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Data login tidak ditemukan di body request. Pastikan format JSON benar." 
+            });
+        }
+
         const { username, password } = req.body;
         
-        // Validasi
         if (!username || !password) {
             return res.status(400).json({ 
                 success: false, 
@@ -63,10 +67,9 @@ exports.login = async (req, res) => {
             });
         }
         
-        // Cari user di database
         const users = await authModel.login(username);
 
-        if (users.length === 0) {
+        if (!users || users.length === 0) {
             return res.status(401).json({ 
                 success: false, 
                 message: "User tidak ditemukan" 
@@ -75,7 +78,6 @@ exports.login = async (req, res) => {
         
         const user = users[0];
         
-        // Cek password (bcrypt compare)
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -85,10 +87,9 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
             { 
-                id: user.idusers, 
+                idusers: user.idusers, 
                 username: user.username,
                 role: user.role 
             },
