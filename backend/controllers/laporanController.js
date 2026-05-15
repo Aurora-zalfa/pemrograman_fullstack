@@ -41,8 +41,7 @@ exports.getLaporanHarian = async (req, res) => {
 
   
     // SORTING
-    let order = "DESC"; // default
-
+    let order = "DESC"; 
     if (sort) {
       if (sort.toLowerCase() === "asc") order = "ASC";
       else if (sort.toLowerCase() === "desc") order = "DESC";
