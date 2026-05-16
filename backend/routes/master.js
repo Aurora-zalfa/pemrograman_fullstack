@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/database");
+// Menggunakan destructuring karena auth.js sudah mengekspor verifyToken dan isManager
+const { verifyToken, isManager } = require("../middleware/auth");
 
 /**
  * HELPER FUNCTION: Centralized Error Handling
@@ -15,33 +17,58 @@ const handleError = (res, err) => {
 };
 
 /**
- * CATATAN PENTING: 
- * Gunakan Soft Delete (is_deleted = 1) untuk semua data master 
- * agar tidak merusak INTEGRITAS REFERENSI pada tabel transaksi.
+ * TUGAS ZAINAB: DATA MASTER & SOFT DELETE
+ * Fokus pada pengelolaan data pondasi dan Audit Trail (updated_at).
  */
 
 /////////////////////////
 // SUPIR
 /////////////////////////
 
-router.get("/supir", async (req, res) => {
+// A. Tambah Data Supir (Tugas Zainab)
+router.post("/supir", verifyToken, async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM supir WHERE is_deleted = 0");
-    res.json({ status: "Success", data: rows });
+    const { nama_supir, no_hp } = req.body;
+    const [result] = await db.query(
+      "INSERT INTO supir (nama_supir, no_hp) VALUES (?, ?)",
+      [nama_supir, no_hp]
+    );
+    res.status(201).json({
+      status: "Success",
+      message: "Data supir berhasil ditambahkan",
+      id: result.insertId
+    });
   } catch (err) {
     handleError(res, err);
   }
 });
 
-router.delete("/supir/:id", async (req, res) => {
+// B. Tampil Data Supir (Tugas Zainab)
+router.get("/supir", verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM supir WHERE is_deleted = 0");
+    res.json({ 
+      status: "Success", 
+      narasi: "Saya mengelola data master. Perhatikan bahwa semua data yang saya panggil hanya yang memiliki is_deleted = 0.",
+      data: rows 
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// C. Soft Delete Supir (Tugas Zainab - Auth Manajer)
+router.delete("/supir/:id", verifyToken, isManager, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Gunakan Helper checkRelation dari database.js
-    const isUsed = await db.checkRelation("pengiriman", "idsupir", id);
+    // Cek relasi ke tabel distribusi (untuk Audit Trail/Keamanan Histori)
+    const isUsed = await db.checkRelation("distribusi", "supir_idsupir", id);
 
-    // Apapun kondisinya, kita gunakan Soft Delete agar data tetap ada di DB
-    const [result] = await db.query("UPDATE supir SET is_deleted = 1 WHERE idsupir = ?", [id]);
+    const [result] = await db.query(
+      "UPDATE supir SET is_deleted = 1 WHERE idsupir = ?", 
+      [id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ status: "Fail", message: "Data supir tidak ditemukan" });
@@ -49,9 +76,8 @@ router.delete("/supir/:id", async (req, res) => {
 
     res.json({ 
       status: "Success", 
-      message: isUsed 
-        ? "Supir dinonaktifkan (Data tetap tersimpan untuk histori)" 
-        : "Supir berhasil dihapus" 
+      message: "Saat data dihapus, kami menggunakan Soft Delete. Kolom is_deleted berubah jadi 1 dan updated_at mencatat waktu eksekusinya. Ini penting agar histori transaksi tidak hilang.",
+      audit_info: isUsed ? "Data memiliki relasi transaksi, diamankan via Soft Delete." : "Data berhasil dihapus."
     });
   } catch (err) {
     handleError(res, err);
@@ -61,36 +87,8 @@ router.delete("/supir/:id", async (req, res) => {
 /////////////////////////
 // TRUK
 /////////////////////////
-// Simpan data baru (CREATE)
-exports.createData = async (req, res) => {
-    try {
-        const { id_barang, nama_penerima, tanggal_kirim } = req.body;
-        const newData = await db.query("INSERT INTO distribusi SET ?", { id_barang, nama_penerima, tanggal_kirim });
-        
-        res.status(201).json({
-            message: "Data distribusi berhasil ditambahkan!",
-            data: newData
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Gagal tambah data", error });
-    }
-};
 
-// Hapus data (DELETE)
-exports.deleteData = async (req, res) => {
-    try {
-        const { id } = req.params;
-        await db.query("DELETE FROM distribusi WHERE id = ?", [id]);
-        
-        res.status(200).json({
-            message: `Data dengan ID ${id} berhasil dihapus!`
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Gagal hapus data", error });
-    }
-};
-
-router.get("/truk", async (req, res) => {
+router.get("/truk", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM truk WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -99,20 +97,17 @@ router.get("/truk", async (req, res) => {
   }
 });
 
-router.delete("/truk/:id", async (req, res) => {
+router.delete("/truk/:id", verifyToken, isManager, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Cek relasi di tabel pengiriman
-    const isUsed = await db.checkRelation("pengiriman", "idtruk", id);
-
+    const isUsed = await db.checkRelation("distribusi", "truk_idtruk", id);
     const [result] = await db.query("UPDATE truk SET is_deleted = 1 WHERE idtruk = ?", [id]);
-
+    
     if (result.affectedRows === 0) return res.status(404).json({ message: "Truk tidak ditemukan" });
-
+    
     res.json({ 
       status: "Success", 
-      message: isUsed ? "Truk dinonaktifkan dari sistem" : "Truk berhasil dihapus" 
+      message: isUsed ? "Truk dinonaktifkan (histori terjaga)" : "Truk berhasil dihapus" 
     });
   } catch (err) {
     handleError(res, err);
@@ -123,7 +118,7 @@ router.delete("/truk/:id", async (req, res) => {
 // KEBUN
 /////////////////////////
 
-router.get("/kebun", async (req, res) => {
+router.get("/kebun", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM kebun WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -132,17 +127,12 @@ router.get("/kebun", async (req, res) => {
   }
 });
 
-router.delete("/kebun/:id", async (req, res) => {
+router.delete("/kebun/:id", verifyToken, isManager, async (req, res) => {
   try {
     const { id } = req.params;
-    const isUsed = await db.checkRelation("pengiriman", "idkebun", id);
-
+    const isUsed = await db.checkRelation("distribusi", "kebun_idkebun", id);
     await db.query("UPDATE kebun SET is_deleted = 1 WHERE idkebun = ?", [id]);
-    
-    res.json({ 
-      status: "Success", 
-      message: isUsed ? "Kebun diarsipkan" : "Kebun dihapus" 
-    });
+    res.json({ status: "Success", message: isUsed ? "Kebun diarsipkan" : "Kebun dihapus" });
   } catch (err) {
     handleError(res, err);
   }
@@ -152,7 +142,7 @@ router.delete("/kebun/:id", async (req, res) => {
 // PABRIK
 /////////////////////////
 
-router.get("/pabrik", async (req, res) => {
+router.get("/pabrik", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM pabrik WHERE is_deleted = 0");
     res.json({ status: "Success", data: rows });
@@ -161,17 +151,12 @@ router.get("/pabrik", async (req, res) => {
   }
 });
 
-router.delete("/pabrik/:id", async (req, res) => {
+router.delete("/pabrik/:id", verifyToken, isManager, async (req, res) => {
   try {
     const { id } = req.params;
-    const isUsed = await db.checkRelation("pengiriman", "idpabrik", id);
-
+    const isUsed = await db.checkRelation("distribusi", "pabrik_idpabrik", id);
     await db.query("UPDATE pabrik SET is_deleted = 1 WHERE idpabrik = ?", [id]);
-
-    res.json({ 
-      status: "Success", 
-      message: isUsed ? "Pabrik diarsipkan" : "Pabrik dihapus" 
-    });
+    res.json({ status: "Success", message: isUsed ? "Pabrik diarsipkan" : "Pabrik dihapus" });
   } catch (err) {
     handleError(res, err);
   }
@@ -181,7 +166,7 @@ router.delete("/pabrik/:id", async (req, res) => {
 // USERS
 /////////////////////////
 
-router.get("/users", async (req, res) => {
+router.get("/users", verifyToken, isManager, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT idusers, username, role FROM users WHERE status = 'active'");
     res.json({ status: "Success", data: rows });
