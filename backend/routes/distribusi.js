@@ -141,12 +141,14 @@ router.get('/', async (req, res) => {
       ORDER BY d.iddistribusi DESC
     `;
 
+    // --- BAGIAN INI TADI HILANG ---
     const [rows] = await db.query(query);
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+// -----------------------------
 
 /**
  * ============================================
@@ -167,8 +169,15 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     const indexBaru = alurStatus.indexOf(status_baru);
 
     if (indexBaru === indexSekarang + 1 || status_baru === 'ditolak') {
-      await db.query('UPDATE distribusi SET status = ? WHERE iddistribusi = ?', [status_baru, id]);
-      res.json({ success: true, message: `Status diupdate ke ${status_baru}` });
+      await db.query(
+        'UPDATE distribusi SET status = ?, updated_at = NOW() WHERE iddistribusi = ?', 
+        [status_baru, id]
+      );
+      res.json({ 
+        success: true, 
+        message: `Status diupdate ke ${status_baru}`,
+        updatedAt: new Date() 
+      });
     } else {
       res.status(400).json({ 
         success: false, 
@@ -179,7 +188,6 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 /**
  * ============================================
  * UPDATE DISTRIBUSI (LENGKAP) - SPRINT 7
