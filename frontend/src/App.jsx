@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import reactLogo from "./assets/react.svg";
 import heroImg from "./assets/hero.png"; 
+
 import "./App.css";
 
 // Import halaman-halaman dari folder project kamu
 import Login from "./pages/Login";
 import Dashboard from "./components/Dashboard/Dashboard"; 
+// 🛠️ PERBAIKAN 1: Impor kedua komponen buatanmu di sini
+import FormManifest from "./components/FormManifest";
+import TabelDistribusi from './components/TabelDistribusi';
 
 /**
  * ========================================================
@@ -219,6 +223,18 @@ function App() {
         
         {/* Jalur Dashboard (/dashboard) -> Memanggil Dashboard Zainab */}
         <Route path="/dashboard" element={<Dashboard />} />
+        
+        {/* 🛠️ PERBAIKAN 2: Jalur resmi /manifest untuk merender gabungan komponen buatanmu */}
+        <Route 
+          path="/manifest" 
+          element={
+            <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500 py-12">
+              <FormManifest />
+              <div className="my-10"></div> {/* Jarak pemisah antar form dan tabel */}
+              <TabelDistribusi />
+            </div>
+          } 
+        />
       </Routes>
     </Router>
   );
