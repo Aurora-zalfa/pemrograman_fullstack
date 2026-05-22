@@ -1,56 +1,69 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import { setToken } from '../utils/auth';
 import axios from '../utils/axios';
-import heroImg from "../assets/hero.png"; // Memakai aset gambar kelompok kamu
+import heroImg from "../assets/hero.png"; 
 
-const Login = () => {
-  // 1. Logika State Penanganan Login/Register & Form Data Dinamis
+const Login = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
+
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({ 
-    nama: '',
-    email: '', 
-    password: '',
-    role: 'petugas' // Default role: petugas
+    username: '', // Sesuai kolom DB
+    password: '', // Sesuai kolom DB
+    role: 'petugas' // Sesuai kolom DB
   });
   const [loading, setLoading] = useState(false);
 
-  // Fungsi pengontrol input otomatis
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 2. Logika Submit Menembak Endpoint API Backend dengan Fitur Penyelamat (Bypass)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
       if (isLoginMode) {
-        try {
-          // A. Coba tembak API Backend kelompok asli dulu
-          const response = await axios.post('/auth/login', {
-            email: formData.email,
-            password: formData.password
-          });
-          setToken(response.data.token);
-          localStorage.setItem('user_role', response.data.role || formData.role);
-        } catch (backendError) {
-          // B. TRIK BYPASS: Jika backend belum konek/404, loloskan otomatis demi tes frontend!
-          console.warn("Backend belum siap, menggunakan bypass mode lokal.");
-          setToken("dummy-token-aurora-sprint9");
-          localStorage.setItem('user_role', formData.role); // Menyimpan role pilihan dari form
+        // LOGIN MODE
+        const response = await axios.post('/auth/login', {
+          username: formData.username,
+          password: formData.password
+        });
+        
+        // PERBAIKAN DI SINI: Menyesuaikan dengan struktur respon backend kamu
+        // Backend mengirim: response.data.data.token & response.data.data.user.role
+        if (response.data && response.data.success) {
+          const token = response.data.data.token;
+          const role = response.data.data.user?.role;
+
+          if (token && role) {
+            onLoginSuccess(token, role);
+            alert(`Login Berhasil! Selamat datang ${formData.username}.`);
+            navigate('/dashboard'); 
+          } else {
+            alert('Gagal memuat token atau hak akses dari data user.');
+          }
+        } else {
+          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.');
         }
         
-        alert('Login Berhasil! (Bypass Mode Aktif).');
-        window.location.href = '/dashboard'; // Redirect otomatis ke dashboard
-        
       } else {
-        // Skenario Simulasi Register jika backend belum siap
-        alert('Simulasi Registrasi Berhasil! Silakan masuk menggunakan akun baru.');
-        setIsLoginMode(true); // Lempar ke mode Sign In
+        // REGISTER MODE
+        await axios.post('/auth/register', {
+          username: formData.username,
+          password: formData.password,
+          role: formData.role
+        });
+        
+        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.');
+        setFormData(prev => ({ ...prev, password: '' }));
+        setIsLoginMode(true); 
       }
     } catch (error) {
-      alert('Terjadi kesalahan sistem: ' + error.message);
+      console.error("API Error Log:", error);
+      const pesanError = error.response?.data?.message || 'Gagal memproses permintaan ke server backend.';
+      alert('Terjadi kesalahan sistem: ' + pesanError);
     } finally {
       setLoading(false);
     }
@@ -59,10 +72,9 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
       
-      {/* Box Utama Card Split-Screen */}
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row min-h-[550px] transition-all duration-500 transform hover:scale-[1.01]">
         
-        {/* SISI KIRI: Ilustrasi & Informasi Aplikasi Kelompok */}
+        {/* SISI KIRI */}
         <div className="md:w-1/2 bg-gradient-to-b from-emerald-800 to-green-900 p-8 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-emerald-700 rounded-full opacity-30 blur-2xl"></div>
           <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-green-600 rounded-full opacity-20 blur-3xl"></div>
@@ -72,11 +84,7 @@ const Login = () => {
           </div>
 
           <div className="relative z-10 my-auto text-center md:text-left">
-            <img 
-              src={heroImg} 
-              alt="Sawit Asset" 
-              className="w-48 md:w-64 mx-auto mb-6" 
-            />
+            <img src={heroImg} alt="Sawit Asset" className="w-48 md:w-64 mx-auto mb-6" />
             <h2 className="text-2xl md:text-3xl font-extrabold leading-tight mb-2">
               {isLoginMode ? "Selamat Datang Kembali!" : "Bergabung Bersama Kami"}
             </h2>
@@ -92,7 +100,7 @@ const Login = () => {
           </div>
         </div>
 
-        {/* SISI KANAN: Form Input Dinamis */}
+        {/* SISI KANAN */}
         <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-gray-50">
           <div className="mb-8">
             <h2 className="text-3xl font-black text-gray-800 mb-1">
@@ -105,53 +113,29 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             
-            {/* INPUT NAMA LENGKAP (Hanya Muncul saat Mode Register / Sign Up) */}
-            {!isLoginMode && (
-              <div className="transition-all duration-300">
-                <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Nama Lengkap</label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                    <i className="fas fa-user text-xs"></i>
-                  </span>
-                  <input
-                    type="text"
-                    name="nama"
-                    value={formData.nama}
-                    onChange={handleChange}
-                    placeholder="Masukkan nama lengkap"
-                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm"
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* INPUT EMAIL */}
+            {/* USERNAME */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Alamat Email</label>
+              <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Username Akun</label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                  <i className="fas fa-envelope text-xs"></i>
+                  <i className="fas fa-user-circle text-xs"></i>
                 </span>
                 <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  type="text"
+                  name="username"
+                  value={formData.username}
                   onChange={handleChange}
-                  placeholder="name@company.com"
+                  placeholder="Contoh: bos_muda atau aurora"
                   className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm"
                   required
                 />
               </div>
             </div>
 
-            {/* INPUT PASSWORD */}
+            {/* PASSWORD */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Password</label>
-                {isLoginMode && (
-                  <a href="#" className="text-xs text-green-700 font-semibold hover:underline">Lupa Password?</a>
-                )}
               </div>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
@@ -169,7 +153,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* DROPDOWN JABATAN / ROLE (Hanya Muncul saat Mode Register / Sign Up) */}
+            {/* DROPDOWN ROLE */}
             {!isLoginMode && (
               <div>
                 <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Jabatan / Otoritas Akses</label>
@@ -179,13 +163,12 @@ const Login = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 text-sm shadow-sm text-gray-700 font-medium"
                 >
-                  <option value="petugas">Petugas Lapangan (Full Akses CRUD)</option>
-                  <option value="manajer">Manajer (Hanya Lihat Statistik & Distribusi)</option>
+                  <option value="petugas">Petugas Lapangan (Akses Input & Validasi)</option>
+                  <option value="manajer">Manajer (Otoritas Pemantau Statistik)</option>
                 </select>
               </div>
             )}
 
-            {/* TOMBOL SUBMIT */}
             <button
               type="submit"
               disabled={loading}
@@ -195,7 +178,6 @@ const Login = () => {
             </button>
           </form>
 
-          {/* TOGGLE MODE LOGIN / REGISTER */}
           <div className="mt-8 text-center">
             <p className="text-xs text-gray-500">
               {isLoginMode ? "Belum memiliki otoritas akun?" : "Sudah terdaftar sebagai admin?"}{" "}

@@ -2,7 +2,8 @@ import axios from 'axios';
 import { getToken } from './auth';
 
 const service = axios.create({
-  baseURL: 'http://localhost:5000/api', // Sesuaikan port backend kamu
+  // UBAH DARI 5000 MENJADI 3000 AGAR COCOK DENGAN BACKEND KAMU
+  baseURL: 'http://localhost:3000/api', 
   timeout: 5000
 });
 
