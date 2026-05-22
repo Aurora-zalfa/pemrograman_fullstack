@@ -8,6 +8,8 @@ import "./App.css";
 // Import halaman-halaman dari folder project kamu
 import Login from "./pages/Login";
 import Dashboard from "./components/Dashboard/Dashboard"; 
+import FormManifest from "./components/FormManifest";
+import TabelDistribusi from './components/TabelDistribusi';
 
 /**
  * ========================================================
@@ -306,7 +308,6 @@ function App() {
   // Efek Lifecycle untuk mengecek keberadaan Token secara otomatis pasca-refresh
   useEffect(() => {
     const token = localStorage.getItem("token");
-    // PERBAIKAN 1: Diubah dari "role" menjadi "user_role" agar sinkron dengan Login.jsx
     const role = localStorage.getItem("user_role"); 
 
     if (token && role) {
@@ -319,7 +320,6 @@ function App() {
   // Handler interaksi saat proses authentikasi login sukses
   const handleLoginSuccess = (token, role) => {
     localStorage.setItem("token", token);
-    // PERBAIKAN 2: Diubah dari "role" menjadi "user_role"
     localStorage.setItem("user_role", role); 
     setIsAuthenticated(true);
     setUserRole(role);
@@ -328,7 +328,6 @@ function App() {
   // Handler interaksi menghapus token (Logout)
   const handleLogout = () => {
     localStorage.removeItem("token");
-    // PERBAIKAN 3: Diubah dari "role" menjadi "user_role"
     localStorage.removeItem("user_role");
     setIsAuthenticated(false);
     setUserRole(null);
@@ -358,12 +357,23 @@ function App() {
             <ProtectedRoute 
               isAuthenticated={isAuthenticated} 
               userRole={userRole}
-              // PERBAIKAN 4: Mengganti "manager" menjadi "manajer" (sesuai struktur ENUM MySQL kamu)
               allowedRoles={["admin", "manajer", "driver", "petugas"]} 
             >
               {/* Distribusikan state role dan fungsi logout ke komponen Dashboard anak */}
               <Dashboard userRole={userRole} onLogout={handleLogout} />
             </ProtectedRoute>
+          } 
+        />
+
+        {/* Jalur resmi /manifest untuk merender gabungan komponen buatanmu */}
+        <Route 
+          path="/manifest" 
+          element={
+            <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500 py-12">
+              <FormManifest />
+              <div className="my-10"></div> {/* Jarak pemisah antar form dan tabel */}
+              <TabelDistribusi />
+            </div>
           } 
         />
       </Routes>
