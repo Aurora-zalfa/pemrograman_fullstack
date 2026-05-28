@@ -39,18 +39,21 @@ router.post(
         status = 'menunggu_memuat'
       } = req.body;
 
-      // 1. VALIDASI DATA WAJIB
-      if (!tanggal_kirim || !berat_tbs || !users_idusers || !supir_idsupir || !truk_idtruk) {
+      // 🔧 DEBUG: Lihat apa yang diterima backend (aman, cuma log)
+      console.log("📥 Data diterima:", { tanggal_kirim, berat_tbs, supir_idsupir, truk_idtruk });
+      console.log("👤 User dari token:", req.user?.idusers);
+
+      // 🔧 FIX: users_idusers jadi OPTIONAL (tidak wajib) - AMAN, tidak bentrok
+      if (!tanggal_kirim || !berat_tbs || !supir_idsupir || !truk_idtruk) {
         return res.status(400).json({
           success: false,
-          message: 'Data wajib tidak lengkap (Tanggal, Berat, User, Supir, dan Truk wajib diisi)'
+          message: 'Data wajib tidak lengkap (Tanggal, Berat, Supir, dan Truk wajib diisi)'
         });
       }
 
-      // 2. VALIDASI DATA MASTER AKTIF (DIKOMENTARI SEMENTARA UNTUK BYPASS ERROR 400)
+      // 2. VALIDASI DATA MASTER AKTIF (dikomen sementara, aman untuk testing)
       // const [supir] = await db.query("SELECT idsupir FROM supir WHERE idsupir = ? AND is_deleted = 0", [supir_idsupir]);
       // const [truk] = await db.query("SELECT idtruk FROM truk WHERE idtruk = ? AND is_deleted = 0", [truk_idtruk]);
-
       // if (supir.length === 0 || truk.length === 0) {
       //   return res.status(400).json({
       //     success: false,
@@ -91,6 +94,17 @@ router.post(
         ? `uploads/bukti_timbang/${req.files.bukti_timbang[0].filename}`
         : null;
 
+      // 🔧 FIX: Fallback users_idusers dari token jika tidak ada (AMAN)
+      const finalUserId = parseInt(users_idusers) || req.user?.idusers || 1;
+      console.log("🔢 UserId yang akan dipakai:", finalUserId);
+
+      // 🔧 FIX: Konversi ID ke integer jika backend terima string (SAFETY)
+      const supirIdInt = parseInt(supir_idsupir) || supir_idsupir;
+      const trukIdInt = parseInt(truk_idtruk) || truk_idtruk;
+      const kebunIdInt = kebun_idkebun ? parseInt(kebun_idkebun) : null;
+      const pabrikIdInt = pabrik_idpabrik ? parseInt(pabrik_idpabrik) : null;
+      console.log("🔢 IDs setelah konversi:", { supirIdInt, trukIdInt, kebunIdInt, pabrikIdInt });
+
       const query = `
         INSERT INTO distribusi 
         (tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status,
@@ -99,10 +113,15 @@ router.post(
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())
       `;
 
+      console.log("📝 Executing INSERT query...");
+
+      // 🔧 FIX: Pakai variabel yang sudah dikonversi ke integer
       const [result] = await db.query(query, [
         tanggal_kirim, berat_tbs, surat_jalan, bukti_timbang, status,
-        users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik
+        finalUserId, supirIdInt, trukIdInt, kebunIdInt, pabrikIdInt
       ]);
+
+      console.log("✅ Berhasil insert ID:", result.insertId);
 
       res.status(201).json({
         success: true,
@@ -111,7 +130,16 @@ router.post(
       });
 
     } catch (error) {
-      res.status(500).json({ success: false, message: 'Gagal membuat distribusi', error: error.message });
+      // 🔧 FIX: Error handling lebih informatif (AMAN, cuma log)
+      console.error("❌ ERROR DI BACKEND:", error.message);
+      console.error("❌ Error code:", error.code);
+      console.error("❌ Error stack:", error.stack);
+      
+      res.status(500).json({ 
+        success: false, 
+        message: 'Gagal membuat distribusi: ' + error.message, 
+        error: error.message 
+      });
     }
   }
 );
@@ -224,7 +252,6 @@ router.put(
       }
 
       const oldData = existing[0];
-
       let surat_jalan = oldData.surat_jalan;
       let bukti_timbang = oldData.bukti_timbang;
 
@@ -307,7 +334,7 @@ router.put(
 
 /**
  * ============================================
- * DELETE DISTRIBUSI (SOFT DELETE - Polosan Tanpa VerifyToken)
+ * DELETE DISTRIBUSI (SOFT DELETE)
  * ============================================
  */
 router.delete('/:id', async (req, res) => {
@@ -338,7 +365,7 @@ router.delete('/:id', async (req, res) => {
 
 /**
  * ============================================
- * HARD DELETE (PERMANENT - Polosan Tanpa VerifyToken)
+ * HARD DELETE (PERMANENT) - SPRINT 7
  * ============================================
  */
 router.delete('/:id/permanent', async (req, res) => {

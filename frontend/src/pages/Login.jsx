@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { setToken } from '../utils/auth';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+// import { setToken } from '../utils/auth';
 import axios from '../utils/axios';
 import heroImg from "../assets/hero.png"; 
 
@@ -26,7 +26,7 @@ const Login = ({ onLoginSuccess }) => {
     try {
       if (isLoginMode) {
         // LOGIN MODE
-        const response = await axios.post('/auth/login', {
+        const response = await axios.post('/api/auth/login', {  // ✅ Sudah ada /api/
           username: formData.username,
           password: formData.password
         });
@@ -36,34 +36,41 @@ const Login = ({ onLoginSuccess }) => {
         if (response.data && response.data.success) {
           const token = response.data.data.token;
           const role = response.data.data.user?.role;
+          const userId = response.data.data.user?.idusers;  // 🔧 TAMBAH: Ambil userId
 
           if (token && role) {
+            // 🔧 TAMBAH: Simpan userId ke localStorage (tidak ganggu kode lain)
+            if (userId) {
+              localStorage.setItem('userId', userId);
+            }
+            localStorage.setItem('token', token);
+            
             onLoginSuccess(token, role);
-            alert(`Login Berhasil! Selamat datang ${formData.username}.`);
+            alert(`Login Berhasil! Selamat datang ${formData.username}.`); // ✅ PERTAHANKAN
             navigate('/dashboard'); 
           } else {
-            alert('Gagal memuat token atau hak akses dari data user.');
+            alert('Gagal memuat token atau hak akses dari data user.'); // ✅ PERTAHANKAN
           }
         } else {
-          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.');
+          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.'); // ✅ PERTAHANKAN
         }
         
       } else {
         // REGISTER MODE
-        await axios.post('/auth/register', {
+        await axios.post('/api/auth/register', {  // 🔧 TAMBAH: /api/ prefix
           username: formData.username,
           password: formData.password,
           role: formData.role
         });
         
-        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.');
+        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.'); // ✅ PERTAHANKAN
         setFormData(prev => ({ ...prev, password: '' }));
         setIsLoginMode(true); 
       }
     } catch (error) {
       console.error("API Error Log:", error);
       const pesanError = error.response?.data?.message || 'Gagal memproses permintaan ke server backend.';
-      alert('Terjadi kesalahan sistem: ' + pesanError);
+      alert('Terjadi kesalahan sistem: ' + pesanError); // ✅ PERTAHANKAN
     } finally {
       setLoading(false);
     }
@@ -74,7 +81,7 @@ const Login = ({ onLoginSuccess }) => {
       
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row min-h-[550px] transition-all duration-500 transform hover:scale-[1.01]">
         
-        {/* SISI KIRI */}
+        {/* SISI KIRI - BRANDING */}
         <div className="md:w-1/2 bg-gradient-to-b from-emerald-800 to-green-900 p-8 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-emerald-700 rounded-full opacity-30 blur-2xl"></div>
           <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-green-600 rounded-full opacity-20 blur-3xl"></div>
@@ -85,7 +92,7 @@ const Login = ({ onLoginSuccess }) => {
 
           <div className="relative z-10 my-auto text-center md:text-left">
             <img src={heroImg} alt="Sawit Asset" className="w-48 md:w-64 mx-auto mb-6" />
-            <h2 className="text-2xl md:text-3xl font-extrabold leading-tight mb-2">
+            <h2 className="text-2xl md:text-3xl font-extrabold leading-tight mb-2 text-white">
               {isLoginMode ? "Selamat Datang Kembali!" : "Bergabung Bersama Kami"}
             </h2>
             <p className="text-sm text-green-100 opacity-90">
@@ -100,7 +107,7 @@ const Login = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {/* SISI KANAN */}
+        {/* SISI KANAN - FORM */}
         <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-gray-50">
           <div className="mb-8">
             <h2 className="text-3xl font-black text-gray-800 mb-1">
@@ -115,9 +122,11 @@ const Login = ({ onLoginSuccess }) => {
             
             {/* USERNAME */}
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Username Akun</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1 tracking-wider">
+                Username Akun
+              </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
                   <i className="fas fa-user-circle text-xs"></i>
                 </span>
                 <input
@@ -126,7 +135,7 @@ const Login = ({ onLoginSuccess }) => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Contoh: bos_muda atau aurora"
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm"
+                  className="w-full pl-9 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm text-gray-900 placeholder-gray-400 font-medium"
                   required
                 />
               </div>
@@ -135,10 +144,12 @@ const Login = ({ onLoginSuccess }) => {
             {/* PASSWORD */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Password</label>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Password
+                </label>
               </div>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
                   <i className="fas fa-lock text-xs"></i>
                 </span>
                 <input
@@ -147,21 +158,23 @@ const Login = ({ onLoginSuccess }) => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm"
+                  className="w-full pl-9 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm text-gray-900 placeholder-gray-400 font-medium"
                   required
                 />
               </div>
             </div>
 
-            {/* DROPDOWN ROLE */}
+            {/* DROPDOWN ROLE - Hanya muncul di mode Register */}
             {!isLoginMode && (
               <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Jabatan / Otoritas Akses</label>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1 tracking-wider">
+                  Jabatan / Otoritas Akses
+                </label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 text-sm shadow-sm text-gray-700 font-medium"
+                  className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 text-sm shadow-sm text-gray-900 font-medium cursor-pointer"
                 >
                   <option value="petugas">Petugas Lapangan (Akses Input & Validasi)</option>
                   <option value="manajer">Manajer (Otoritas Pemantau Statistik)</option>
@@ -169,21 +182,33 @@ const Login = ({ onLoginSuccess }) => {
               </div>
             )}
 
+            {/* TOMBOL SUBMIT */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Mohon Tunggu...' : (isLoginMode ? "Masuk ke Dashboard" : "Daftarkan Akun")}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Memproses...
+                </span>
+              ) : (
+                isLoginMode ? "🚀 Masuk ke Dashboard" : "📝 Daftarkan Akun"
+              )}
             </button>
           </form>
 
+          {/* TOGGLE LOGIN/REGISTER */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-gray-600">
               {isLoginMode ? "Belum memiliki otoritas akun?" : "Sudah terdaftar sebagai admin?"}{" "}
               <button
                 onClick={() => setIsLoginMode(!isLoginMode)}
-                className="text-green-700 font-bold hover:underline ml-1 focus:outline-none"
+                className="text-green-700 font-bold hover:underline hover:text-green-900 transition-colors focus:outline-none"
               >
                 {isLoginMode ? "Buat Akun Baru" : "Login Sekarang"}
               </button>

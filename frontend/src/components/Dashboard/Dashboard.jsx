@@ -23,7 +23,7 @@ const Dashboard = () => {
   // ==========================================
   const [activePage, setActivePage] = useState('dashboard');
   const [userRole, setUserRole] = useState(localStorage.getItem('user_role') || 'manajer');
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || '';
 
   // State untuk Data Ringkasan Dashboard & Laporan
   const [stats, setStats] = useState({ totalBerat: 0, totalPengiriman: 0 });
@@ -39,6 +39,8 @@ const Dashboard = () => {
   // State untuk Mengontrol Modal Tambah Data Master
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inputData, setInputData] = useState({});
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
 
   // State Input Form Transaksi Distribusi Baru
   const [formTransaksi, setFormTransaksi] = useState({
@@ -56,13 +58,16 @@ const Dashboard = () => {
   // ==========================================
   // 2. LIFECYCLE EFFECTS
   // ==========================================
-  useEffect(() => {
-    getDashboardData();
-    if (activePage === 'master') {
-      loadMasterData();
-    }
-  }, [activePage, activeMasterType]);
+useEffect(() => {
+  getDashboardData();
+}, []);
 
+useEffect(() => {
+  console.log('🔥 EFFECT TRIGGERED:', activePage, activeMasterType);
+  if (activePage === 'master') {
+    loadMasterData();
+  }
+}, [activePage, activeMasterType]);
   // ==========================================
   // 3. FUNGSI LOGIKA API BACKEND
   // ==========================================
@@ -98,6 +103,7 @@ const Dashboard = () => {
 
   // Ambil List Data Master Berdasarkan Sub-Tab Aktif
   const loadMasterData = async () => {
+    console.log('🔥 LOAD MASTER CALLED!', activeMasterType); // TAMBAH INI
     setIsMasterLoading(true);
     setMasterData([]);
     try {
@@ -115,31 +121,94 @@ const Dashboard = () => {
     }
   };
 
-  // Logika Simpan Data Master Baru
-  const submitAddData = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inputData)
-      });
-      const result = await response.json();
-      if (result.status === 'Success') {
-        alert(result.message || 'Data berhasil disimpan!');
-        setIsModalOpen(false);
-        setInputData({});
-        loadMasterData();
-      } else {
-        alert('Gagal menambah data');
-      }
-    } catch (error) {
-      console.error(error);
+// Logika Simpan Data Master Baru
+const submitAddData = async (e) => {
+  e.preventDefault();
+  
+  console.log('DEBUG TOKEN:', token);
+  if (!token) {
+    alert('TOKEN KOSONG! Coba logout dan login lagi.');
+    return;
+  }
+  
+  try {
+    let cleanData = {};
+    if (activeMasterType === 'supir') {
+      cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
+    } else if (activeMasterType === 'truk') {
+cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
+    } else if (activeMasterType === 'kebun') {
+      cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
+    } else if (activeMasterType === 'pabrik') {
+      cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
     }
-  };
+    
+    console.log('📤 Kirim:', cleanData);
+    
+    const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(cleanData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'Success') {
+      alert(result.message || 'Data berhasil disimpan!');
+      setIsModalOpen(false);
+      setInputData({});
+      loadMasterData();
+    } else {
+      alert('Gagal: ' + (result.message || 'Data gagal disimpan'));
+    }
+  } catch (error) {
+    console.error('❌ Error:', error);
+    alert('Error: ' + error.message);
+  }
+};
+
+// Update Data Master
+const submitUpdateData = async (e) => {
+  e.preventDefault();
+  try {
+    let cleanData = {};
+    if (activeMasterType === 'supir') {
+      cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
+    } else if (activeMasterType === 'truk') {
+cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
+    } else if (activeMasterType === 'kebun') {
+      cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
+    } else if (activeMasterType === 'pabrik') {
+      cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
+    }
+
+    const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}/${editId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(cleanData)
+    });
+    
+    const result = await response.json();
+    if (result.status === 'Success') {
+      alert('Data berhasil diupdate!');
+      setIsModalOpen(false);
+      setIsEditMode(false);
+      setEditId(null);
+      setInputData({});
+      loadMasterData();
+    } else {
+      alert('Gagal: ' + result.message);
+    }
+  } catch (error) {
+    alert('Error: ' + error.message);
+  }
+};
 
   // Logika Soft Delete Data Master
   const handleDeleteData = async (id) => {
@@ -258,7 +327,12 @@ const Dashboard = () => {
 
             <div className="mb-4">
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setIsEditMode(false);
+                  setEditId(null);
+                  setInputData({});
+                  setIsModalOpen(true);
+                }}
                 className="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2"
               >
                 <i className="fas fa-plus text-xs"></i> Tambah {getMasterTitle()}
@@ -302,7 +376,7 @@ const Dashboard = () => {
                             {activeMasterType === 'truk' && <>
                               <td className="py-4 px-6 font-semibold text-gray-900">{item.no_polisi}</td>
                               <td className="py-4 px-6 text-gray-500">{item.merk}</td>
-                              <td className="py-4 px-6 font-medium text-green-700">{item.kapasitas} kg</td>
+                              <td className="py-4 px-6 font-medium text-green-700">{item.kapasitas_ton} ton</td>
                             </>}
                             {activeMasterType === 'kebun' && <>
                               <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_kebun}</td>
@@ -314,6 +388,18 @@ const Dashboard = () => {
                             </>}
                             <td className="py-4 px-6 text-gray-400">{formatDate(item.created_at)}</td>
                             <td className="py-4 px-6">
+                              <button
+                              onClick={() => {
+                                const idKey = `id${activeMasterType}`;
+                                setEditId(item[idKey]);
+                                setInputData(item);
+                                setIsEditMode(true);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 mr-3"
+                            >
+                              <i className="fas fa-edit text-xs"></i> Edit
+                            </button>
                               <button
                                 onClick={() => handleDeleteData(item[idKey])}
                                 className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
@@ -820,49 +906,80 @@ const Dashboard = () => {
         <div className={styles['content-wrapper']}>{renderContent()}</div>
       </main>
 
-      {/* MODAL FORM POP-UP DATA MASTER */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-            <div className="bg-green-800 p-4 text-white flex justify-between items-center">
-              <h3 className="font-bold">Tambah Data {getMasterTitle()}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-xl hover:opacity-75">&times;</button>
+{/* MODAL FORM POP-UP DATA MASTER */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div className="bg-green-800 p-4 text-white flex justify-between items-center">
+        <h3 className="font-bold">{isEditMode ? 'Edit' : 'Tambah'} Data {getMasterTitle()}</h3>
+        <button onClick={() => setIsModalOpen(false)} className="text-xl hover:opacity-75">&times;</button>
+      </div>
+      <form onSubmit={isEditMode ? submitUpdateData : submitAddData} className="p-6 space-y-4">
+        
+        {/* SUPIR */}
+        {activeMasterType === 'supir' && (
+          <>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Nama Supir</label>
+              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData.nama_supir || ''}
+                onChange={(e) => setInputData({ ...inputData, nama_supir: e.target.value })} />
             </div>
-            <form onSubmit={submitAddData} className="p-6 space-y-4">
-              {activeMasterType === 'supir' && (
-                <>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">Nama Supir</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, nama_supir: e.target.value })} /></div>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">No. HP</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, no_hp: e.target.value })} /></div>
-                </>
-              )}
-              {activeMasterType === 'truk' && (
-                <>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">No. Polisi (Plat)</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, no_polisi: e.target.value })} /></div>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">Merk Kendaraan</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, merk: e.target.value })} /></div>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">Kapasitas Muatan (Kg)</label>
-                    <input type="number" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, kapasitas: e.target.value })} /></div>
-                </>
-              )}
-              {(activeMasterType === 'kebun' || activeMasterType === 'pabrik') && (
-                <>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">Nama {getMasterTitle()}</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, [`nama_${activeMasterType}`]: e.target.value })} /></div>
-                  <div><label className="block text-xs font-bold text-gray-600 mb-1">Lokasi Wilayah</label>
-                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" onChange={(e) => setInputData({ ...inputData, lokasi: e.target.value })} /></div>
-                </>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
-                <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800">Simpan Data</button>
-              </div>
-            </form>
-          </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">No. HP</label>
+              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData.no_hp || ''}
+                onChange={(e) => setInputData({ ...inputData, no_hp: e.target.value })} />
+            </div>
+          </>
+        )}
+        
+        {/* TRUK */}
+        {activeMasterType === 'truk' && (
+          <>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">No. Polisi (Plat)</label>
+              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData.no_polisi || ''}
+                onChange={(e) => setInputData({ ...inputData, no_polisi: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Kapasitas Muatan (Ton)</label>
+              <input type="number" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData.kapasitas || ''}
+                onChange={(e) => setInputData({ ...inputData, kapasitas: e.target.value })} />
+            </div>
+          </>
+        )}
+        
+        {/* KEBUN / PABRIK */}
+        {(activeMasterType === 'kebun' || activeMasterType === 'pabrik') && (
+          <>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Nama {getMasterTitle()}</label>
+              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData[`nama_${activeMasterType}`] || ''}
+                onChange={(e) => setInputData({ ...inputData, [`nama_${activeMasterType}`]: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-600 mb-1">Lokasi Wilayah</label>
+              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
+                value={inputData.lokasi || ''}
+                onChange={(e) => setInputData({ ...inputData, lokasi: e.target.value })} />
+            </div>
+          </>
+        )}
+        
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
+          <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800">
+            {isEditMode ? 'Update' : 'Simpan'} Data
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };

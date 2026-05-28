@@ -17,18 +17,9 @@ const TabelDistribusi = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axiosInstance.get('/distribusi');
-        
-        // 🛠️ PERBAIKAN 1: Deteksi format data dari backend secara fleksibel
-        // Jika response.data berbentuk Array langsung ambil, jika berupa Object coba ambil properti .data di dalamnya
-        if (Array.isArray(response.data)) {
-          setDataDistribusi(response.data);
-        } else if (response.data && Array.isArray(response.data.data)) {
-          setDataDistribusi(response.data.data);
-        } else {
-          setDataDistribusi([]); // Fallback ke array kosong jika format tidak dikenali
-        }
-
+        // Mengambil data dari backend dengan interceptor Rumaisha (Token otomatis terisi)
+        const response = await axiosInstance.get('/api/distribusi');
+        setDataDistribusi(response.data.data || []);
       } catch (error) {
         console.error("Gagal mengambil data distribusi:", error);
         setDataDistribusi([]); // Cegah crash jika server error
@@ -61,10 +52,7 @@ const TabelDistribusi = () => {
   };
 
   // --- 1. CLIENT-SIDE DATA FILTERING (PENCARIAN) ---
-  // 🛠️ PERBAIKAN 2: Berikan pengaman Array.isArray agar tidak crash (.filter is not a function) jika data kosong/object
-  const safeData = Array.isArray(dataDistribusi) ? dataDistribusi : [];
-
-  const filteredData = safeData.filter((item) => {
+  const filteredData = (dataDistribusi || []).filter((item) => {
     const keyword = searchKeyword.toLowerCase();
     const namaSupir = item.nama_supir ? item.nama_supir.toLowerCase() : '';
     const noPolisi = item.no_polisi ? item.no_polisi.toLowerCase() : '';
