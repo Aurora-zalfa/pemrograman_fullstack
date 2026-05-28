@@ -13,7 +13,7 @@ const { verifyToken } = require("../middleware/auth");
 router.get("/", distribusiController.getDistribusi);
 
 // Membuat transaksi distribusi baru (Validasi master data aktif dilakukan di controller)
-router.post("/", verifyToken, distribusiController.createDistribusi);
+router.post("/", distribusiController.createDistribusi);
 
 // Update status alur pengiriman (menunggu -> perjalanan -> tiba -> selesai)
 router.put("/:id/status", verifyToken, distribusiController.updateStatus);

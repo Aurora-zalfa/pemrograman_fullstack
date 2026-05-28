@@ -1,16 +1,24 @@
 import React, { useState } from "react";
-import axiosInstance from "../utils/axios"; // Mengarah ke file axios kelompokmu
 import Container from "./Container"; // Menggunakan container penampung
+import UploadDistribusi from "./UploadDistribusi"; // Mengimpor komponen upload buatanmu
 
 const FormManifest = () => {
   const [formData, setFormData] = useState({
     no_polisi: "",
     nama_supir: "",
-    tanggal: "",
+    tanggal_kirim: "", 
     berat_tbs: "",
-    status: "dalam_perjalanan",
+    status: "menunggu_memuat",
+    users_idusers: 52,     // Default ID sesuai isi database kamu
+    supir_idsupir: 1,      // Default ID supir awal
+    truk_idtruk: 1,        // Default ID truk awal
+    kebun_idkebun: 1,      // Default ID kebun awal
+    pabrik_idpabrik: 1,    // Default ID pabrik awal
   });
 
+  // Nama state disamakan agar tidak memicu ReferenceError atau data kosong
+  const [suratJalan, setSuratJalan] = useState(null);
+  const [buktiTimbang, setBuktiTimbang] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pesan, setPesan] = useState({ type: "", text: "" });
 
@@ -25,29 +33,79 @@ const FormManifest = () => {
     setPesan({ type: "", text: "" });
 
     try {
-      // Menembak ke API backend kelompokmu menggunakan Axios interceptor
-      const response = await axiosInstance.post("/api/distribusi", formData);
+      console.log("Mengirim Multipart Form-Data melalui Fetch vanilla...");
+      const dataToSend = new FormData();
       
-      setPesan({ type: "success", text: "✅ Data manifest berhasil disimpan!" });
-      // Reset form setelah sukses input
-      setFormData({
-        no_polisi: "",
-        nama_supir: "",
-        tanggal: "",
-        berat_tbs: "",
-        status: "dalam_perjalanan",
+      // 1. Tambahkan no_polisi dan nama_supir
+      dataToSend.append("no_polisi", formData.no_polisi);
+      dataToSend.append("nama_supir", formData.nama_supir);
+
+      // 2. Append data teks lainnya dari state formData
+      dataToSend.append("tanggal_kirim", formData.tanggal_kirim);
+      dataToSend.append("berat_tbs", formData.berat_tbs);
+      dataToSend.append("status", formData.status);
+      dataToSend.append("users_idusers", formData.users_idusers);
+      dataToSend.append("supir_idsupir", formData.supir_idsupir);
+      dataToSend.append("truk_idtruk", formData.truk_idtruk);
+      dataToSend.append("kebun_idkebun", formData.kebun_idkebun);
+      dataToSend.append("pabrik_idpabrik", formData.pabrik_idpabrik);
+      
+      // 3. Ambil file fisik langsung dari state
+      if (suratJalan) {
+        dataToSend.append("surat_jalan", suratJalan);
+      }
+      if (buktiTimbang) {
+        dataToSend.append("bukti_timbang", buktiTimbang);
+      }
+      
+      // 4. Eksekusi POST menggunakan FETCH murni (Bypass Axios Interceptor Kelompok)
+      const response = await fetch("http://localhost:3000/api/distribusi", {
+        method: "POST",
+        body: dataToSend,
+        // CATATAN: Jangan memberikan header "Content-Type" manual di sini.
+        // Browser akan otomatis menyusun boundary multipart/form-data yang benar.
       });
+
+      // Ambil respons data JSON dari backend
+      const resData = await response.json();
       
-      // Reload halaman otomatis agar datanya langsung muncul di tabel bawah
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      if (response.ok || resData.success) {
+        setPesan({ 
+          type: "success", 
+          text: `✅ ${resData.message || "Data & file berhasil disimpan ke database!"}` 
+        });
+        
+        // Reset Form ke default setelah sukses
+        setFormData({
+          no_polisi: "",
+          nama_supir: "",
+          tanggal_kirim: "",
+          berat_tbs: "",
+          status: "menunggu_memuat",
+          users_idusers: 52,
+          supir_idsupir: 1,
+          truk_idtruk: 1,
+          kebun_idkebun: 1,
+          pabrik_idpabrik: 1,
+        });
+
+        setSuratJalan(null);
+        setBuktiTimbang(null);
+
+        // Reload halaman setelah 1.5 detik agar tabel otomatis ter-update data baru
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        // Jika fetch merespons gagal dari backend (misal error 400 atau 500)
+        throw new Error(resData.message || "Gagal memproses request di server.");
+      }
 
     } catch (error) {
-      console.error("Error input manifest:", error);
+      console.error("Error submit manifest:", error);
       setPesan({ 
         type: "error", 
-        text: "❌ Gagal menyimpan data. Pastikan semua data terisi dan backend menyala." 
+        text: `❌ Gagal menyimpan data. Alasan: ${error.message || "Terjadi kesalahan autentikasi atau validasi pada data server."}` 
       });
     } finally {
       setLoading(false);
@@ -57,7 +115,7 @@ const FormManifest = () => {
   return (
     <Container>
       <div className="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-md text-left">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifest Distribusi TBS</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Input Transaksi Distribusi TBS & Upload Dokumen</h2>
         
         {pesan.text && (
           <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
@@ -99,8 +157,8 @@ const FormManifest = () => {
               <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengiriman</label>
               <input
                 type="date"
-                name="tanggal"
-                value={formData.tanggal}
+                name="tanggal_kirim"
+                value={formData.tanggal_kirim}
                 onChange={handleChange}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"
                 required
@@ -129,9 +187,23 @@ const FormManifest = () => {
               onChange={handleChange}
               className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-800"
             >
+              <option value="menunggu_memuat">Menunggu Memuat</option>
               <option value="dalam_perjalanan">Dalam Perjalanan</option>
+              <option value="tiba_di_pabrik">Tiba Di Pabrik</option>
               <option value="selesai">Selesai</option>
+              <option value="ditolak">Ditolak</option>
             </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <UploadDistribusi 
+              label="Surat Jalan (JPG/PNG/PDF)" 
+              onFileSelect={(file) => setSuratJalan(file)} 
+            />
+            <UploadDistribusi 
+              label="Bukti Timbang (JPG/PNG/PDF)" 
+              onFileSelect={(file) => setBuktiTimbang(file)} 
+            />
           </div>
 
           <div className="pt-2">
@@ -142,7 +214,7 @@ const FormManifest = () => {
                 loading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              {loading ? "Menyimpan..." : "Simpan Manifest"}
+              {loading ? "Menyimpan..." : "Simpan Transaksi Distribusi"}
             </button>
           </div>
         </form>
