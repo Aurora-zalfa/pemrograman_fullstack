@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { setToken } from '../utils/auth';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+// import { setToken } from '../utils/auth';
 import axios from '../utils/axios';
 import heroImg from "../assets/hero.png"; 
 
