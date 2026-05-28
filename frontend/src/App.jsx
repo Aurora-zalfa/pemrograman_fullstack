@@ -8,7 +8,7 @@ import "./App.css";
 // Import halaman-halaman dari folder project kamu
 import Login from "./pages/Login";
 import Dashboard from "./components/Dashboard/Dashboard"; 
-import FormManifest from "./components/FormManifest";
+import FormManifest from "./components/formManifest";
 import TabelDistribusi from './components/TabelDistribusi';
 
 /**

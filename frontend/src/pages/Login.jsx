@@ -26,7 +26,7 @@ const Login = ({ onLoginSuccess }) => {
     try {
       if (isLoginMode) {
         // LOGIN MODE
-        const response = await axios.post('/auth/login', {
+        const response = await axios.post('/api/auth/login', {  // ✅ Sudah ada /api/
           username: formData.username,
           password: formData.password
         });
@@ -36,34 +36,41 @@ const Login = ({ onLoginSuccess }) => {
         if (response.data && response.data.success) {
           const token = response.data.data.token;
           const role = response.data.data.user?.role;
+          const userId = response.data.data.user?.idusers;  // 🔧 TAMBAH: Ambil userId
 
           if (token && role) {
+            // 🔧 TAMBAH: Simpan userId ke localStorage (tidak ganggu kode lain)
+            if (userId) {
+              localStorage.setItem('userId', userId);
+            }
+            localStorage.setItem('token', token);
+            
             onLoginSuccess(token, role);
-            alert(`Login Berhasil! Selamat datang ${formData.username}.`);
+            alert(`Login Berhasil! Selamat datang ${formData.username}.`); // ✅ PERTAHANKAN
             navigate('/dashboard'); 
           } else {
-            alert('Gagal memuat token atau hak akses dari data user.');
+            alert('Gagal memuat token atau hak akses dari data user.'); // ✅ PERTAHANKAN
           }
         } else {
-          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.');
+          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.'); // ✅ PERTAHANKAN
         }
         
       } else {
         // REGISTER MODE
-        await axios.post('/auth/register', {
+        await axios.post('/api/auth/register', {  // 🔧 TAMBAH: /api/ prefix
           username: formData.username,
           password: formData.password,
           role: formData.role
         });
         
-        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.');
+        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.'); // ✅ PERTAHANKAN
         setFormData(prev => ({ ...prev, password: '' }));
         setIsLoginMode(true); 
       }
     } catch (error) {
       console.error("API Error Log:", error);
       const pesanError = error.response?.data?.message || 'Gagal memproses permintaan ke server backend.';
-      alert('Terjadi kesalahan sistem: ' + pesanError);
+      alert('Terjadi kesalahan sistem: ' + pesanError); // ✅ PERTAHANKAN
     } finally {
       setLoading(false);
     }

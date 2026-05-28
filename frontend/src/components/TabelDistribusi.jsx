@@ -21,7 +21,7 @@ const TabelDistribusi = () => {
         setLoading(true);
         // Mengambil data dari backend dengan interceptor Rumaisha (Token otomatis terisi)
         const response = await axiosInstance.get('/api/distribusi');
-        setDataDistribusi(response.data);
+        setDataDistribusi(response.data.data || []);
       } catch (error) {
         console.error("Gagal mengambil data distribusi:", error);
       } finally {
@@ -53,7 +53,7 @@ const TabelDistribusi = () => {
   };
 
   // --- 1. CLIENT-SIDE DATA FILTERING (PENCARIAN) ---
-  const filteredData = dataDistribusi.filter((item) => {
+  const filteredData = (dataDistribusi || []).filter((item) => {
     const keyword = searchKeyword.toLowerCase();
     const namaSupir = item.nama_supir ? item.nama_supir.toLowerCase() : '';
     const noPolisi = item.no_polisi ? item.no_polisi.toLowerCase() : '';

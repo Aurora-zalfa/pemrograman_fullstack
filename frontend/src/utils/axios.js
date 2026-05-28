@@ -4,7 +4,7 @@ import { getToken } from './auth';
 
 const service = axios.create({
   // UBAH DARI 5000 MENJADI 3000 AGAR COCOK DENGAN BACKEND KAMU
-  baseURL: 'http://localhost:3000/api', 
+  baseURL: 'http://localhost:3000', 
   timeout: 5000
 });
 
