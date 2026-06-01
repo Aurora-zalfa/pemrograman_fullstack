@@ -1,0 +1,17 @@
+/* src/App.css */
+
+/* Mengatur transisi global agar perpindahan animasi/hover tombol terasa smooth */
+* {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Memastikan html dan body menggunakan scroll yang halus */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}

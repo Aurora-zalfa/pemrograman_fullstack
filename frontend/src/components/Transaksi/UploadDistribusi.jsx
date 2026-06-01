@@ -1,6 +1,8 @@
 // src/components/UploadDistribusi.jsx
-import { useState } from 'react';
+// import { useState } from 'react';
+import React, { useState, useEffect } from "react"; 
 import axiosInstance from '../config/axios';
+ // Tambahkan useEffect di sini
 
 function UploadDistribusi() {
   // State untuk form data

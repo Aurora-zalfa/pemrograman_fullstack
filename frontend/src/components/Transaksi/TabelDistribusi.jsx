@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react"; // Tambahkan useEffect di sini
 // 🛠️ PERBAIKAN: Mengarah ke file asli kamu (src/utils/axios.js)
-import axiosInstance from '../utils/axios'; 
-import styles from './Dashboard/Dashboard.module.css'; 
+import axiosInstance from "../../utils/axios"; // Tambah ../ satu lagi
+// import axiosInstance from '../utils/axios'; 
+// import styles from './Dashboard/Dashboard.module.css'; 
+import styles from "../Dashboard/Dashboard.module.css"; // Ditambah titik satu lagi (jadi ..)
 
 
 // --- INTEGRASI TIM ---
 // Menggunakan titik satu (./) karena berada di folder yang sama (src/components/)
 // import StatusBadge from './StatusBadge'; 
-import StatusBadge from "./StatusBadge/StatusBadge";
-import Container from './Container'; 
+// import StatusBadge from "./StatusBadge/StatusBadge";
+// import Container from './Container'; 
+import Container from "../Container";
+import StatusBadge from "../StatusBadge/StatusBadge";
 
 const TabelDistribusi = () => {
   // --- 4. STATE MANAGEMENT ---
@@ -23,7 +28,7 @@ const TabelDistribusi = () => {
         setLoading(true);
         // Mengambil data dari backend dengan interceptor Rumaisha (Token otomatis terisi)
         const response = await axiosInstance.get('/api/distribusi');
-        setDataDistribusi(response.data);
+        setDataDistribusi(response.data.data || []);
       } catch (error) {
         console.error("Gagal mengambil data distribusi:", error);
       } finally {
@@ -55,7 +60,7 @@ const TabelDistribusi = () => {
   };
 
   // --- 1. CLIENT-SIDE DATA FILTERING (PENCARIAN) ---
-  const filteredData = dataDistribusi.filter((item) => {
+  const filteredData = (dataDistribusi || []).filter((item) => {
     const keyword = searchKeyword.toLowerCase();
     const namaSupir = item.nama_supir ? item.nama_supir.toLowerCase() : '';
     const noPolisi = item.no_polisi ? item.no_polisi.toLowerCase() : '';
