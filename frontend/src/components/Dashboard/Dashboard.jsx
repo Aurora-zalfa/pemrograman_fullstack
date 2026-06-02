@@ -58,16 +58,16 @@ const Dashboard = () => {
   // ==========================================
   // 2. LIFECYCLE EFFECTS
   // ==========================================
-useEffect(() => {
-  getDashboardData();
-}, []);
+  useEffect(() => {
+    getDashboardData();
+  }, []);
 
-useEffect(() => {
-  console.log('🔥 EFFECT TRIGGERED:', activePage, activeMasterType);
-  if (activePage === 'master') {
-    loadMasterData();
-  }
-}, [activePage, activeMasterType]);
+  useEffect(() => {
+    console.log('🔥 EFFECT TRIGGERED:', activePage, activeMasterType);
+    if (activePage === 'master') {
+      loadMasterData();
+    }
+  }, [activePage, activeMasterType]);
   // ==========================================
   // 3. FUNGSI LOGIKA API BACKEND
   // ==========================================
@@ -121,94 +121,94 @@ useEffect(() => {
     }
   };
 
-// Logika Simpan Data Master Baru
-const submitAddData = async (e) => {
-  e.preventDefault();
-  
-  console.log('DEBUG TOKEN:', token);
-  if (!token) {
-    alert('TOKEN KOSONG! Coba logout dan login lagi.');
-    return;
-  }
-  
-  try {
-    let cleanData = {};
-    if (activeMasterType === 'supir') {
-      cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
-    } else if (activeMasterType === 'truk') {
-cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
-    } else if (activeMasterType === 'kebun') {
-      cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
-    } else if (activeMasterType === 'pabrik') {
-      cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
-    }
-    
-    console.log('📤 Kirim:', cleanData);
-    
-    const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(cleanData)
-    });
-    
-    const result = await response.json();
-    
-    if (result.status === 'Success') {
-      alert(result.message || 'Data berhasil disimpan!');
-      setIsModalOpen(false);
-      setInputData({});
-      loadMasterData();
-    } else {
-      alert('Gagal: ' + (result.message || 'Data gagal disimpan'));
-    }
-  } catch (error) {
-    console.error('❌ Error:', error);
-    alert('Error: ' + error.message);
-  }
-};
+  // Logika Simpan Data Master Baru
+  const submitAddData = async (e) => {
+    e.preventDefault();
 
-// Update Data Master
-const submitUpdateData = async (e) => {
-  e.preventDefault();
-  try {
-    let cleanData = {};
-    if (activeMasterType === 'supir') {
-      cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
-    } else if (activeMasterType === 'truk') {
-cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
-    } else if (activeMasterType === 'kebun') {
-      cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
-    } else if (activeMasterType === 'pabrik') {
-      cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
+    console.log('DEBUG TOKEN:', token);
+    if (!token) {
+      alert('TOKEN KOSONG! Coba logout dan login lagi.');
+      return;
     }
 
-    const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}/${editId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(cleanData)
-    });
-    
-    const result = await response.json();
-    if (result.status === 'Success') {
-      alert('Data berhasil diupdate!');
-      setIsModalOpen(false);
-      setIsEditMode(false);
-      setEditId(null);
-      setInputData({});
-      loadMasterData();
-    } else {
-      alert('Gagal: ' + result.message);
+    try {
+      let cleanData = {};
+      if (activeMasterType === 'supir') {
+        cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
+      } else if (activeMasterType === 'truk') {
+        cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
+      } else if (activeMasterType === 'kebun') {
+        cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
+      } else if (activeMasterType === 'pabrik') {
+        cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
+      }
+
+      console.log('📤 Kirim:', cleanData);
+
+      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cleanData)
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'Success') {
+        alert(result.message || 'Data berhasil disimpan!');
+        setIsModalOpen(false);
+        setInputData({});
+        loadMasterData();
+      } else {
+        alert('Gagal: ' + (result.message || 'Data gagal disimpan'));
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
+      alert('Error: ' + error.message);
     }
-  } catch (error) {
-    alert('Error: ' + error.message);
-  }
-};
+  };
+
+  // Update Data Master
+  const submitUpdateData = async (e) => {
+    e.preventDefault();
+    try {
+      let cleanData = {};
+      if (activeMasterType === 'supir') {
+        cleanData = { nama_supir: inputData.nama_supir, no_hp: inputData.no_hp };
+      } else if (activeMasterType === 'truk') {
+        cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas };
+      } else if (activeMasterType === 'kebun') {
+        cleanData = { nama_kebun: inputData.nama_kebun, lokasi: inputData.lokasi };
+      } else if (activeMasterType === 'pabrik') {
+        cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
+      }
+
+      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}/${editId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cleanData)
+      });
+
+      const result = await response.json();
+      if (result.status === 'Success') {
+        alert('Data berhasil diupdate!');
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setEditId(null);
+        setInputData({});
+        loadMasterData();
+      } else {
+        alert('Gagal: ' + result.message);
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  };
 
   // Logika Soft Delete Data Master
   const handleDeleteData = async (id) => {
@@ -292,129 +292,118 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
     switch (activePage) {
       case 'dashboard':
         return (
-          <div className={styles.dashboard}>
-            <h1>Dashboard Monitoring Sawit</h1>
-            <div className={styles['stats-grid']}>
-              <div className={styles['stat-card']}>
-                <h3>Total Berat TBS</h3>
-                <p>{stats.totalBerat} Kg</p>
-              </div>
-              <div className={styles['stat-card']}>
-                <h3>Jumlah Pengiriman</h3>
-                <p>{stats.totalPengiriman}</p>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'master':
-        return (
           <div className={styles.pageContent}>
-            <h1 className="text-2xl font-bold text-gray-800">Manajemen Data Master</h1>
-
-            <div className="flex gap-2 my-4 bg-gray-100 p-1.5 rounded-xl w-max">
-              {['supir', 'truk', 'kebun', 'pabrik'].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setActiveMasterType(type)}
-                  className={`px-4 py-2 text-sm font-bold rounded-lg transition-all capitalize ${activeMasterType === type ? 'bg-white text-green-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                >
-                  Data {type}
-                </button>
-              ))}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-800">Dashboard Monitoring Sawit</h1>
+              <p className="text-sm text-gray-500">Gambaran umum dan visualisasi real-time distribusi sawit.</p>
             </div>
 
-            <div className="mb-4">
-              <button
-                onClick={() => {
-                  setIsEditMode(false);
-                  setEditId(null);
-                  setInputData({});
-                  setIsModalOpen(true);
-                }}
-                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2"
-              >
-                <i className="fas fa-plus text-xs"></i> Tambah {getMasterTitle()}
-              </button>
+            {/* 4 CARD UTAMA */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div>
+                  <p className="text-sm text-gray-400 font-medium">Total Berat</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">2800 Kg</h3>
+                  <p className="text-xs text-green-500 mt-1">Total distribusi bulan ini</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-xl text-green-600 font-bold text-xl">📦</div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div>
+                  <p className="text-sm text-gray-400 font-medium">Pengiriman</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">3</h3>
+                  <p className="text-xs text-blue-500 mt-1">Total pengiriman aktif</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-xl text-blue-600 font-bold text-xl">🚛</div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div>
+                  <p className="text-sm text-gray-400 font-medium">Supir Aktif</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">12</h3>
+                  <p className="text-xs text-orange-500 mt-1">Supir sedang bertugas</p>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-xl text-orange-600 font-bold text-xl">👨‍✈️</div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div>
+                  <p className="text-sm text-gray-400 font-medium">Truk Operasional</p>
+                  <h3 className="text-2xl font-bold text-gray-800 mt-1">8 Truk</h3>
+                  <p className="text-xs text-purple-500 mt-1">Armada siap digunakan</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-xl text-purple-600 font-bold text-xl">🚚</div>
+              </div>
             </div>
 
-            {isMasterLoading ? (
-              <div className="p-12 text-center text-gray-500 font-medium">
-                <i className="fas fa-spinner animate-spin text-green-700 text-2xl mb-2 block"></i>
-                <p>Memuat data master...</p>
+            {/* BARIS GRAFIK 1: LINE CHART & BAR CHART */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="text-md font-bold text-gray-700 mb-4">Tren Berat Pengiriman</h3>
+                <div style={{ width: '100%', height: 250 }}>
+                  <ResponsiveContainer>
+                    <LineChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="tanggal" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="berat" stroke="#10b981" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs uppercase tracking-wider font-semibold">
-                      <th className="py-4 px-6">ID</th>
-                      {activeMasterType === 'supir' && <><th>Nama Supir</th><th>No. HP</th></>}
-                      {activeMasterType === 'truk' && <><th>No. Polisi</th><th>Merk</th><th>Kapasitas</th></>}
-                      {activeMasterType === 'kebun' && <><th>Nama Kebun</th><th>Lokasi</th></>}
-                      {activeMasterType === 'pabrik' && <><th>Nama Pabrik</th><th>Lokasi</th></>}
-                      <th>Dibuat</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700 text-sm divide-y divide-gray-50">
-                    {masterData.length === 0 ? (
-                      <tr>
-                        <td colSpan="6" className="py-8 text-center text-gray-400 font-medium">Tidak ada data terdaftar dalam sistem.</td>
-                      </tr>
-                    ) : (
-                      masterData.map((item, index) => {
-                        const idKey = `id${activeMasterType}`;
-                        return (
-                          <tr key={index} className="hover:bg-gray-50/50 transition">
-                            <td className="py-4 px-6 font-medium">{item[idKey]}</td>
-                            {activeMasterType === 'supir' && <>
-                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_supir}</td>
-                              <td className="py-4 px-6 text-gray-500">{item.no_hp}</td>
-                            </>}
-                            {activeMasterType === 'truk' && <>
-                              <td className="py-4 px-6 font-semibold text-gray-900">{item.no_polisi}</td>
-                              <td className="py-4 px-6 text-gray-500">{item.merk}</td>
-                              <td className="py-4 px-6 font-medium text-green-700">{item.kapasitas_ton} ton</td>
-                            </>}
-                            {activeMasterType === 'kebun' && <>
-                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_kebun}</td>
-                              <td className="py-4 px-6 text-gray-500">{item.lokasi}</td>
-                            </>}
-                            {activeMasterType === 'pabrik' && <>
-                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_pabrik}</td>
-                              <td className="py-4 px-6 text-gray-500">{item.lokasi}</td>
-                            </>}
-                            <td className="py-4 px-6 text-gray-400">{formatDate(item.created_at)}</td>
-                            <td className="py-4 px-6">
-                              <button
-                              onClick={() => {
-                                const idKey = `id${activeMasterType}`;
-                                setEditId(item[idKey]);
-                                setInputData(item);
-                                setIsEditMode(true);
-                                setIsModalOpen(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 mr-3"
-                            >
-                              <i className="fas fa-edit text-xs"></i> Edit
-                            </button>
-                              <button
-                                onClick={() => handleDeleteData(item[idKey])}
-                                className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
-                              >
-                                <i className="fas fa-trash text-xs"></i> Hapus
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="text-md font-bold text-gray-700 mb-4">Volume Pengiriman Harian</h3>
+                <div style={{ width: '100%', height: 250 }}>
+                  <ResponsiveContainer>
+                    <BarChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="tanggal" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="berat" fill="#10b981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* BARIS GRAFIK 2: DONUT CHART KONTRIBUSI KEBUN */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-700 mb-4">Kontribusi Kebun</h3>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={pieChartData && pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={70}
+                        outerRadius={110}
+                        dataKey="value"
+                        label
+                      >
+                        {(pieChartData && pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]).map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS ? COLORS[index % COLORS.length] : '#10b981'}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Sisi kanan dikosongkan/bisa dipakai komponen lain nanti */}
+              <div className="hidden md:block"></div>
+            </div>
+
           </div>
         );
 
@@ -548,117 +537,16 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
             </div>
           </div>
         );
-
       case 'laporan':
         return (
           <div className={styles.pageContent}>
-            {/* CARD STATISTIK */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-
-              {/* TOTAL BERAT */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all duration-300">
-
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Total Berat
-                  </p>
-
-                  <h2 className="text-2xl font-bold text-green-700 mt-2">
-                    {stats.totalBerat} Kg
-                  </h2>
-
-                  <p className="text-xs text-green-600 mt-1">
-                    Total distribusi bulan ini
-                  </p>
-                </div>
-
-                <div className="bg-green-100 p-4 rounded-2xl">
-                  <i className="fas fa-boxes text-2xl text-green-700"></i>
-                </div>
-
-              </div>
-
-              {/* TOTAL PENGIRIMAN */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all duration-300">
-
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Pengiriman
-                  </p>
-
-                  <h2 className="text-2xl font-bold text-blue-700 mt-2">
-                    {stats.totalPengiriman}
-                  </h2>
-
-                  <p className="text-xs text-blue-600 mt-1">
-                    Total pengiriman aktif
-                  </p>
-                </div>
-
-                <div className="bg-blue-100 p-4 rounded-2xl">
-                  <i className="fas fa-truck text-2xl text-blue-700"></i>
-                </div>
-
-              </div>
-
-              {/* SUPIR AKTIF */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all duration-300">
-
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Supir Aktif
-                  </p>
-
-                  <h2 className="text-2xl font-bold mt-2" style={{ color: '#f97316' }}>
-                    12
-                  </h2>
-
-                  <p className="text-xs mt-1" style={{ color: '#fb923c' }}>
-                    Supir sedang bertugas
-                  </p>
-                </div>
-
-                <div className="bg-orange-100 p-4 rounded-2xl text-2xl">
-                  👨‍✈️
-                </div>
-
-              </div>
-
-              {/* TRUK OPERASIONAL */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg transition-all duration-300">
-
-                <div>
-                  <p className="text-sm text-gray-500 font-medium">
-                    Truk Operasional
-                  </p>
-
-                  <h2 className="text-3xl font-extrabold text-purple-700 mt-2">
-                    8 Truk
-                  </h2>
-
-                  <p className="text-xs text-purple-600 mt-1">
-                    Armada siap digunakan
-                  </p>
-                </div>
-
-                <div className="bg-purple-100 p-4 rounded-2xl">
-                  <i className="fas fa-shipping-fast text-2xl text-purple-700"></i>
-                </div>
-
-              </div>
-
-            </div>
-
             {/* FILTER TANGGAL */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-5">
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-
                 <div>
                   <label className="text-sm font-semibold text-gray-600 block mb-1">
                     Tanggal Mulai
                   </label>
-
                   <input
                     type="date"
                     value={tanggalMulai}
@@ -671,7 +559,6 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
                   <label className="text-sm font-semibold text-gray-600 block mb-1">
                     Tanggal Selesai
                   </label>
-
                   <input
                     type="date"
                     value={tanggalSelesai}
@@ -686,8 +573,8 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
                 >
                   Filter Laporan
                 </button>
-
               </div>
+
               <p className="text-sm text-gray-500 mt-3">
                 Menampilkan data dari{" "}
                 <span className="font-bold text-green-700">
@@ -698,16 +585,14 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
                   {formatDate(tanggalSelesai)}
                 </span>
               </p>
-
             </div>
 
-            {/* HEADER */}
+            {/* HEADER JUDUL & CETAK */}
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
                   Laporan Pengiriman Ringkasan
                 </h1>
-
                 <p className="text-sm text-gray-500 mt-1">
                   Histori laporan pengiriman terintegrasi basis data periode April 2026.
                 </p>
@@ -722,11 +607,9 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
               </button>
             </div>
 
-            {/* TABEL LAPORAN */}
+            {/* TABEL LAPORAN UTAMA */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-4">
-
               <table className="w-full text-left border-collapse">
-
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs font-semibold uppercase tracking-wider">
                     <th className="py-4 px-6">No Laporan</th>
@@ -737,7 +620,6 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
                 </thead>
 
                 <tbody className="text-sm text-gray-700 divide-y divide-gray-50">
-
                   {laporanData.length === 0 ? (
                     <tr>
                       <td
@@ -756,109 +638,39 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
                         <td className="py-4 px-6 font-medium text-gray-900">
                           #LAP-{1000 + index}
                         </td>
-
                         <td className="py-4 px-6">
                           {formatDate(item.tanggal)}
                         </td>
-
                         <td className="py-4 px-6 font-semibold text-green-700">
                           {item.berat_tbs} Kg
                         </td>
+                       <td className="py-4 px-6">
+                          {/* 1. JIKA STATUS ADALAH SELESAI atau JUSTRU KOSONG (KITA ANGGAP SUKSES DEFAULT SEPERTI DATA LAMA) */}
+                          {(item.status === 'selesai' || !item.status || item.status.trim() === '') && (
+                            <span className="bg-green-100 text-green-800 font-bold px-2.5 py-1 rounded-full text-xs">
+                              Sukses Terdata
+                            </span>
+                          )}
 
-                        <td className="py-4 px-6">
-                          <span className="bg-green-100 text-green-800 font-bold px-2.5 py-1 rounded-full text-xs">
-                            Sukses Terdata
-                          </span>
+                          {/* 2. JIKA STATUS ADALAH DALAM PERJALANAN */}
+                          {item.status === 'dalam_perjalanan' && (
+                            <span className="bg-yellow-100 text-yellow-800 font-bold px-2.5 py-1 rounded-full text-xs">
+                              Dalam Perjalanan
+                            </span>
+                          )}
+
+                          {/* 3. JIKA STATUS ADALAH DITOLAK */}
+                          {item.status === 'ditolak' && (
+                            <span className="bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-full text-xs">
+                              Ditolak
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))
                   )}
-
                 </tbody>
               </table>
-            </div>
-
-            {/* CHART */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-
-              {/* LINE CHART */}
-              <div className="bg-white p-5 rounded-2xl shadow-sm">
-                <h3 className="font-bold text-gray-700 mb-4">
-                  Tren Berat Pengiriman
-                </h3>
-
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={lineChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-
-                    <Line
-                      type="monotone"
-                      dataKey="berat"
-                      stroke="#15803d"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* BAR CHART */}
-              <div className="bg-white p-5 rounded-2xl shadow-sm">
-                <h3 className="font-bold text-gray-700 mb-4">
-                  Volume Pengiriman Harian
-                </h3>
-
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={barChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="tanggal" />
-                    <YAxis />
-                    <Tooltip />
-
-                    <Bar
-                      dataKey="berat"
-                      fill="#16a34a"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-            </div>
-
-            {/* DONUT CHART */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm mt-6">
-
-              <h3 className="font-bold text-gray-700 mb-4">
-                Kontribusi Kebun
-              </h3>
-
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-
-                  <Pie
-                    data={pieChartData}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={70}
-                    outerRadius={110}
-                    dataKey="value"
-                    label
-                  >
-                    {pieChartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-
-                  <Tooltip />
-                  <Legend />
-
-                </PieChart>
-              </ResponsiveContainer>
-
             </div>
 
           </div>
@@ -906,80 +718,80 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
         <div className={styles['content-wrapper']}>{renderContent()}</div>
       </main>
 
-{/* MODAL FORM POP-UP DATA MASTER */}
-{isModalOpen && (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-      <div className="bg-green-800 p-4 text-white flex justify-between items-center">
-        <h3 className="font-bold">{isEditMode ? 'Edit' : 'Tambah'} Data {getMasterTitle()}</h3>
-        <button onClick={() => setIsModalOpen(false)} className="text-xl hover:opacity-75">&times;</button>
-      </div>
-      <form onSubmit={isEditMode ? submitUpdateData : submitAddData} className="p-6 space-y-4">
-        
-        {/* SUPIR */}
-        {activeMasterType === 'supir' && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">Nama Supir</label>
-              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData.nama_supir || ''}
-                onChange={(e) => setInputData({ ...inputData, nama_supir: e.target.value })} />
+      {/* MODAL FORM POP-UP DATA MASTER */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div className="bg-green-800 p-4 text-white flex justify-between items-center">
+              <h3 className="font-bold">{isEditMode ? 'Edit' : 'Tambah'} Data {getMasterTitle()}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-xl hover:opacity-75">&times;</button>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">No. HP</label>
-              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData.no_hp || ''}
-                onChange={(e) => setInputData({ ...inputData, no_hp: e.target.value })} />
-            </div>
-          </>
-        )}
-        
-        {/* TRUK */}
-        {activeMasterType === 'truk' && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">No. Polisi (Plat)</label>
-              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData.no_polisi || ''}
-                onChange={(e) => setInputData({ ...inputData, no_polisi: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">Kapasitas Muatan (Ton)</label>
-              <input type="number" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData.kapasitas || ''}
-                onChange={(e) => setInputData({ ...inputData, kapasitas: e.target.value })} />
-            </div>
-          </>
-        )}
-        
-        {/* KEBUN / PABRIK */}
-        {(activeMasterType === 'kebun' || activeMasterType === 'pabrik') && (
-          <>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">Nama {getMasterTitle()}</label>
-              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData[`nama_${activeMasterType}`] || ''}
-                onChange={(e) => setInputData({ ...inputData, [`nama_${activeMasterType}`]: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-1">Lokasi Wilayah</label>
-              <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl" 
-                value={inputData.lokasi || ''}
-                onChange={(e) => setInputData({ ...inputData, lokasi: e.target.value })} />
-            </div>
-          </>
-        )}
-        
-        <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
-          <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800">
-            {isEditMode ? 'Update' : 'Simpan'} Data
-          </button>
+            <form onSubmit={isEditMode ? submitUpdateData : submitAddData} className="p-6 space-y-4">
+
+              {/* SUPIR */}
+              {activeMasterType === 'supir' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Nama Supir</label>
+                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData.nama_supir || ''}
+                      onChange={(e) => setInputData({ ...inputData, nama_supir: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">No. HP</label>
+                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData.no_hp || ''}
+                      onChange={(e) => setInputData({ ...inputData, no_hp: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              {/* TRUK */}
+              {activeMasterType === 'truk' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">No. Polisi (Plat)</label>
+                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData.no_polisi || ''}
+                      onChange={(e) => setInputData({ ...inputData, no_polisi: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Kapasitas Muatan (Ton)</label>
+                    <input type="number" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData.kapasitas || ''}
+                      onChange={(e) => setInputData({ ...inputData, kapasitas: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              {/* KEBUN / PABRIK */}
+              {(activeMasterType === 'kebun' || activeMasterType === 'pabrik') && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Nama {getMasterTitle()}</label>
+                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData[`nama_${activeMasterType}`] || ''}
+                      onChange={(e) => setInputData({ ...inputData, [`nama_${activeMasterType}`]: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-600 mb-1">Lokasi Wilayah</label>
+                    <input type="text" required className="w-full p-2.5 bg-gray-50 border rounded-xl"
+                      value={inputData.lokasi || ''}
+                      onChange={(e) => setInputData({ ...inputData, lokasi: e.target.value })} />
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">Batal</button>
+                <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-xl text-sm font-semibold hover:bg-green-800">
+                  {isEditMode ? 'Update' : 'Simpan'} Data
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };
