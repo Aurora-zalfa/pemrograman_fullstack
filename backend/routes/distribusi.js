@@ -95,8 +95,23 @@ router.post(
         : null;
 
       // 🔧 FIX: Fallback users_idusers dari token jika tidak ada (AMAN)
-      const finalUserId = parseInt(users_idusers) || req.user?.idusers || 1;
-      console.log("🔢 UserId yang akan dipakai:", finalUserId);
+      let finalUserId = parseInt(users_idusers);
+
+      if (!finalUserId) {
+        // Ambil 1 user paling baru/tersedia dari database secara otomatis
+        const [latestUser] = await db.query("SELECT idusers FROM users ORDER BY idusers DESC LIMIT 1");
+        
+        if (latestUser.length > 0) {
+          finalUserId = latestUser[0].idusers;
+          console.log(`🤖 Otomatis menggunakan ID User terbaru dari DB: ${finalUserId}`);
+        } else {
+          // Jika tabel users benar-benar kosong total (antisipasi terakhir)
+          finalUserId = 1; 
+          console.log("⚠️ Tabel users kosong, fallback terpaksa ke ID 1");
+        }
+      } else {
+        console.log(`🔢 Menggunakan ID User kiriman frontend: ${finalUserId}`);
+      }
 
       // 🔧 FIX: Konversi ID ke integer jika backend terima string (SAFETY)
       const supirIdInt = parseInt(supir_idsupir) || supir_idsupir;
