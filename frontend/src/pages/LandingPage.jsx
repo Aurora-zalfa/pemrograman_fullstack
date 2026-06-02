@@ -49,53 +49,107 @@ const LandingPage = () => {
         </svg>
       </div>
 
-      {/* SEKSI FITUR UTAMA */}
-      <section id="fitur" className="bg-white border-b py-16 text-left">
-        <div className="container mx-auto flex flex-wrap pt-4 pb-12">
-          <h2 className="w-full my-2 text-4xl font-bold leading-tight text-center text-gray-800">
-            Fitur Unggulan Sistem
-          </h2>
-          <div className="w-full mb-12">
-            <div className="h-1 mx-auto bg-green-700 w-64 opacity-25 my-0 py-0 rounded-t"></div>
-          </div>
+{/* ═══════════════════════════════════════
+   SEKSI FITUR UTAMA — Nyawit Hunter
+   ═══════════════════════════════════════ */}
+<section id="fitur" className="relative py-24 overflow-hidden" style={{ background: "#F8FAFC" }}>
+  
+  {/* Background decoration */}
+  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50rem] h-[50rem] bg-[#10B981]/3 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <div className="flex-1 bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition p-8 border border-gray-100">
-              <div className="flex items-center justify-center bg-green-100 text-green-800 w-12 h-12 rounded-xl mb-4">
-                <i className="fas fa-truck text-lg"></i>
-              </div>
-              <h3 className="font-bold text-xl text-gray-800 px-1 mb-2">Pelacakan Manifes Riil</h3>
-              <p className="text-gray-600 text-sm px-1 leading-relaxed">
-                Memantau secara berkala alur pengiriman Tandan Buah Segar (TBS) dari berbagai kebun asal menuju pabrik tujuan secara dinamis lewat label status otomatis.
-              </p>
-            </div>
-          </div>
+  <div className="container px-6 mx-auto relative z-10">
+    
+    {/* Section Header */}
+    <div className="text-center mb-16">
+      <span className="inline-block text-[#10B981] font-bold text-xs tracking-[0.2em] uppercase mb-3 bg-[#10B981]/10 px-4 py-1.5 rounded-full">
+        Fitur Unggulan
+      </span>
+      <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#064E3B] leading-tight">
+        Solusi Cerdas untuk{" "}
+        <span className="relative">
+          <span className="text-[#F59E0B]">Distribusi Sawit</span>
+          <svg className="absolute -bottom-2 left-0 w-full h-2 text-[#F59E0B]/30" viewBox="0 0 100 6" preserveAspectRatio="none">
+            <path d="M0,3 Q50,0 100,3" fill="none" stroke="currentColor" strokeWidth="3" />
+          </svg>
+        </span>
+      </h2>
+      <p className="text-[#064E3B]/50 text-base mt-4 max-w-xl mx-auto">
+        Tiga pilar utama yang menjadikan sistem kami andalan perkebunan modern.
+      </p>
+    </div>
 
-          <div className="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <div className="flex-1 bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition p-8 border border-gray-100">
-              <div className="flex items-center justify-center bg-green-100 text-green-800 w-12 h-12 rounded-xl mb-4">
-                <i className="fas fa-balance-scale text-lg"></i>
-              </div>
-              <h3 className="font-bold text-xl text-gray-800 px-1 mb-2">Akurasi Timbangan TBS</h3>
-              <p className="text-gray-600 text-sm px-1 leading-relaxed">
-                Pencatatan data tonase muatan bersih sawit yang presisi, terintegrasi otomatis ke sistem rekapitulasi database untuk mencegah manipulasi berat di lapangan.
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <div className="flex-1 bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition p-8 border border-gray-100">
-              <div className="flex items-center justify-center bg-green-100 text-green-800 w-12 h-12 rounded-xl mb-4">
-                <i className="fas fa-user-shield text-lg"></i>
-              </div>
-              <h3 className="font-bold text-xl text-gray-800 px-1 mb-2">Otorisasi Jabatan Aman</h3>
-              <p className="text-gray-600 text-sm px-1 leading-relaxed">
-                Pembatasan hak akses operasional yang ketat berbasis peran akun. Memisahkan fungsionalitas input Petugas Lapangan dengan pengawasan laporan Manajer.
-              </p>
-            </div>
-          </div>
+    {/* Feature Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+      
+      {/* Card 1 */}
+      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#10B981]/20 transition-all duration-500 hover:-translate-y-1">
+        {/* Top accent */}
+        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#10B981] to-[#064E3B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Icon */}
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#10B981] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#10B981]/20 group-hover:scale-110 transition-all duration-500">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="3" width="15" height="13" rx="2" />
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+            <circle cx="5.5" cy="18.5" r="2.5" />
+            <circle cx="18.5" cy="18.5" r="2.5" />
+          </svg>
         </div>
-      </section>
+        
+        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#10B981] transition-colors duration-300">
+          Pelacakan Manifes Riil
+        </h3>
+        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
+          Memantau secara berkala alur pengiriman Tandan Buah Segar (TBS) dari berbagai kebun asal menuju pabrik tujuan secara dinamis lewat label status otomatis.
+        </p>
+      </div>
+        
+
+      {/* Card 2 */}
+      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#F59E0B]/20 transition-all duration-500 hover:-translate-y-1">
+        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#10B981] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center mb-6 shadow-lg shadow-[#F59E0B]/10 group-hover:shadow-[#F59E0B]/20 group-hover:scale-110 transition-all duration-500">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            <polyline points="8 2 12 6 16 2" />
+            <polyline points="8 22 12 18 16 22" />
+          </svg>
+        </div>
+        
+        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#F59E0B] transition-colors duration-300">
+          Akurasi Timbangan TBS
+        </h3>
+        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
+          Pencatatan data tonase muatan bersih sawit yang presisi, terintegrasi otomatis ke sistem rekapitulasi database untuk mencegah manipulasi berat di lapangan.
+        </p>
+        
+        
+      </div>
+
+      {/* Card 3 */}
+      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#064E3B]/30 transition-all duration-500 hover:-translate-y-1">
+        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#064E3B] to-[#F59E0B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#043A2C] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#064E3B]/20 group-hover:scale-110 transition-all duration-500">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <polyline points="9 12 11 14 15 10" />
+          </svg>
+        </div>
+        
+        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#064E3B] transition-colors duration-300">
+          Otorisasi Jabatan Aman
+        </h3>
+        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
+          Pembatasan hak akses operasional yang ketat berbasis peran akun. Memisahkan fungsionalitas input Petugas Lapangan dengan pengawasan laporan Manajer.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
 
       {/* SEKSI TENTANG SISTEM */}
       <section id="tentang" className="py-20 bg-gray-50">
