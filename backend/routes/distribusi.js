@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../config/multer');
 const db = require('../config/database');
-const { verifyToken } = require('../middleware/auth');
 const { validateId, validateFileUpload } = require('../utils/validator');
 const path = require('path');
 const fs = require('fs');
@@ -18,12 +17,11 @@ const fs = require('fs');
 
 /**
  * ============================================
- * CREATE DISTRIBUSI
+ * CREATE DISTRIBUSI (POLOSAN TANPA VERIFYTOKEN)
  * ============================================
  */
 router.post(
   '/',
-  verifyToken,
   upload.fields([
     { name: 'surat_jalan', maxCount: 1 },
     { name: 'bukti_timbang', maxCount: 1 }
@@ -97,8 +95,23 @@ router.post(
         : null;
 
       // 🔧 FIX: Fallback users_idusers dari token jika tidak ada (AMAN)
-      const finalUserId = parseInt(users_idusers) || req.user?.idusers || 1;
-      console.log("🔢 UserId yang akan dipakai:", finalUserId);
+      let finalUserId = parseInt(users_idusers);
+
+      if (!finalUserId) {
+        // Ambil 1 user paling baru/tersedia dari database secara otomatis
+        const [latestUser] = await db.query("SELECT idusers FROM users ORDER BY idusers DESC LIMIT 1");
+        
+        if (latestUser.length > 0) {
+          finalUserId = latestUser[0].idusers;
+          console.log(`🤖 Otomatis menggunakan ID User terbaru dari DB: ${finalUserId}`);
+        } else {
+          // Jika tabel users benar-benar kosong total (antisipasi terakhir)
+          finalUserId = 1; 
+          console.log("⚠️ Tabel users kosong, fallback terpaksa ke ID 1");
+        }
+      } else {
+        console.log(`🔢 Menggunakan ID User kiriman frontend: ${finalUserId}`);
+      }
 
       // 🔧 FIX: Konversi ID ke integer jika backend terima string (SAFETY)
       const supirIdInt = parseInt(supir_idsupir) || supir_idsupir;
@@ -178,10 +191,10 @@ router.get('/', async (req, res) => {
 
 /**
  * ============================================
- * UPDATE STATUS (Tetap menjaga validasi alur)
+ * UPDATE STATUS (Polosan Tanpa VerifyToken)
  * ============================================
  */
-router.put('/:id/status', verifyToken, async (req, res) => {
+router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status: status_baru } = req.body;
@@ -217,12 +230,11 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 
 /**
  * ============================================
- * UPDATE DISTRIBUSI (LENGKAP) - SPRINT 7
+ * UPDATE DISTRIBUSI (LENGKAP) - SPRINT 7 (Polosan Tanpa VerifyToken)
  * ============================================
  */
 router.put(
   '/:id',
-  verifyToken,
   upload.fields([
     { name: 'surat_jalan', maxCount: 1 },
     { name: 'bukti_timbang', maxCount: 1 }
@@ -340,7 +352,7 @@ router.put(
  * DELETE DISTRIBUSI (SOFT DELETE)
  * ============================================
  */
-router.delete('/:id', verifyToken, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const idError = validateId(id);
@@ -371,7 +383,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
  * HARD DELETE (PERMANENT) - SPRINT 7
  * ============================================
  */
-router.delete('/:id/permanent', verifyToken, async (req, res) => {
+router.delete('/:id/permanent', async (req, res) => {
   try {
     const { id } = req.params;
     const idError = validateId(id);

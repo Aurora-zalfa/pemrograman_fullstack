@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import styles from './Dashboard.module.css';
+
+// 1. KODE IMPOR HALAMAN TRANSAKSI (PUNYA KAMU)
+// Karena file transaksi sudah dipindah ke folder Transaksi, jalurnya harus mundur satu folder (../)
+import FormManifest from '../Transaksi/formManifest';
+import TabelDistribusi from '../Transaksi/TabelDistribusi';
+
+// 2. KODE IMPOR GRAFIK STATISTIK (PUNYA TEMANMU)
 import {
   LineChart,
   Line,
@@ -15,12 +23,8 @@ import {
   Legend
 } from 'recharts';
 
-import styles from './Dashboard.module.css';
-
 const Dashboard = () => {
-  // ==========================================
   // 1. STATE MANAGEMENT
-  // ==========================================
   const [activePage, setActivePage] = useState('dashboard');
   const [userRole, setUserRole] = useState(localStorage.getItem('user_role') || 'manajer');
   const token = localStorage.getItem('token') || '';
@@ -55,9 +59,7 @@ const Dashboard = () => {
     { supir: 'Supir Dummy 1', plat: 'BM 1234 AA', berat: 4500, status: 'menunggu_memuat' }
   ]);
 
-  // ==========================================
   // 2. LIFECYCLE EFFECTS
-  // ==========================================
   useEffect(() => {
     getDashboardData();
   }, []);
@@ -68,9 +70,7 @@ const Dashboard = () => {
       loadMasterData();
     }
   }, [activePage, activeMasterType]);
-  // ==========================================
   // 3. FUNGSI LOGIKA API BACKEND
-  // ==========================================
 
   // Ambil Data Hitungan Ringkasan & Tabel Laporan
   const getDashboardData = async () => {
@@ -81,13 +81,24 @@ const Dashboard = () => {
 
       const result = await response.json();
 
-      console.log(result);
+      console.log("================================");
+      console.log("RESULT API:", result);
 
       const data = result.data || [];
+
+      console.log("DATA LAPORAN:", data);
+
+      if (data.length > 0) {
+        console.log("DATA PERTAMA:", data[0]);
+        console.log("FIELD YANG ADA:", Object.keys(data[0]));
+      }
+
+      console.log("================================");
 
       setLaporanData(data);
 
       let total = 0;
+
       data.forEach(item => {
         total += parseFloat(item.berat_tbs || 0);
       });
@@ -96,6 +107,7 @@ const Dashboard = () => {
         totalBerat: total,
         totalPengiriman: data.length
       });
+
     } catch (error) {
       console.error("Error Dashboard Data:", error);
     }
@@ -283,11 +295,34 @@ const Dashboard = () => {
     value: kebunMap[key]
   }));
 
-  const COLORS = ['#15803d', '#16a34a', '#22c55e', '#4ade80'];
+  // ==========================================
+  // DATA DONUT STATUS PENGIRIMAN
+  // ==========================================
+  const statusMap = {};
 
-  // ==========================================
+  transaksiList.forEach((item) => {
+    const status = item.status || 'tidak_diketahui';
+
+    if (!statusMap[status]) {
+      statusMap[status] = 0;
+    }
+
+    statusMap[status]++;
+  });
+
+  const statusChartData = Object.keys(statusMap).map((key) => ({
+    name: key.replaceAll('_', ' '),
+    value: statusMap[key]
+  }));
+
+  const COLORS = [
+    '#f59e0b', // menunggu
+    '#3b82f6', // perjalanan
+    '#22c55e', // selesai
+    '#ef4444'  // ditolak
+  ];
+
   // 4. KONTEN SUB-RENDERER HALAMAN
-  // ==========================================
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
@@ -400,140 +435,207 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Sisi kanan dikosongkan/bisa dipakai komponen lain nanti */}
-              <div className="hidden md:block"></div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-700 mb-4">
+                  Status Pengiriman
+                </h3>
+
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={
+                          statusChartData.length
+                            ? statusChartData
+                            : [{ name: 'Belum Ada Data', value: 1 }]
+                        }
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={70}
+                        outerRadius={110}
+                        dataKey="value"
+                        label
+                      >
+                        {(statusChartData.length
+                          ? statusChartData
+                          : [{ name: 'Belum Ada Data', value: 1 }]
+                        ).map((entry, index) => (
+                          <Cell
+                            key={`status-cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  {statusChartData.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100"
+                    >
+                      <div className="text-lg font-bold text-gray-800">
+                        {item.value}
+                      </div>
+
+                      <div className="text-xs text-gray-500 capitalize">
+                        {item.name}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
+          </div>
+        );
+
+
+      case 'master':
+        return (
+          <div className={styles.pageContent}>
+            <h1 className="text-2xl font-bold text-gray-800">Manajemen Data Master</h1>
+
+            <div className="flex gap-2 my-4 bg-gray-100 p-1.5 rounded-xl w-max">
+              {['supir', 'truk', 'kebun', 'pabrik'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveMasterType(type)}
+                  className={`px-4 py-2 text-sm font-bold rounded-lg transition-all capitalize ${activeMasterType === type ? 'bg-white text-green-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                  Data {type}
+                </button>
+              ))}
+            </div>
+
+            <div className="mb-4">
+              <button
+                onClick={() => {
+                  setIsEditMode(false);
+                  setEditId(null);
+                  setInputData({});
+                  setIsModalOpen(true);
+                }}
+                className="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2"
+              >
+                <i className="fas fa-plus text-xs"></i> Tambah {getMasterTitle()}
+              </button>
+            </div>
+
+            {isMasterLoading ? (
+              <div className="p-12 text-center text-gray-500 font-medium">
+                <i className="fas fa-spinner animate-spin text-green-700 text-2xl mb-2 block"></i>
+                <p>Memuat data master...</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-gray-600 text-xs uppercase tracking-wider font-semibold">
+                      <th className="py-4 px-6">ID</th>
+                      {activeMasterType === 'supir' && <><th>Nama Supir</th><th>No. HP</th></>}
+                      {activeMasterType === 'truk' && <><th>No. Polisi</th><th>Merk</th><th>Kapasitas</th></>}
+                      {activeMasterType === 'kebun' && <><th>Nama Kebun</th><th>Lokasi</th></>}
+                      {activeMasterType === 'pabrik' && <><th>Nama Pabrik</th><th>Lokasi</th></>}
+                      <th>Dibuat</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700 text-sm divide-y divide-gray-50">
+                    {masterData.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="py-8 text-center text-gray-400 font-medium">Tidak ada data terdaftar dalam sistem.</td>
+                      </tr>
+                    ) : (
+                      masterData.map((item, index) => {
+                        const idKey = `id${activeMasterType}`;
+                        return (
+                          <tr key={index} className="hover:bg-gray-50/50 transition">
+                            <td className="py-4 px-6 font-medium">{item[idKey]}</td>
+                            {activeMasterType === 'supir' && <>
+                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_supir}</td>
+                              <td className="py-4 px-6 text-gray-500">{item.no_hp}</td>
+                            </>}
+                            {activeMasterType === 'truk' && <>
+                              <td className="py-4 px-6 font-semibold text-gray-900">{item.no_polisi}</td>
+                              <td className="py-4 px-6 text-gray-500">{item.merk}</td>
+                              <td className="py-4 px-6 font-medium text-green-700">{item.kapasitas_ton} ton</td>
+                            </>}
+                            {activeMasterType === 'kebun' && <>
+                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_kebun}</td>
+                              <td className="py-4 px-6 text-gray-500">{item.lokasi}</td>
+                            </>}
+                            {activeMasterType === 'pabrik' && <>
+                              <td className="py-4 px-6 font-semibold text-gray-900">{item.nama_pabrik}</td>
+                              <td className="py-4 px-6 text-gray-500">{item.lokasi}</td>
+                            </>}
+                            <td className="py-4 px-6 text-gray-400">{formatDate(item.created_at)}</td>
+                            <td className="py-4 px-6">
+                              <button
+                                onClick={() => {
+                                  const idKey = `id${activeMasterType}`;
+                                  setEditId(item[idKey]);
+                                  setInputData(item);
+                                  setIsEditMode(true);
+                                  setIsModalOpen(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 mr-3"
+                              >
+                                <i className="fas fa-edit text-xs"></i> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteData(item[idKey])}
+                                className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
+                              >
+                                <i className="fas fa-trash text-xs"></i> Hapus
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         );
 
       case 'transaksi':
         return (
           <div className={styles.pageContent}>
+            {/* Judul Utama */}
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Transaksi Distribusi</h1>
-              <p className="text-gray-500 text-sm mt-1">Pencatatan dan pemantauan real-time alur pengiriman logistik sawit.</p>
+              <p className="text-gray-500 text-sm mt-1">Pencatatan manifes baru dan pemantauan real-time alur pengiriman logistik sawit.</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-              <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-bold text-gray-700 text-base">Daftar Pengiriman Berjalan</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/70 border-b border-gray-100 text-gray-600 text-xs uppercase tracking-wider font-semibold">
-                      <th className="py-4 px-6">Nama Supir</th>
-                      <th className="py-4 px-6">No Plat</th>
-                      <th className="py-4 px-6">Berat Muatan</th>
-                      <th className="py-4 px-6">Status Logistik</th>
-                      <th className="py-4 px-6 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700 text-sm divide-y divide-gray-50">
-                    {transaksiList.map((tx, idx) => {
-                      const getBadgeColor = (status) => {
-                        if (status === 'menunggu_memuat') return 'bg-amber-50 text-amber-700 border-amber-100';
-                        if (status === 'dalam_perjalanan') return 'bg-blue-50 text-blue-700 border-blue-100';
-                        if (status === 'selesai') return 'bg-green-50 text-green-700 border-green-100';
-                        return 'bg-red-50 text-red-700 border-red-100';
-                      };
+            {/* Layout Menumpuk ke Bawah (Satu Kolom Penuh) */}
+            <div className="flex flex-col gap-6 w-full">
 
-                      return (
-                        <tr key={idx} className="hover:bg-gray-50/50 transition">
-                          <td className="py-4 px-6 font-semibold text-gray-900">{tx.supir}</td>
-                          <td className="py-4 px-6 font-mono text-gray-600">{tx.plat}</td>
-                          <td className="py-4 px-6 font-medium text-gray-800">{tx.berat} Kg</td>
-                          <td className="py-4 px-6">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getBadgeColor(tx.status)}`}>
-                              {tx.status.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex justify-center gap-4">
-                              <button
-                                className="text-blue-600 hover:text-blue-800 font-bold text-xs flex items-center gap-1"
-                                onClick={() => alert('Fitur Edit Distribusi sedang dikembangkan.')}
-                              >
-                                <i className="fas fa-edit"></i> Edit
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-800 font-bold text-xs flex items-center gap-1"
-                                onClick={() => setTransaksiList(transaksiList.filter((_, i) => i !== idx))}
-                              >
-                                <i className="fas fa-trash"></i> Hapus
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              {/* Bagian Atas - Memanggil Tabel Distribusi (Lebar Penuh) */}
+              <div className="w-full">
+                <TabelDistribusi
+                  transaksiList={transaksiList}
+                  setTransaksiList={setTransaksiList}
+                />
               </div>
-            </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-bold text-gray-700 text-base">Input Manifes Distribusi Baru</h3>
+              {/* Bagian Bawah - Memanggil Form Manifest (Lebar Penuh) */}
+              <div className="w-full">
+                <FormManifest
+                  formTransaksi={formTransaksi}
+                  setFormTransaksi={setFormTransaksi}
+                  handleTransaksiSubmit={handleTransaksiSubmit}
+                />
               </div>
-              <form onSubmit={handleTransaksiSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Nama Supir</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Masukkan nama supir"
-                    value={formTransaksi.supir}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, supir: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">No Plat Kendaraan</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: BM 1234 AA"
-                    value={formTransaksi.plat}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, plat: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Berat TBS (Kg)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Contoh: 5000"
-                    value={formTransaksi.berat}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, berat: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Status Awal Pengiriman</label>
-                  <select
-                    value={formTransaksi.status}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, status: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm text-gray-700 font-medium transition-all"
-                  >
-                    <option value="menunggu_memuat">Menunggu Memuat</option>
-                    <option value="dalam_perjalanan">Dalam Perjalanan</option>
-                    <option value="selesai">Selesai</option>
-                    <option value="ditolak">Ditolak</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2 pt-2">
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white font-bold rounded-xl shadow-md transform active:scale-[0.99] transition-all text-sm tracking-wide flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-save"></i>
-                    <span>Simpan Manifest Distribusi</span>
-                  </button>
-                </div>
-              </form>
+
             </div>
           </div>
         );
@@ -644,27 +746,10 @@ const Dashboard = () => {
                         <td className="py-4 px-6 font-semibold text-green-700">
                           {item.berat_tbs} Kg
                         </td>
-                       <td className="py-4 px-6">
-                          {/* 1. JIKA STATUS ADALAH SELESAI atau JUSTRU KOSONG (KITA ANGGAP SUKSES DEFAULT SEPERTI DATA LAMA) */}
-                          {(item.status === 'selesai' || !item.status || item.status.trim() === '') && (
-                            <span className="bg-green-100 text-green-800 font-bold px-2.5 py-1 rounded-full text-xs">
-                              Sukses Terdata
-                            </span>
-                          )}
-
-                          {/* 2. JIKA STATUS ADALAH DALAM PERJALANAN */}
-                          {item.status === 'dalam_perjalanan' && (
-                            <span className="bg-yellow-100 text-yellow-800 font-bold px-2.5 py-1 rounded-full text-xs">
-                              Dalam Perjalanan
-                            </span>
-                          )}
-
-                          {/* 3. JIKA STATUS ADALAH DITOLAK */}
-                          {item.status === 'ditolak' && (
-                            <span className="bg-red-100 text-red-800 font-bold px-2.5 py-1 rounded-full text-xs">
-                              Ditolak
-                            </span>
-                          )}
+                        <td className="py-4 px-6">
+                          <span className="bg-green-100 text-green-800 font-bold px-2.5 py-1 rounded-full text-xs">
+                            Sukses Terdata
+                          </span>
                         </td>
                       </tr>
                     ))
@@ -679,6 +764,7 @@ const Dashboard = () => {
         return <div>Halaman tidak ditemukan.</div>;
     }
   };
+
 
   return (
     <div className={styles['app-container']}>

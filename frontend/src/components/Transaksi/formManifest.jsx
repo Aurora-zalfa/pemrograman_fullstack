@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react"; 
-import axiosInstance from "../utils/axios";
-import Container from "./Container";
+import React, { useState, useEffect } from "react"; 
+import axiosInstance from "../../utils/axios";
+import styles from "../Dashboard/Dashboard.module.css";
+import Container from "../Container"; 
 
 const FormManifest = () => {
   // State untuk form data (MATCH dengan backend distribusi.js)
@@ -53,7 +54,7 @@ const FormManifest = () => {
           pabrik: pabrikRes.data.data || [],
         });
       } catch (error) {
-        console.warn("⚠️ Master data fallback ke input manual:", error);
+        console.warn("Master data fallback ke input manual:", error);
       } finally {
         setMasterLoading(false);
       }
@@ -76,7 +77,7 @@ const FormManifest = () => {
       // Validasi tipe file
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
       if (!allowedTypes.includes(file.type)) {
-        setPesan({ type: "error", text: "❌ File harus JPG, PNG, atau PDF" });
+        setPesan({ type: "error", text: "File harus JPG, PNG, atau PDF" });
         e.target.value = "";
         return;
       }
@@ -84,7 +85,7 @@ const FormManifest = () => {
       // Validasi ukuran (max 5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setPesan({ type: "error", text: "❌ Ukuran file maksimal 5MB" });
+        setPesan({ type: "error", text: "Ukuran file maksimal 5MB" });
         e.target.value = "";
         return;
       }
@@ -104,19 +105,18 @@ const FormManifest = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 🔧 FIX: Debug userId
     console.log("userId dari localStorage:", localStorage.getItem('userId'));
     console.log("Token dari localStorage:", localStorage.getItem('token'));
     
     // Validasi file wajib
     if (!suratJalan || !buktiTimbang) {
-      setPesan({ type: "error", text: "❌ Surat Jalan dan Bukti Timbang wajib diupload!" });
+      setPesan({ type: "error", text: "Surat Jalan dan Bukti Timbang wajib diupload!" });
       return;
     }
 
     // Validasi field wajib
     if (!formData.tanggal_kirim || !formData.berat_tbs || !formData.supir_idsupir || !formData.truk_idtruk) {
-      setPesan({ type: "error", text: "❌ Tanggal, Berat, Supir, dan Truk wajib diisi!" });
+      setPesan({ type: "error", text: "Tanggal, Berat, Supir, dan Truk wajib diisi!" });
       return;
     }
 
@@ -125,26 +125,20 @@ const FormManifest = () => {
     setPesan({ type: "", text: "" });
 
     try {
-      // Buat FormData untuk multipart/form-data
       const data = new FormData();
-      
-      // 🔧 FIX: Fallback userId jika kosong
       const userIdToSubmit = formData.users_idusers || localStorage.getItem('userId') || '1';
       
-      // Append semua field dari formData state
       Object.keys(formData).forEach((key) => {
         if (key === 'users_idusers') {
-          data.append(key, userIdToSubmit);  // ← Pakai userIdToSubmit
+          data.append(key, userIdToSubmit);
         } else if (formData[key]) {
           data.append(key, formData[key]);
         }
       });
 
-      // Append file upload
       data.append("surat_jalan", suratJalan);
       data.append("bukti_timbang", buktiTimbang);
 
-      // POST ke API dengan progress bar
       await axiosInstance.post("/api/distribusi", data, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
@@ -153,8 +147,7 @@ const FormManifest = () => {
         },
       });
 
-      // Success
-      setPesan({ type: "success", text: "✅ Data distribusi berhasil dibuat!" });
+      setPesan({ type: "success", text: "Data distribusi berhasil dibuat!" });
       
       // Reset form
       setFormData({
@@ -173,27 +166,24 @@ const FormManifest = () => {
       setPreviewBuktiTimbang(null);
       setUploadProgress(0);
 
-      // Reload halaman setelah 1.5 detik
       setTimeout(() => {
         window.location.reload();
       }, 1500);
 
     } catch (error) {
-      console.error("❌ Error submit:", error);
+      console.error("Error submit:", error);
       setPesan({ 
         type: "error", 
-        text: "❌ Gagal: " + (error.response?.data?.message || error.message) 
+        text: "Gagal: " + (error.response?.data?.message || error.message) 
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔧 FIX: Helper render dropdown dengan explicit idKey parameter
+  // Helper render dropdown dengan explicit idKey parameter
   const renderMasterField = (label, name, options, placeholder, displayKey, idKey) => {
     const hasData = options && options.length > 0;
-    
-    // Default idKey jika tidak disediakan (backward compatible)
     const actualIdKey = idKey || `id${name.replace("_id", "")}`;
     
     return (
@@ -206,14 +196,14 @@ const FormManifest = () => {
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-800"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
             required
           >
             <option value="">-- Pilih {label} --</option>
             {options.map((item) => (
               <option 
                 key={item[actualIdKey]} 
-                value={item[actualIdKey]}  // ← PASTIKAN VALUE = ID (angka), bukan nama!
+                value={item[actualIdKey]}
               >
                 {item[displayKey] || item.nama_supir || item.no_polisi || item.nama_kebun || item.nama_pabrik}
                 {item.lokasi && ` - ${item.lokasi}`}
@@ -227,7 +217,7 @@ const FormManifest = () => {
             value={formData[name]}
             onChange={handleChange}
             placeholder={placeholder}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"
+            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
             required
           />
         )}
@@ -237,8 +227,8 @@ const FormManifest = () => {
 
   return (
     <Container>
-      <div className="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow-md text-left">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifest Distribusi TBS</h2>
+      <div className="p-6 w-full bg-white rounded-lg shadow-md text-left">
+        <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifes Distribusi Baru</h2>
         
         {/* Pesan Alert */}
         {pesan.text && (
@@ -254,11 +244,11 @@ const FormManifest = () => {
           <div className="mb-4">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                className="bg-green-600 h-2.5 rounded-full transition-all duration-300" 
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-xs text-gray-600 mt-1">📤 Mengupload: {uploadProgress}%</p>
+            <p className="text-xs text-gray-600 mt-1">Mengupload: {uploadProgress}%</p>
           </div>
         )}
 
@@ -266,74 +256,68 @@ const FormManifest = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Tanggal Kirim */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">📅 Tanggal Pengiriman</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengiriman</label>
               <input
                 type="date"
                 name="tanggal_kirim"
                 value={formData.tanggal_kirim}
                 onChange={handleChange}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
                 required
               />
             </div>
 
             {/* Berat TBS */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">⚖️ Berat TBS (kg)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Berat TBS (kg)</label>
               <input
                 type="number"
                 name="berat_tbs"
                 value={formData.berat_tbs}
                 onChange={handleChange}
                 placeholder="Contoh: 5000"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800"
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
                 required
               />
             </div>
 
-            {/* 🔧 FIX: Supir - Dropdown dengan explicit idKey */}
-            {renderMasterField("👤 Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
-
-            {/* 🔧 FIX: Truk - Dropdown dengan explicit idKey */}
-            {renderMasterField("🚛 No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
-
-            {/* 🔧 FIX: Kebun - Dropdown dengan explicit idKey */}
-            {renderMasterField("🌴 Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
-
-            {/* 🔧 FIX: Pabrik - Dropdown dengan explicit idKey */}
-            {renderMasterField("🏭 Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
+            {/* Dropdown Master Tanpa Emoji */}
+            {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
+            {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
+            {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
+            {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">📊 Status Distribusi</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Status Awal Pengiriman</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-800"
+              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
             >
-              <option value="menunggu_memuat">⏳ Menunggu Memuat</option>
-              <option value="dalam_perjalanan">🚚 Dalam Perjalanan</option>
-              <option value="tiba_di_pabrik">🏭 Tiba di Pabrik</option>
-              <option value="selesai">✅ Selesai</option>
+              <option value="menunggu_memuat">Menunggu Memuat</option>
+              <option value="dalam_perjalanan">Dalam Perjalanan</option>
+              <option value="tiba_di_pabrik">Tiba di Pabrik</option>
+              <option value="selesai">Selesai</option>
             </select>
           </div>
 
           {/* Upload Surat Jalan */}
           <div className="border-t pt-4 mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">📎 Surat Jalan (Wajib)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Surat Jalan (Wajib)</label>
             <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.pdf"
               onChange={(e) => handleFileChange(e, "surat_jalan")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               required
             />
             {previewSuratJalan && (
               <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">👁️ Preview:</p>
+                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
                 {suratJalan?.type.includes("pdf") ? (
                   <iframe src={previewSuratJalan} className="w-full h-40 border rounded" title="Preview Surat Jalan" />
                 ) : (
@@ -345,18 +329,18 @@ const FormManifest = () => {
 
           {/* Upload Bukti Timbang */}
           <div className="mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">📎 Bukti Timbang (Wajib)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Bukti Timbang (Wajib)</label>
             <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.pdf"
               onChange={(e) => handleFileChange(e, "bukti_timbang")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               required
             />
             {previewBuktiTimbang && (
               <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">👁️ Preview:</p>
+                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
                 {buktiTimbang?.type.includes("pdf") ? (
                   <iframe src={previewBuktiTimbang} className="w-full h-40 border rounded" title="Preview Bukti Timbang" />
                 ) : (
@@ -371,13 +355,13 @@ const FormManifest = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full md:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-lg transition-all ${
-                loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-xl"
+              className={`w-full md:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-700 hover:to-green-600 text-white font-bold rounded-lg shadow-md transition-all ${
+                loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg"
               }`}
             >
               {loading 
-                ? (uploadProgress > 0 ? `📤 Mengupload ${uploadProgress}%...` : "⏳ Menyimpan...") 
-                : "💾 Simpan Manifest + Upload Dokumen"}
+                ? (uploadProgress > 0 ? `Mengupload ${uploadProgress}%...` : "Menyimpan...") 
+                : "Simpan Manifes Distribusi"}
             </button>
           </div>
         </form>

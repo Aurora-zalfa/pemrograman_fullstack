@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react"; // Tambahkan useEffect di sini
 // 🛠️ PERBAIKAN: Mengarah ke file asli kamu (src/utils/axios.js)
-import axiosInstance from '../utils/axios'; 
+import axiosInstance from "../../utils/axios"; // Tambah ../ satu lagi
+// import axiosInstance from '../utils/axios'; 
+// import styles from './Dashboard/Dashboard.module.css'; 
+import styles from "../Dashboard/Dashboard.module.css"; // Ditambah titik satu lagi (jadi ..)
+
 
 // --- INTEGRASI TIM ---
 // Menggunakan titik satu (./) karena berada di folder yang sama (src/components/)
 // import StatusBadge from './StatusBadge'; 
-import StatusBadge from "./StatusBadge/StatusBadge";
-import Container from './Container'; 
+// import StatusBadge from "./StatusBadge/StatusBadge";
+// import Container from './Container'; 
+import Container from "../Container";
+import StatusBadge from "../StatusBadge/StatusBadge";
 
 const TabelDistribusi = () => {
   // --- 4. STATE MANAGEMENT ---
@@ -24,6 +31,7 @@ const TabelDistribusi = () => {
         setDataDistribusi(response.data.data || []);
       } catch (error) {
         console.error("Gagal mengambil data distribusi:", error);
+        setDataDistribusi([]); // Cegah crash jika server error
       } finally {
         setLoading(false);
       }
@@ -63,17 +71,17 @@ const TabelDistribusi = () => {
   });
 
   return (
-    // --- 3. UI INTEGRATION (Bungkus pakai Container Zainab) ---
+    // --- 3. UI INTEGRATION ---
     <Container>
       <div className="p-6 max-w-7xl mx-auto bg-white rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">Daftar Distribusi TBS</h2>
 
-        {/* Kotak Pencarian Silvia */}
+        {/* Kotak Pencarian */}
         <div className="mb-6">
           <input
             type="text"
             placeholder="🔍 Cari berdasarkan nama supir atau nomor polisi..."
-            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
           />
@@ -107,15 +115,14 @@ const TabelDistribusi = () => {
                 ) : (
                   // Looping data yang sudah difilter
                   filteredData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={item.iddistribusi || item.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-gray-900">{item.no_polisi}</td>
                       <td className="px-4 py-3">{item.nama_supir}</td>
-                      {/* Tampilkan tanggal yang sudah diformat */}
-                      <td className="px-4 py-3">{formatTanggal(item.tanggal)}</td>
-                      {/* Tampilkan berat tbs + teks "kg" */}
+                      {/* 🛠️ PERBAIKAN 3: Ubah item.tanggal menjadi item.tanggal_kirim sesuai nama kolom database kamu */}
+                      <td className="px-4 py-3">{formatTanggal(item.tanggal_kirim)}</td>
                       <td className="px-4 py-3">{item.berat_tbs} kg</td>
                       <td className="px-4 py-3">
-                        {/* --- 3. STATUS BADGE AURORA --- */}
+                        {/* --- 3. STATUS BADGE --- */}
                         <StatusBadge status={item.status}>
                           {formatStatus(item.status)}
                         </StatusBadge>

@@ -1,0 +1,52 @@
+/* Gaya dasar badge (bentuk oval melengkung rapi) */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* 1. menunggu_memuat (Warna Abu-Abu) */
+.menunggu {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border-color: #e5e7eb;
+}
+
+/* 2. dalam_perjalanan (Warna Biru Logistik) */
+.proses {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+/* 3. tiba_di_pabrik (Warna Ungu / Oranye Soft) */
+.pabrik {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+/* 4. selesai (Warna Hijau Sukses) */
+.sukses {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+/* 5. ditolak (Warna Merah Gagal) */
+.gagal {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+/* Cadangan aman */
+.default {
+  background-color: #f9fafb;
+  color: #6b7280;
+  border-color: #f3f4f6;
+}
