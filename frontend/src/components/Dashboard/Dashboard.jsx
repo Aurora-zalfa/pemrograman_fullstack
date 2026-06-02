@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import styles from './Dashboard.module.css';
+
+// 1. KODE IMPOR HALAMAN TRANSAKSI (PUNYA KAMU)
+// Karena file transaksi sudah dipindah ke folder Transaksi, jalurnya harus mundur satu folder (../)
+import FormManifest from '../Transaksi/formManifest';
+import TabelDistribusi from '../Transaksi/TabelDistribusi';
+
+// 2. KODE IMPOR GRAFIK STATISTIK (PUNYA TEMANMU)
 import {
   LineChart,
   Line,
@@ -14,8 +22,6 @@ import {
   Cell,
   Legend
 } from 'recharts';
-
-import styles from './Dashboard.module.css';
 
 const Dashboard = () => {
   // ==========================================
@@ -418,137 +424,38 @@ cleanData = { no_polisi: inputData.no_polisi, kapasitas_ton: inputData.kapasitas
           </div>
         );
 
-      case 'transaksi':
-        return (
-          <div className={styles.pageContent}>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Transaksi Distribusi</h1>
-              <p className="text-gray-500 text-sm mt-1">Pencatatan dan pemantauan real-time alur pengiriman logistik sawit.</p>
-            </div>
+     case 'transaksi':
+  return (
+    <div className={styles.pageContent}>
+      {/* Judul Utama */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Transaksi Distribusi</h1>
+        <p className="text-gray-500 text-sm mt-1">Pencatatan manifes baru dan pemantauan real-time alur pengiriman logistik sawit.</p>
+      </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-              <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-bold text-gray-700 text-base">Daftar Pengiriman Berjalan</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50/70 border-b border-gray-100 text-gray-600 text-xs uppercase tracking-wider font-semibold">
-                      <th className="py-4 px-6">Nama Supir</th>
-                      <th className="py-4 px-6">No Plat</th>
-                      <th className="py-4 px-6">Berat Muatan</th>
-                      <th className="py-4 px-6">Status Logistik</th>
-                      <th className="py-4 px-6 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700 text-sm divide-y divide-gray-50">
-                    {transaksiList.map((tx, idx) => {
-                      const getBadgeColor = (status) => {
-                        if (status === 'menunggu_memuat') return 'bg-amber-50 text-amber-700 border-amber-100';
-                        if (status === 'dalam_perjalanan') return 'bg-blue-50 text-blue-700 border-blue-100';
-                        if (status === 'selesai') return 'bg-green-50 text-green-700 border-green-100';
-                        return 'bg-red-50 text-red-700 border-red-100';
-                      };
+      {/* Layout Menumpuk ke Bawah (Satu Kolom Penuh) */}
+      <div className="flex flex-col gap-6 w-full">
+        
+        {/* Bagian Atas - Memanggil Tabel Distribusi (Lebar Penuh) */}
+        <div className="w-full">
+          <TabelDistribusi 
+            transaksiList={transaksiList}
+            setTransaksiList={setTransaksiList}
+          />
+        </div>
 
-                      return (
-                        <tr key={idx} className="hover:bg-gray-50/50 transition">
-                          <td className="py-4 px-6 font-semibold text-gray-900">{tx.supir}</td>
-                          <td className="py-4 px-6 font-mono text-gray-600">{tx.plat}</td>
-                          <td className="py-4 px-6 font-medium text-gray-800">{tx.berat} Kg</td>
-                          <td className="py-4 px-6">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getBadgeColor(tx.status)}`}>
-                              {tx.status.replace('_', ' ')}
-                            </span>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex justify-center gap-4">
-                              <button
-                                className="text-blue-600 hover:text-blue-800 font-bold text-xs flex items-center gap-1"
-                                onClick={() => alert('Fitur Edit Distribusi sedang dikembangkan.')}
-                              >
-                                <i className="fas fa-edit"></i> Edit
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-800 font-bold text-xs flex items-center gap-1"
-                                onClick={() => setTransaksiList(transaksiList.filter((_, i) => i !== idx))}
-                              >
-                                <i className="fas fa-trash"></i> Hapus
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        {/* Bagian Bawah - Memanggil Form Manifest (Lebar Penuh) */}
+        <div className="w-full">
+          <FormManifest 
+            formTransaksi={formTransaksi}
+            setFormTransaksi={setFormTransaksi}
+            handleTransaksiSubmit={handleTransaksiSubmit}
+          />
+        </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-5 border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-bold text-gray-700 text-base">Input Manifes Distribusi Baru</h3>
-              </div>
-              <form onSubmit={handleTransaksiSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Nama Supir</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Masukkan nama supir"
-                    value={formTransaksi.supir}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, supir: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">No Plat Kendaraan</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: BM 1234 AA"
-                    value={formTransaksi.plat}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, plat: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Berat TBS (Kg)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Contoh: 5000"
-                    value={formTransaksi.berat}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, berat: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Status Awal Pengiriman</label>
-                  <select
-                    value={formTransaksi.status}
-                    onChange={(e) => setFormTransaksi({ ...formTransaksi, status: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:bg-white text-sm text-gray-700 font-medium transition-all"
-                  >
-                    <option value="menunggu_memuat">Menunggu Memuat</option>
-                    <option value="dalam_perjalanan">Dalam Perjalanan</option>
-                    <option value="selesai">Selesai</option>
-                    <option value="ditolak">Ditolak</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2 pt-2">
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white font-bold rounded-xl shadow-md transform active:scale-[0.99] transition-all text-sm tracking-wide flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-save"></i>
-                    <span>Simpan Manifest Distribusi</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        );
-
+      </div>
+    </div>
+  );
       case 'laporan':
         return (
           <div className={styles.pageContent}>

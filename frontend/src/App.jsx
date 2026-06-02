@@ -6,14 +6,10 @@ import "./App.css";
 import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Dashboard from "./components/Dashboard/Dashboard"; 
-import FormManifest from "./components/formManifest";
-import TabelDistribusi from './components/TabelDistribusi';
-
-// Selesai diperbaiki: Mengamankan import aset gambar agar tidak memicu error 'not defined'
-import reactLogo from "./assets/react.svg"; // Sesuaikan ekstensi jika .png atau .svg
-import heroImg from "./assets/buah_sawit.png"; // Jalur gambar pendukung herosection
-import buahSawitImg from "./assets/buah_sawit.png"; 
-
+// import FormManifest from "./components/formManifest";
+// import TabelDistribusi from './components/TabelDistribusi';
+import FormManifest from "./components/Transaksi/formManifest";
+import TabelDistribusi from "./components/Transaksi/TabelDistribusi";
 /**
  * ========================================================
  * 1. KOMPONEN PROTECTED ROUTE 
@@ -98,10 +94,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-
-        {/* Catatan Sprint 10: Rute /manifest eksternal ini nanti akan dihapus oleh Silvi */}
-        {/* karena form transaksi ini dipindahkan langsung menjadi interior menu Sidebar Dashboard Admin */}
-        <Route 
+        {/* <Route 
           path="/manifest" 
           element={
             <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500 py-12">
@@ -110,10 +103,21 @@ function App() {
               <TabelDistribusi />
             </div>
           } 
-        />
+        /> */}
+        
+<Route 
+  path="/manifest"
+  element={
+    <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500">
+      <FormManifest />
+      <div className="my-10"></div>
+      <TabelDistribusi />
+    </div>
+  }
+/>
       </Routes>
     </Router>
   );
-}
+}; // <-- PASTIKAN ADA TITIK KOMA SETELAH KURUNG KURAWAL ( }; )
 
 export default App;
