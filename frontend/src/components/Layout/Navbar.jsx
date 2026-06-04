@@ -233,7 +233,6 @@ const Navbar = ({ isScrolled, isNavOpen, toggleNav }) => {
                 }}
                 className="hidden-mobile-brand"
               >
-                <br></br>
                 Distribution System
               </span>
             </div>

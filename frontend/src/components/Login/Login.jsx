@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../utils/axios'; // 🔧 PERBAIKAN PATH: Mundur 2 tingkat karena sekarang ada di dalam subfolder
-import heroImg from "../../assets/hero.png"; // 🔧 PERBAIKAN PATH: Mundur 2 tingkat karena sekarang ada di dalam subfolder
+import axios from '../../utils/axios';
+import heroImg from "../../assets/hero.png";
 
 const Login = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({ 
     username: '', 
     password: '', 
-    role: 'petugas' // Default role sesuai DB kamu
+    role: 'petugas'
   });
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,6 @@ const Login = ({ onLoginSuccess }) => {
     
     try {
       if (isLoginMode) {
-        // LOGIN MODE
         const response = await axios.post('/api/auth/login', {  
           username: formData.username,
           password: formData.password
@@ -40,8 +39,6 @@ const Login = ({ onLoginSuccess }) => {
               localStorage.setItem('userId', userId);
             }
             localStorage.setItem('token', token);
-            
-            // 🔒 FITUR UTAMA KAMU: Simpan role ke localStorage untuk bahan 'Logic Gate' di LamanTransaksi nanti
             localStorage.setItem('user_role', role); 
             
             onLoginSuccess(token, role);
@@ -55,14 +52,13 @@ const Login = ({ onLoginSuccess }) => {
         }
         
       } else {
-        // REGISTER MODE
         await axios.post('/api/auth/register', {  
           username: formData.username,
           password: formData.password,
           role: formData.role
         });
         
-        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.'); 
+        alert('Registrasi Berhasil! Silakan login menggunakan akun baru Anda.'); 
         setFormData(prev => ({ ...prev, password: '' }));
         setIsLoginMode(true); 
       }
@@ -76,44 +72,58 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-950 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #042B21 0%, #064E3B 50%, #053D2F 100%)" }}>
       
-      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row min-h-[550px] transition-all duration-500 transform hover:scale-[1.01]">
-        
-        {/* SISI KIRI - BRANDING */}
-        <div className="md:w-1/2 bg-gradient-to-b from-emerald-800 to-green-900 p-8 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-emerald-700 rounded-full opacity-30 blur-2xl"></div>
-          <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-green-600 rounded-full opacity-20 blur-3xl"></div>
+      {/* Background Decorations */}
+      <div className="absolute top-[-10%] right-[-5%] w-[30rem] h-[30rem] bg-[#F59E0B]/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[25rem] h-[25rem] bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-[#065F46]/30 rounded-full blur-3xl pointer-events-none" />
 
+      {/* Main Card */}
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row min-h-[550px] transition-all duration-500">
+        
+        {/* LEFT SIDE - BRANDING */}
+        <div className="md:w-1/2 bg-[#064E3B] p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
+          {/* Decorative blobs */}
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#F59E0B]/15 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-[#10B981]/10 rounded-full blur-3xl"></div>
+
+          {/* Top label */}
           <div className="relative z-10">
-            <h3 className="text-xl font-bold tracking-wider text-green-300">MONITORING SAWIT</h3>
+            <span className="inline-block text-[10px] font-bold tracking-[0.25em] uppercase text-[#A7F3D0]/60 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+              Nyawit Hunter
+            </span>
           </div>
 
+          {/* Hero content */}
           <div className="relative z-10 my-auto text-center md:text-left">
-            <img src={heroImg} alt="Sawit Asset" className="w-48 md:w-64 mx-auto mb-6" />
-            <h2 className="text-2xl md:text-3xl font-extrabold leading-tight mb-2 text-white">
-              {isLoginMode ? "Selamat Datang Kembali!" : "Bergabung Bersama Kami"}
+            <img src={heroImg} alt="Sawit Asset" className="w-40 md:w-52 mx-auto mb-8 drop-shadow-2xl" />
+            <h2 className="text-2xl md:text-3xl font-black leading-tight mb-3 text-white">
+              {isLoginMode ? "Selamat Datang Kembali" : "Bergabung Bersama Kami"}
             </h2>
-            <p className="text-sm text-green-100 opacity-90">
+            <p className="text-sm text-[#D1FAE5]/70 leading-relaxed">
               {isLoginMode 
-                ? "Silakan masuk untuk memantau data distribusi dan berat TBS kelapa sawit secara real-time."
-                : "Daftarkan akun kelompok untuk mulai mengelola sistem distribusi digital."}
+                ? "Login untuk memantau data distribusi dan berat TBS kelapa sawit secara real-time."
+                : "Daftarkan akun untuk mulai mengelola sistem distribusi digital terintegrasi."}
             </p>
           </div>
 
-          <div className="relative z-10 text-xs text-green-300 text-center md:text-left">
-            &copy; 2026 Kelompok Aurora &middot; v1.0
+          {/* Bottom info */}
+          <div className="relative z-10 text-[10px] text-[#6EE7B7]/40 text-center md:text-left tracking-wider uppercase font-semibold">
+            &copy; 2026 Nyawit Hunter &middot; v1.0
           </div>
         </div>
 
-        {/* SISI KANAN - FORM */}
-        <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-gray-50">
+        {/* RIGHT SIDE - FORM */}
+        <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-[#F8FAFC]">
+          
+          {/* Form Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-gray-800 mb-1">
-              {isLoginMode ? "Sign In" : "Sign Up"}
+            <h2 className="text-3xl font-black text-[#064E3B] mb-1">
+              {isLoginMode ? "Login" : "Daftar"}
             </h2>
-            <p className="text-sm text-gray-500">
-              {isLoginMode ? "Akses ke dalam panel monitoring sawit" : "Lengkapi data untuk membuat akun baru"}
+            <p className="text-sm text-[#064E3B]/50">
+              {isLoginMode ? "Akses panel monitoring distribusi sawit" : "Lengkapi data untuk membuat akun baru"}
             </p>
           </div>
 
@@ -121,20 +131,23 @@ const Login = ({ onLoginSuccess }) => {
             
             {/* USERNAME */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1 tracking-wider">
-                Username Akun
+              <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+                Username
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                  <i className="fas fa-user-circle text-xs"></i>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
                 </span>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Contoh: bos_muda atau aurora"
-                  className="w-full pl-9 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder="Masukkan username"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent text-sm transition-all shadow-sm text-[#064E3B] placeholder-[#064E3B]/30 font-medium"
                   required
                 />
               </div>
@@ -142,72 +155,102 @@ const Login = ({ onLoginSuccess }) => {
 
             {/* PASSWORD */}
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Password
-                </label>
-              </div>
+              <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+                Password
+              </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-                  <i className="fas fa-lock text-xs"></i>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                 </span>
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="••••••••"
-                  className="w-full pl-9 pr-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent text-sm transition-all shadow-sm text-gray-900 placeholder-gray-400 font-medium"
+                  placeholder="Masukkan password"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent text-sm transition-all shadow-sm text-[#064E3B] placeholder-[#064E3B]/30 font-medium"
                   required
                 />
               </div>
             </div>
 
-            {/* 🔒 DROPDOWN ROLE - Sesuai dengan pilihan 'petugas' dan 'manajer' di database kamu */}
+            {/* ROLE DROPDOWN - Register only */}
             {!isLoginMode && (
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1 tracking-wider">
-                  Jabatan / Otoritas Akses
+                <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+                  Jabatan / Otoritas
                 </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 text-sm shadow-sm text-gray-900 font-medium cursor-pointer"
-                >
-                  <option value="petugas">Petugas Lapangan (Akses Input & Validasi)</option>
-                  <option value="manajer">Manajer (Otoritas Pemantau Statistik)</option>
-                </select>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </span>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] text-sm shadow-sm text-[#064E3B] font-medium cursor-pointer appearance-none"
+                  >
+                    <option value="petugas">Petugas Lapangan (Input & Validasi)</option>
+                    <option value="manajer">Manajer (Pemantau Statistik)</option>
+                  </select>
+                </div>
               </div>
             )}
 
-            {/* TOMBOL SUBMIT */}
+            {/* SUBMIT BUTTON */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white font-bold rounded-xl shadow-md transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 font-bold rounded-xl shadow-lg transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
+                color: "#064E3B",
+                boxShadow: "0 4px 20px rgba(245,158,11,0.3)",
+              }}
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
+                <>
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Memproses...
-                </span>
+                </>
               ) : (
-                isLoginMode ? "🚀 Masuk ke Dashboard" : "📝 Daftarkan Akun"
+                isLoginMode ? (
+                  <>
+                    Login ke Dashboard
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    Daftarkan Akun
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="8.5" cy="7" r="4" />
+                      <line x1="20" y1="8" x2="20" y2="14" />
+                      <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                  </>
+                )
               )}
             </button>
           </form>
 
           {/* TOGGLE LOGIN/REGISTER */}
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-600">
-              {isLoginMode ? "Belum memiliki otoritas akun?" : "Sudah terdaftar sebagai admin?"}{" "}
+            <p className="text-sm text-[#064E3B]/50">
+              {isLoginMode ? "Belum memiliki akun?" : "Sudah terdaftar?"}{" "}
               <button
                 onClick={() => setIsLoginMode(!isLoginMode)}
-                className="text-green-700 font-bold hover:underline hover:text-green-900 transition-colors focus:outline-none"
+                className="text-[#10B981] font-bold hover:text-[#F59E0B] transition-colors focus:outline-none underline decoration-[#10B981]/30 hover:decoration-[#F59E0B] underline-offset-4"
               >
                 {isLoginMode ? "Buat Akun Baru" : "Login Sekarang"}
               </button>
