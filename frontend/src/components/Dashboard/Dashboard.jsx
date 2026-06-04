@@ -29,7 +29,7 @@ const Dashboard = () => {
   const token = localStorage.getItem('token') || '';
 
   // State untuk Data Ringkasan Dashboard & Laporan
-  const [stats, setStats] = useState({ totalBerat: 0, totalPengiriman: 0, totalSupir: 0, totalTruk: 0 });
+  const [stats, setStats] = useState({ totalBerat: 0, totalPengiriman: 0, totalSupir: 0, totalTruk: 0, totalKebun: 0, totalPabrik: 0 });
   const [laporanData, setLaporanData] = useState([]);
   const [tanggalMulai, setTanggalMulai] = useState('2026-04-01');
   const [tanggalSelesai, setTanggalSelesai] = useState('2026-04-30');
@@ -73,14 +73,18 @@ const Dashboard = () => {
 
   const getDashboardData = async () => {
     try {
-      const [laporanRes, supirRes, trukRes] = await Promise.all([
+      const [laporanRes, supirRes, trukRes, kebunRes, pabrikRes] = await Promise.all([
         fetch(`http://localhost:3000/api/laporan?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`),
         fetch(`http://localhost:3000/api/master/supir`, { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch(`http://localhost:3000/api/master/truk`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`http://localhost:3000/api/master/kebun`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`http://localhost:3000/api/master/pabrik`, { headers: { 'Authorization': `Bearer ${token}` } }),
       ]);
       const laporanResult = await laporanRes.json();
       const supirResult = await supirRes.json();
       const trukResult = await trukRes.json();
+      const kebunResult = await kebunRes.json();
+      const pabrikResult = await pabrikRes.json();
       const data = laporanResult.data || [];
       setLaporanData(data);
       let total = 0;
@@ -90,6 +94,8 @@ const Dashboard = () => {
         totalPengiriman: data.length,
         totalSupir: (supirResult.data || []).length,
         totalTruk: (trukResult.data || []).length,
+        totalKebun: (kebunResult.data || []).length,
+        totalPabrik: (pabrikResult.data || []).length,
       });
     } catch (error) {
       console.error("Error Dashboard Data:", error);
@@ -104,7 +110,7 @@ const Dashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
-      if (result.status === 'Success') {
+      if (result.status === 'Success' || result.status === 'success') {
         setMasterData(result.data || []);
       }
     } catch (error) {
@@ -142,12 +148,12 @@ const Dashboard = () => {
         body: JSON.stringify(cleanData)
       });
       const result = await response.json();
-      if (result.status === 'Success') {
+      if (result.status === 'Success' || result.status === 'success') {
         alert(result.message || 'Data berhasil disimpan!');
         setIsModalOpen(false);
         setInputData({});
         loadMasterData();
-        getDashboardData(); 
+        getDashboardData();
       }
       else {
         alert('Gagal: ' + (result.message || 'Data gagal disimpan'));
@@ -181,7 +187,7 @@ const Dashboard = () => {
         body: JSON.stringify(cleanData)
       });
       const result = await response.json();
-      if (result.status === 'Success') {
+      if (result.status === 'Success' || result.status === 'success') {
         alert('Data berhasil diupdate!');
         setIsModalOpen(false);
         setIsEditMode(false);
@@ -209,7 +215,7 @@ const Dashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
-      if (result.status === 'Success') {
+      if (result.status === 'Success' || result.status === 'success') {
         alert(result.message || 'Data berhasil dihapus');
         loadMasterData();
       }
@@ -263,7 +269,7 @@ const Dashboard = () => {
 
   const statusChartData = (() => {
     const statusMap = {};
-    transaksiList.forEach((item) => {
+    laporanData.forEach((item) => {
       const status = item.status || 'tidak_diketahui';
       statusMap[status] = (statusMap[status] || 0) + 1;
     });
@@ -284,23 +290,36 @@ const Dashboard = () => {
               <h1 className="text-2xl font-bold text-gray-800">Dashboard Monitoring Sawit</h1>
               <p className="text-sm text-gray-500">Gambaran umum dan visualisasi real-time distribusi sawit.</p>
             </div>
-            {/* 4 CARD UTAMA */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+
+            {/* BARIS 1 - 4 card utama */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
                 <div><p className="text-sm text-gray-400 font-medium">Total Berat</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalBerat} Kg</h3><p className="text-xs text-green-500 mt-1">Total distribusi bulan ini</p></div>
-                <div className="p-3 bg-green-50 rounded-xl text-green-600 font-bold text-xl">📦</div>
+                <div className="p-3 bg-green-50 rounded-xl text-green-600 font-bold text-2xl animate-bounce">⚖️</div>
               </div>
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
                 <div><p className="text-sm text-gray-400 font-medium">Pengiriman</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalPengiriman}</h3><p className="text-xs text-blue-500 mt-1">Total pengiriman aktif</p></div>
-                <div className="p-3 bg-blue-50 rounded-xl text-blue-600 font-bold text-xl">🚛</div>
+                <div className="p-3 bg-blue-50 rounded-xl text-blue-600 font-bold text-2xl animate-pulse">🚛</div>
               </div>
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
                 <div><p className="text-sm text-gray-400 font-medium">Supir Aktif</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalSupir}</h3><p className="text-xs text-orange-500 mt-1">Supir sedang bertugas</p></div>
-                <div className="p-3 bg-orange-50 rounded-xl text-orange-600 font-bold text-xl">👨‍✈️</div>
+                <div className="p-3 bg-orange-50 rounded-xl text-orange-600 font-bold text-2xl animate-pulse">👨‍✈️</div>
               </div>
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
                 <div><p className="text-sm text-gray-400 font-medium">Truk Operasional</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalTruk} Truk</h3><p className="text-xs text-purple-500 mt-1">Armada siap digunakan</p></div>
-                <div className="p-3 bg-purple-50 rounded-xl text-purple-600 font-bold text-xl">🚚</div>
+                <div className="p-3 bg-purple-50 rounded-xl text-purple-600 font-bold text-2xl animate-bounce">🚚</div>
+              </div>
+            </div>
+
+            {/* BARIS 2 - Kebun & Pabrik */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div><p className="text-sm text-gray-400 font-medium">Kebun Terdaftar</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalKebun}</h3><p className="text-xs text-yellow-500 mt-1">Total kebun aktif</p></div>
+                <div className="p-3 bg-yellow-50 rounded-xl text-yellow-600 font-bold text-2xl animate-spin" style={{ animationDuration: '3s' }}>🌿</div>
+              </div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
+                <div><p className="text-sm text-gray-400 font-medium">Pabrik Terdaftar</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalPabrik}</h3><p className="text-xs text-red-500 mt-1">Total pabrik aktif</p></div>
+                <div className="p-3 bg-red-50 rounded-xl text-red-600 font-bold text-2xl animate-pulse">🏭</div>
               </div>
             </div>
             {/* Grafik */}
@@ -310,7 +329,16 @@ const Dashboard = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="font-bold text-gray-700 mb-4">Kontribusi Kebun</h3><div style={{ height: 300 }}><ResponsiveContainer><PieChart><Pie data={pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]} cx="50%" cy="45%" innerRadius={70} outerRadius={110} dataKey="value" label>{(pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]).map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div></div>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="font-bold text-gray-700 mb-4">Status Pengiriman</h3><div style={{ height: 300 }}><ResponsiveContainer><PieChart><Pie data={statusChartData.length ? statusChartData : [{ name: 'Belum Ada Data', value: 1 }]} cx="50%" cy="45%" innerRadius={70} outerRadius={110} dataKey="value" label>{(statusChartData.length ? statusChartData : [{ name: 'Belum Ada Data', value: 1 }]).map((entry, index) => <Cell key={`status-cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div><div className="grid grid-cols-2 gap-2 mt-4">{statusChartData.map((item, index) => (<div key={index} className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100"><div className="text-lg font-bold text-gray-800">{item.value}</div><div className="text-xs text-gray-500 capitalize">{item.name}</div></div>))}</div></div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="font-bold text-gray-700 mb-4">Status Pengiriman</h3><div style={{ height: 300 }}><ResponsiveContainer><PieChart><Pie data={statusChartData.length ? statusChartData : [{ name: 'Belum Ada Data', value: 1 }]} cx="50%" cy="45%" innerRadius={70} outerRadius={110} dataKey="value" label>{(statusChartData.length ? statusChartData : [{ name: 'Belum Ada Data', value: 1 }]).map((entry, index) => <Cell key={`status-cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {statusChartData.map((item, index) => (
+                    <div key={index} className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100 hover:shadow-sm transition">
+                      <div className="text-xl font-bold text-gray-800">{item.value}</div>
+                      <div className="text-xs text-gray-500 capitalize mt-1 leading-tight">{item.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -324,7 +352,7 @@ const Dashboard = () => {
                 <button key={type} onClick={() => setActiveMasterType(type)} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all capitalize ${activeMasterType === type ? 'bg-white text-green-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>Data {type}</button>
               ))}
             </div>
-            {/* Tombol Tambah hanya untuk PETUGAS */}
+
             {!isManajer && (
               <div className="mb-4">
                 <button onClick={() => { setIsEditMode(false); setEditId(null); setInputData({}); setIsModalOpen(true); }} className="bg-green-700 hover:bg-green-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2"><i className="fas fa-plus text-xs"></i> Tambah {getMasterTitle()}</button>
