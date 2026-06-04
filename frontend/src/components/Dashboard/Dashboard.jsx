@@ -29,7 +29,7 @@ const Dashboard = () => {
   const token = localStorage.getItem('token') || '';
 
   // State untuk Data Ringkasan Dashboard & Laporan
-  const [stats, setStats] = useState({ totalBerat: 0, totalPengiriman: 0 });
+  const [stats, setStats] = useState({ totalBerat: 0, totalPengiriman: 0, totalSupir: 0, totalTruk: 0 });
   const [laporanData, setLaporanData] = useState([]);
   const [tanggalMulai, setTanggalMulai] = useState('2026-04-01');
   const [tanggalSelesai, setTanggalSelesai] = useState('2026-04-30');
@@ -73,15 +73,24 @@ const Dashboard = () => {
 
   const getDashboardData = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/laporan?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`
-      );
-      const result = await response.json();
-      const data = result.data || [];
+      const [laporanRes, supirRes, trukRes] = await Promise.all([
+        fetch(`http://localhost:3000/api/laporan?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`),
+        fetch(`http://localhost:3000/api/master/supir`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`http://localhost:3000/api/master/truk`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
+      const laporanResult = await laporanRes.json();
+      const supirResult = await supirRes.json();
+      const trukResult = await trukRes.json();
+      const data = laporanResult.data || [];
       setLaporanData(data);
       let total = 0;
       data.forEach(item => { total += parseFloat(item.berat_tbs || 0); });
-      setStats({ totalBerat: total, totalPengiriman: data.length });
+      setStats({
+        totalBerat: total,
+        totalPengiriman: data.length,
+        totalSupir: (supirResult.data || []).length,
+        totalTruk: (trukResult.data || []).length,
+      });
     } catch (error) {
       console.error("Error Dashboard Data:", error);
     }
@@ -138,7 +147,9 @@ const Dashboard = () => {
         setIsModalOpen(false);
         setInputData({});
         loadMasterData();
-      } else {
+        getDashboardData(); 
+      }
+      else {
         alert('Gagal: ' + (result.message || 'Data gagal disimpan'));
       }
     } catch (error) {
@@ -284,18 +295,18 @@ const Dashboard = () => {
                 <div className="p-3 bg-blue-50 rounded-xl text-blue-600 font-bold text-xl">🚛</div>
               </div>
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
-                <div><p className="text-sm text-gray-400 font-medium">Supir Aktif</p><h3 className="text-2xl font-bold text-gray-800 mt-1">12</h3><p className="text-xs text-orange-500 mt-1">Supir sedang bertugas</p></div>
+                <div><p className="text-sm text-gray-400 font-medium">Supir Aktif</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalSupir}</h3><p className="text-xs text-orange-500 mt-1">Supir sedang bertugas</p></div>
                 <div className="p-3 bg-orange-50 rounded-xl text-orange-600 font-bold text-xl">👨‍✈️</div>
               </div>
               <div className="bg-white p-5 rounded-2xl shadow-sm flex items-center justify-between border border-gray-100">
-                <div><p className="text-sm text-gray-400 font-medium">Truk Operasional</p><h3 className="text-2xl font-bold text-gray-800 mt-1">8 Truk</h3><p className="text-xs text-purple-500 mt-1">Armada siap digunakan</p></div>
+                <div><p className="text-sm text-gray-400 font-medium">Truk Operasional</p><h3 className="text-2xl font-bold text-gray-800 mt-1">{stats.totalTruk} Truk</h3><p className="text-xs text-purple-500 mt-1">Armada siap digunakan</p></div>
                 <div className="p-3 bg-purple-50 rounded-xl text-purple-600 font-bold text-xl">🚚</div>
               </div>
             </div>
             {/* Grafik */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-md font-bold text-gray-700 mb-4">Tren Berat Pengiriman</h3><div style={{ height: 250 }}><ResponsiveContainer><LineChart data={barChartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="tanggal" /><YAxis /><Tooltip /><Line type="monotone" dataKey="berat" stroke="#10b981" strokeWidth={2} /></LineChart></ResponsiveContainer></div></div>
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-md font-bold text-gray-700 mb-4">Volume Pengiriman Harian</h3><div style={{ height: 250 }}><ResponsiveContainer><BarChart data={barChartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="tanggal" /><YAxis /><Tooltip /><Bar dataKey="berat" fill="#10b981" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer></div></div>
+              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="text-md font-bold text-gray-700 mb-4">Volume Pengiriman Harian</h3><div style={{ height: 250 }}><ResponsiveContainer><BarChart data={barChartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="tanggal" /><YAxis /><Tooltip /><Bar dataKey="berat" fill="#10b981" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><h3 className="font-bold text-gray-700 mb-4">Kontribusi Kebun</h3><div style={{ height: 300 }}><ResponsiveContainer><PieChart><Pie data={pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]} cx="50%" cy="45%" innerRadius={70} outerRadius={110} dataKey="value" label>{(pieChartData.length ? pieChartData : [{ name: 'Belum Ada Data', value: 1 }]).map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div></div>
