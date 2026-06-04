@@ -47,7 +47,7 @@ const Footer = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl lg:text-2xl font-black tracking-wide leading-tight">
+                <h3 className="text-xl lg:text-2xl font-black tracking-wide leading-tight text-[#F8FAFC]">
                   Nyawit<span className="text-[#F59E0B]">Hunter</span>
                 </h3>
                 <p className="text-[10px] text-[#6EE7B7]/50 uppercase tracking-[0.15em] font-semibold">
@@ -62,41 +62,46 @@ const Footer = () => {
 
             {/* Tech Stack Pills */}
             <div className="flex flex-wrap gap-2">
-              {[
-                { name: "React", color: "hover:border-[#61DAFB]/40 hover:text-[#61DAFB]" },
-                { name: "Node.js", color: "hover:border-[#339933]/40 hover:text-[#339933]" },
-                { name: "Tailwind", color: "hover:border-[#06B6D4]/40 hover:text-[#06B6D4]" },
-              ].map((tech) => (
+              {["React", "Node.js", "Tailwind"].map((tech) => (
                 <span
-                  key={tech.name}
-                  className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-white/5 text-[#A7F3D0]/70 border border-white/10 transition-all duration-300 cursor-default ${tech.color}`}
+                  key={tech}
+                  className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-white/5 text-[#A7F3D0]/70 border border-white/10 hover:bg-white/10 hover:border-[#10B981]/30 transition-all duration-300 cursor-default"
                 >
-                  {tech.name}
+                  {tech}
                 </span>
               ))}
             </div>
 
-            {/* Social Links (placeholder) */}
+            {/* Social Links */}
             <div className="flex gap-3 pt-1">
-              {["github", "gitlab", "globe"].map((icon) => (
-                <a
-                  key={icon}
-                  href="#"
-                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#A7F3D0]/50 hover:text-[#10B981] hover:bg-white/10 hover:border-[#10B981]/30 transition-all duration-300 no-underline"
-                  aria-label={icon}
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"/>
-                  </svg>
-                </a>
-              ))}
+              <a
+                href="https://github.com/Aurora-zalfa/pemrograman_fullstack"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#A7F3D0]/50 hover:text-[#10B981] hover:bg-white/10 hover:border-[#10B981]/30 transition-all duration-300 no-underline"
+                aria-label="GitHub"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12 24 5.37 18.63 0 12 0z"/>
+                </svg>
+              </a>
+
+              <a
+                href="mailto:nyawithunter@gmail.com"
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#A7F3D0]/50 hover:text-[#10B981] hover:bg-white/10 hover:border-[#10B981]/30 transition-all duration-300 no-underline"
+                aria-label="Gmail"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+                </svg>
+              </a>
             </div>
           </div>
 
           {/* === Column 2: Navigasi === */}
           <div className="space-y-5">
             <div>
-              <h4 className="text-white font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+              <h4 className="text-[#A7F3D0] font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
                 Navigasi
               </h4>
@@ -105,17 +110,17 @@ const Footer = () => {
                   { label: "Beranda", to: "/" },
                   { label: "Fitur Sistem", href: "#fitur" },
                   { label: "Tentang Kami", href: "#tentang" },
-                  { label: "Masuk Sistem", to: "/login" },
+                  { label: "Login", to: "/login" },
                 ].map((item) =>
                   item.to ? (
                     <li key={item.label}>
                       <Link
                         to={item.to}
-                        className="group flex items-center gap-2 text-[#D1FAE5]/70 hover:text-[#10B981] text-sm transition-all duration-300 no-underline hover:translate-x-1"
+                        className="flex items-center gap-2 text-[#D1FAE5]/70 hover:text-[#10B981] text-sm transition-all duration-300 no-underline hover:translate-x-1 group"
                       >
-                        <span className="text-base group-hover:scale-110 transition-transform duration-300">
-                          {item.icon}
-                        </span>
+                        <svg className="w-2.5 h-2.5 text-[#10B981]/50 group-hover:text-[#10B981] transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 6 6">
+                          <circle cx="3" cy="3" r="2" />
+                        </svg>
                         <span>{item.label}</span>
                       </Link>
                     </li>
@@ -123,11 +128,11 @@ const Footer = () => {
                     <li key={item.label}>
                       <a
                         href={item.href}
-                        className="group flex items-center gap-2 text-[#D1FAE5]/70 hover:text-[#10B981] text-sm transition-all duration-300 no-underline hover:translate-x-1"
+                        className="flex items-center gap-2 text-[#D1FAE5]/70 hover:text-[#10B981] text-sm transition-all duration-300 no-underline hover:translate-x-1 group"
                       >
-                        <span className="text-base group-hover:scale-110 transition-transform duration-300">
-                          {item.icon}
-                        </span>
+                        <svg className="w-2.5 h-2.5 text-[#10B981]/50 group-hover:text-[#10B981] transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 6 6">
+                          <circle cx="3" cy="3" r="2" />
+                        </svg>
                         <span>{item.label}</span>
                       </a>
                     </li>
@@ -140,26 +145,23 @@ const Footer = () => {
           {/* === Column 3: Proyek === */}
           <div className="space-y-5">
             <div>
-              <h4 className="text-white font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+              <h4 className="text-[#A7F3D0] font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
                 Proyek
               </h4>
               <ul className="space-y-4">
                 {[
-                  { label: "Mata Kuliah", value: "Pemrograman Fullstack", icon: "📚" },
-                  { label: "Tahun Akademik", value: "2026", icon: "📅" },
-                  { label: "Fokus", value: "Agribisnis Digital", icon: "🌿" },
+                  { label: "Mata Kuliah", value: "Pemrograman Fullstack" },
+                  { label: "Tahun Akademik", value: "2026" },
+                  { label: "Fokus", value: "Agribisnis Digital" },
                 ].map((item) => (
-                  <li key={item.label} className="flex items-start gap-3">
-                    <span className="text-lg mt-0.5">{item.icon}</span>
-                    <div className="space-y-0.5">
-                      <p className="text-[#6EE7B7]/50 text-[10px] uppercase tracking-wider font-semibold">
-                        {item.label}
-                      </p>
-                      <p className="text-[#D1FAE5] text-sm font-medium">
-                        {item.value}
-                      </p>
-                    </div>
+                  <li key={item.label} className="space-y-0.5">
+                    <p className="text-[#6EE7B7]/50 text-[10px] uppercase tracking-wider font-semibold">
+                      {item.label}
+                    </p>
+                    <p className="text-[#D1FAE5] text-sm font-medium">
+                      {item.value}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -169,7 +171,7 @@ const Footer = () => {
           {/* === Column 4: Tim Kami === */}
           <div className="space-y-5">
             <div>
-              <h4 className="text-white font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+              <h4 className="text-[#A7F3D0] font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
                 Tim Kami
               </h4>
@@ -189,7 +191,7 @@ const Footer = () => {
                       {member.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-[#D1FAE5] text-sm leading-tight group-hover:text-white transition-colors duration-300">
+                      <p className="text-[#D1FAE5] text-sm leading-tight group-hover:text-[#F8FAFC] transition-colors duration-300">
                         {member.name}
                       </p>
                       <p className="text-[#6EE7B7]/40 text-[10px] tracking-wider">
