@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { setToken } from '../utils/auth';
-import axios from '../utils/axios';
-import heroImg from "../assets/hero.png"; 
+import axios from '../../utils/axios'; // 🔧 PERBAIKAN PATH: Mundur 2 tingkat karena sekarang ada di dalam subfolder
+import heroImg from "../../assets/hero.png"; // 🔧 PERBAIKAN PATH: Mundur 2 tingkat karena sekarang ada di dalam subfolder
 
 const Login = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({ 
-    username: '', // Sesuai kolom DB
-    password: '', // Sesuai kolom DB
-    role: 'petugas' // Sesuai kolom DB
+    username: '', 
+    password: '', 
+    role: 'petugas' // Default role sesuai DB kamu
   });
   const [loading, setLoading] = useState(false);
 
@@ -26,51 +25,51 @@ const Login = ({ onLoginSuccess }) => {
     try {
       if (isLoginMode) {
         // LOGIN MODE
-        const response = await axios.post('/api/auth/login', {  // ✅ Sudah ada /api/
+        const response = await axios.post('/api/auth/login', {  
           username: formData.username,
           password: formData.password
         });
         
-        // PERBAIKAN DI SINI: Menyesuaikan dengan struktur respon backend kamu
-        // Backend mengirim: response.data.data.token & response.data.data.user.role
         if (response.data && response.data.success) {
           const token = response.data.data.token;
           const role = response.data.data.user?.role;
-          const userId = response.data.data.user?.idusers;  // 🔧 TAMBAH: Ambil userId
+          const userId = response.data.data.user?.idusers;  
 
           if (token && role) {
-            // 🔧 TAMBAH: Simpan userId ke localStorage (tidak ganggu kode lain)
             if (userId) {
               localStorage.setItem('userId', userId);
             }
             localStorage.setItem('token', token);
             
+            // 🔒 FITUR UTAMA KAMU: Simpan role ke localStorage untuk bahan 'Logic Gate' di LamanTransaksi nanti
+            localStorage.setItem('user_role', role); 
+            
             onLoginSuccess(token, role);
-            alert(`Login Berhasil! Selamat datang ${formData.username}.`); // ✅ PERTAHANKAN
+            alert(`Login Berhasil! Selamat datang ${formData.username}.`); 
             navigate('/dashboard'); 
           } else {
-            alert('Gagal memuat token atau hak akses dari data user.'); // ✅ PERTAHANKAN
+            alert('Gagal memuat token atau hak akses dari data user.'); 
           }
         } else {
-          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.'); // ✅ PERTAHANKAN
+          alert(response.data?.message || 'Login gagal, periksa kembali akun Anda.'); 
         }
         
       } else {
         // REGISTER MODE
-        await axios.post('/api/auth/register', {  // 🔧 TAMBAH: /api/ prefix
+        await axios.post('/api/auth/register', {  
           username: formData.username,
           password: formData.password,
           role: formData.role
         });
         
-        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.'); // ✅ PERTAHANKAN
+        alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru Anda.'); 
         setFormData(prev => ({ ...prev, password: '' }));
         setIsLoginMode(true); 
       }
     } catch (error) {
       console.error("API Error Log:", error);
       const pesanError = error.response?.data?.message || 'Gagal memproses permintaan ke server backend.';
-      alert('Terjadi kesalahan sistem: ' + pesanError); // ✅ PERTAHANKAN
+      alert('Terjadi kesalahan sistem: ' + pesanError); 
     } finally {
       setLoading(false);
     }
@@ -164,7 +163,7 @@ const Login = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            {/* DROPDOWN ROLE - Hanya muncul di mode Register */}
+            {/* 🔒 DROPDOWN ROLE - Sesuai dengan pilihan 'petugas' dan 'manajer' di database kamu */}
             {!isLoginMode && (
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1 tracking-wider">

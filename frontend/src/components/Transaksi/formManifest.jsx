@@ -4,6 +4,9 @@ import styles from "../Dashboard/Dashboard.module.css";
 import Container from "../Container"; 
 
 const FormManifest = () => {
+  // 🔒 SECURITY GATE: Ambil role akun dari localStorage
+  const userRole = localStorage.getItem('user_role') || 'manajer';
+
   // State untuk form data (MATCH dengan backend distribusi.js)
   const [formData, setFormData] = useState({
     tanggal_kirim: "",
@@ -36,8 +39,10 @@ const FormManifest = () => {
   });
   const [masterLoading, setMasterLoading] = useState(true);
 
-  // Fetch master data dari API Zen (dengan fallback jika error)
+  // Fetch master data dari API Zen (hanya dijalankan jika user BUKAN manajer untuk menghemat bandwidth)
   useEffect(() => {
+    if (userRole === 'manajer') return; // Bypass fetch data jika manajer
+
     const fetchMasterData = async () => {
       try {
         const [supirRes, trukRes, kebunRes, pabrikRes] = await Promise.all([
@@ -61,7 +66,7 @@ const FormManifest = () => {
     };
 
     fetchMasterData();
-  }, []);
+  }, [userRole]);
 
   // Handle change untuk input text & select
   const handleChange = (e) => {
@@ -74,7 +79,6 @@ const FormManifest = () => {
     const file = e.target.files[0];
     
     if (file) {
-      // Validasi tipe file
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
       if (!allowedTypes.includes(file.type)) {
         setPesan({ type: "error", text: "File harus JPG, PNG, atau PDF" });
@@ -82,7 +86,6 @@ const FormManifest = () => {
         return;
       }
 
-      // Validasi ukuran (max 5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         setPesan({ type: "error", text: "Ukuran file maksimal 5MB" });
@@ -90,7 +93,6 @@ const FormManifest = () => {
         return;
       }
 
-      // Set file & generate preview
       if (fileType === "surat_jalan") {
         setSuratJalan(file);
         setPreviewSuratJalan(URL.createObjectURL(file));
@@ -101,20 +103,15 @@ const FormManifest = () => {
     }
   };
 
-  // Handle submit dengan upload file (FormData + multipart)
+  // Handle submit dengan upload file
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    console.log("userId dari localStorage:", localStorage.getItem('userId'));
-    console.log("Token dari localStorage:", localStorage.getItem('token'));
-    
-    // Validasi file wajib
     if (!suratJalan || !buktiTimbang) {
       setPesan({ type: "error", text: "Surat Jalan dan Bukti Timbang wajib diupload!" });
       return;
     }
 
-    // Validasi field wajib
     if (!formData.tanggal_kirim || !formData.berat_tbs || !formData.supir_idsupir || !formData.truk_idtruk) {
       setPesan({ type: "error", text: "Tanggal, Berat, Supir, dan Truk wajib diisi!" });
       return;
@@ -149,7 +146,6 @@ const FormManifest = () => {
 
       setPesan({ type: "success", text: "Data distribusi berhasil dibuat!" });
       
-      // Reset form
       setFormData({
         tanggal_kirim: "",
         berat_tbs: "",
@@ -181,7 +177,6 @@ const FormManifest = () => {
     }
   };
 
-  // Helper render dropdown dengan explicit idKey parameter
   const renderMasterField = (label, name, options, placeholder, displayKey, idKey) => {
     const hasData = options && options.length > 0;
     const actualIdKey = idKey || `id${name.replace("_id", "")}`;
@@ -225,12 +220,28 @@ const FormManifest = () => {
     );
   };
 
+  // 🔒 TUNING KONTRAST: Banner Manajer sekarang menggunakan warna yang tajam dan kontras tinggi
+  if (userRole === 'manajer') {
+    return (
+      <Container>
+        <div className="p-5 bg-amber-100 border border-amber-300 text-amber-950 rounded-xl text-left shadow-sm mb-6">
+          <p className="text-sm font-bold flex items-center gap-2 text-amber-950">
+             Hak Akses Terbatas (Manajer Pemantau)
+          </p>
+          <p className="text-xs text-amber-950 mt-1.5 font-semibold leading-relaxed">
+            Formulir pendaftaran manifes distribusi baru disembunyikan secara otomatis. Otoritas akun Anda diset khusus untuk peninjauan log data (*Read-Only*) dan pengarsipan berkas demi keamanan data lapangan.
+          </p>
+        </div>
+      </Container>
+    );
+  }
+
+  // JIKA BUKAN MANAJER (PETUGAS), TAMPILKAN FORM SEPERTI BIASA
   return (
     <Container>
       <div className="p-6 w-full bg-white rounded-lg shadow-md text-left">
         <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifes Distribusi Baru</h2>
         
-        {/* Pesan Alert */}
         {pesan.text && (
           <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
             pesan.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -239,7 +250,6 @@ const FormManifest = () => {
           </div>
         )}
 
-        {/* Progress Bar Upload */}
         {loading && uploadProgress > 0 && (
           <div className="mb-4">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -254,7 +264,6 @@ const FormManifest = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Tanggal Kirim */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengiriman</label>
               <input
@@ -267,7 +276,6 @@ const FormManifest = () => {
               />
             </div>
 
-            {/* Berat TBS */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Berat TBS (kg)</label>
               <input
@@ -281,14 +289,12 @@ const FormManifest = () => {
               />
             </div>
 
-            {/* Dropdown Master Tanpa Emoji */}
             {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
             {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
             {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
             {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
           </div>
 
-          {/* Status */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Status Awal Pengiriman</label>
             <select
@@ -304,7 +310,6 @@ const FormManifest = () => {
             </select>
           </div>
 
-          {/* Upload Surat Jalan */}
           <div className="border-t pt-4 mt-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Surat Jalan (Wajib)</label>
             <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
@@ -327,7 +332,6 @@ const FormManifest = () => {
             )}
           </div>
 
-          {/* Upload Bukti Timbang */}
           <div className="mt-4">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Bukti Timbang (Wajib)</label>
             <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
@@ -350,7 +354,6 @@ const FormManifest = () => {
             )}
           </div>
 
-          {/* Submit Button */}
           <div className="pt-4">
             <button
               type="submit"

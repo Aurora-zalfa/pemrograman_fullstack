@@ -4,7 +4,7 @@ import "./App.css";
 
 // Import halaman hasil pemisahan & komponen lain
 import LandingPage from "./pages/LandingPage";
-import Login from "./pages/Login";
+import Login from './components/Login/Login';
 import Dashboard from "./components/Dashboard/Dashboard"; 
 // import FormManifest from "./components/formManifest";
 // import TabelDistribusi from './components/TabelDistribusi';
