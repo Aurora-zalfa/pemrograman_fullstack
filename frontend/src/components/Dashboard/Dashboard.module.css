@@ -7,7 +7,7 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f7f0;
+  /* DIHAPUS: background-color: #f0f7f0; (Biar bg-[#F4F7FE] dari Tailwind jalan) */
   margin: 0;
   padding: 0;
 }
@@ -18,17 +18,21 @@ body {
   min-height: 100vh;
 }
 
-/* ============ SIDEBAR STYLES ============ */
+/* ============ SIDEBAR STYLES (Diubah jadi gaya putih Horizon) ============ */
 .sidebar {
   width: 260px;
-  background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
-  color: white;
+  /* DIUBAH: Sidebar jadi putih, bukan gradasi hijau */
+  background: white; 
+  /* DIUBAH: Warna font sidebar jadi biru gelap, bukan putih */
+  color: #A3AED0; 
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
   position: fixed;
   height: 100vh;
   z-index: 1000;
+  /* DITAMBAH: Shadow halus untuk pembatas sidebar */
+  box-shadow: 2px 0 10px rgba(0,0,0,0.02);
 }
 
 .sidebar.collapsed {
@@ -45,12 +49,13 @@ body {
   padding: 20px;
   text-align: center;
   margin-bottom: 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #F4F7FE; /* Diubah warna bordernya */
 }
 
 .sidebar-header h3 {
   font-size: 1.3rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: #2B3674; /* Font logo Horizon */
 }
 
 .sidebar-nav {
@@ -62,22 +67,25 @@ body {
   display: flex;
   align-items: center;
   padding: 12px 20px;
-  color: white;
+  color: #A3AED0; /* Teks abu-abu */
   text-decoration: none;
   transition: all 0.3s ease;
   margin: 5px 10px;
   border-radius: 8px;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #F4F7FE; /* Hover abu-abu muda */
   transform: translateX(5px);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.2);
-  border-left: 3px solid #a5d6a7;
+  /* Diubah warnanya jadi aktif ala Horizon */
+  background: #F4F7FE; 
+  color: #4318FF; /* Ikon dan teks ungu saat aktif */
+  border-right: 3px solid #4318FF; /* Garis aktif di kanan, bukan kiri */
 }
 
 .nav-item i {
@@ -88,26 +96,27 @@ body {
 
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #F4F7FE;
 }
 
 .btn-logout {
   width: 100%;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  background: #ffebee; /* Merah muda lembut */
   border: none;
-  color: white;
-  border-radius: 8px;
+  color: #c62828; /* Merah untuk logout */
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  font-weight: 600;
 }
 
 .btn-logout:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffcdd2;
 }
 
 /* ============ MAIN CONTENT STYLES ============ */
@@ -115,30 +124,30 @@ body {
   flex: 1;
   margin-left: 260px;
   transition: all 0.3s ease;
+  /* background biarkan kosong agar Tailwind yang mengisi */
 }
 
 .sidebar.collapsed + .main-content {
   margin-left: 70px;
 }
 
-/* Navbar Styles */
+/* Navbar Styles (Diubah jadi transparan/menyatu) */
 .navbar {
-  background: white;
+  /* DIHAPUS: background: white; border-bottom: 3px solid #2e7d32; */
   padding: 15px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 999;
-  border-bottom: 3px solid #2e7d32;
+  backdrop-filter: blur(10px); /* Efek blur kaca khas Horizon */
 }
 
 .navbar-toggle {
   cursor: pointer;
   font-size: 1.2rem;
-  color: #2e7d32;
+  color: #A3AED0; /* Disesuaikan */
 }
 
 .navbar-user {
@@ -149,11 +158,11 @@ body {
 
 #userName {
   font-weight: 600;
-  color: #333;
+  color: #2B3674;
 }
 
 .user-role {
-  background: #2e7d32;
+  background: #4318FF; /* Ungu Horizon */
   color: white;
   padding: 5px 12px;
   border-radius: 20px;
@@ -163,64 +172,23 @@ body {
 
 /* Content Wrapper */
 .content-wrapper {
-  padding: 30px;
+  /* DIHAPUS padding dan warna, biar diatur di .jsx */
   min-height: calc(100vh - 70px);
 }
 
 /* ============ DASHBOARD STYLES ============ */
-.dashboard {
-  padding: 20px;
-}
+/* Bagian Stats-grid dan Stat-card sudah dihapus karena kita panggil via Tailwind di .jsx */
 
-.dashboard h1 {
-  color: #1b5e20;
-  margin-bottom: 30px;
-  font-size: 28px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.stat-card {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-  border-bottom: 3px solid #4caf50;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
-}
-
-.stat-card h3 {
-  color: #2e7d32;
-  margin-bottom: 15px;
-  font-size: 18px;
-}
-
-.stat-card p {
-  font-size: 32px;
-  color: #4caf50;
-  font-weight: bold;
-}
 
 /* ============ DATA MASTER STYLES ============ */
 .master-container {
   padding: 20px;
-  background: #f0f7f0;
+  /* DIHAPUS: background: #f0f7f0; */
   border-radius: 10px;
 }
 
 .page-title {
-  color: #1b5e20;
+  color: #2B3674; /* Disesuaikan */
   margin-bottom: 25px;
   font-size: 24px;
   font-weight: 600;
@@ -230,7 +198,7 @@ body {
   display: flex;
   gap: 10px;
   margin-bottom: 25px;
-  border-bottom: 2px solid #c8e6c9;
+  border-bottom: 2px solid #E2E8F0;
   padding-bottom: 10px;
   flex-wrap: wrap;
 }
@@ -244,16 +212,17 @@ body {
   transition: all 0.3s ease;
   border-radius: 5px;
   font-weight: 500;
-  color: #333;
+  color: #A3AED0;
 }
 
 .tab-btn:hover {
-  background: #c8e6c9;
+  color: #4318FF;
 }
 
 .tab-btn.active {
-  background: #2e7d32;
+  background: #4318FF; /* Ungu Horizon */
   color: white;
+  border-radius: 10px;
 }
 
 .action-bar {
@@ -264,11 +233,11 @@ body {
 
 /* ============ BUTTON STYLES ============ */
 .btn-add {
-  background: #4caf50;
+  background: #4318FF; /* Ungu Horizon */
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
@@ -278,54 +247,54 @@ body {
 }
 
 .btn-add:hover {
-  background: #388e3c;
+  background: #3311DB;
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 10px rgba(67, 24, 255, 0.3);
 }
 
 .btn-delete {
-  background: #dc3545;
-  color: white;
+  background: #ffebee;
+  color: #c62828;
   border: none;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 12px;
 }
 
 .btn-delete:hover {
-  background: #c82333;
+  background: #ffcdd2;
   transform: scale(1.05);
 }
 
 .btn-save {
-  background: #4caf50;
+  background: #05CD99; /* Hijau Horizon */
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .btn-save:hover {
-  background: #388e3c;
+  background: #04A67B;
 }
 
 .btn-cancel {
-  background: #6c757d;
-  color: white;
+  background: #F4F7FE;
+  color: #2B3674;
   border: none;
   padding: 10px 20px;
-  border-radius: 5px;
+  border-radius: 10px;
   cursor: pointer;
   margin-right: 10px;
   transition: all 0.3s ease;
 }
 
 .btn-cancel:hover {
-  background: #5a6268;
+  background: #E2E8F0;
 }
 
 /* ============ TABLE STYLES ============ */
@@ -335,30 +304,33 @@ body {
   border-collapse: collapse;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .data-table thead {
-  background: #2e7d32;
-  color: white;
+  background: white;
+  color: #A3AED0;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 .data-table th {
-  padding: 12px 15px;
+  padding: 15px;
   text-align: left;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .data-table td {
-  padding: 12px 15px;
+  padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid #F4F7FE;
   font-size: 14px;
+  color: #2B3674;
+  font-weight: 600;
 }
 
 .data-table tbody tr:hover {
-  background: #e8f5e9;
+  background: #F4F7FE;
 }
 
 .data-table tbody tr:last-child td {
@@ -377,8 +349,8 @@ body {
 }
 
 .spinner {
-  border: 3px solid #e8f5e9;
-  border-top: 3px solid #4caf50;
+  border: 3px solid #F4F7FE;
+  border-top: 3px solid #4318FF;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -391,51 +363,14 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* ============ ALERT STYLES ============ */
-.alert {
-  padding: 12px 20px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.alert-info {
-  background: #e8f5e9;
-  color: #1b5e20;
-  border: 1px solid #c8e6c9;
-}
-
-.alert-error {
-  background: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
-}
-
-.alert-success {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #a5d6a7;
-}
-
-/* ============ MODAL STYLES ============ */
+/* ============ MODAL STYLES (Disesuaikan warnanya) ============ */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(11, 20, 55, 0.5); /* Blur gelap Horizon */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -443,65 +378,13 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .modal-content {
   background: white;
-  border-radius: 10px;
+  border-radius: 20px;
   width: 500px;
   max-width: 90%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.modal-header {
-  padding: 20px;
-  border-bottom: 1px solid #dee2e6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: #1b5e20;
-  font-size: 20px;
-}
-
-.close-modal {
-  font-size: 28px;
-  cursor: pointer;
-  color: #999;
-  transition: color 0.3s ease;
-}
-
-.close-modal:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 20px;
-}
-
-.modal-footer {
-  padding: 20px;
-  border-top: 1px solid #dee2e6;
-  display: flex;
-  justify-content: flex-end;
 }
 
 /* ============ FORM STYLES ============ */
@@ -513,84 +396,41 @@ body {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: #2B3674;
   font-size: 14px;
 }
 
 .form-control {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  padding: 12px 15px;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
   font-size: 14px;
-  transition: border-color 0.3s ease;
+  color: #2B3674;
+  transition: all 0.3s ease;
 }
 
 .form-control:focus {
   outline: none;
-  border-color: #4caf50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25);
-}
-
-/* ============ RESPONSIVE STYLES ============ */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    position: fixed;
-  }
-  
-  .sidebar.active {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-  }
-  
-  .navbar-toggle {
-    display: block;
-  }
-  
-  .content-wrapper {
-    padding: 15px;
-  }
-  
-  .master-tabs {
-    gap: 5px;
-  }
-  
-  .tab-btn {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .data-table th,
-  .data-table td {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
+  border-color: #4318FF;
+  box-shadow: 0 0 0 2px rgba(67, 24, 255, 0.1);
 }
 
 /* ============ SCROLLBAR STYLES ============ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #e8f5e9;
+  background: #F4F7FE;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4caf50;
-  border-radius: 4px;
+  background: #A3AED0;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2e7d32;
+  background: #4318FF;
 }
-

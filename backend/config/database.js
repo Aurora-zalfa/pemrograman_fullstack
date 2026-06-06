@@ -18,6 +18,7 @@ const pool = mysql.createPool({
  * HELPER: Cek Relasi Transaksi
  * Fungsi ini mengecek apakah ID master sedang digunakan di tabel lain.
  * Digunakan untuk mencegah kerusakan histori transaksi.
+ * Digunakan untuk mencegah kerusakan histori transaksi.
  * * @param {string} table - Nama tabel transaksi (misal: 'pengiriman')
  * @param {string} column - Nama kolom foreign key (misal: 'idsupir')
  * @param {number|string} id - Value ID yang dicek
