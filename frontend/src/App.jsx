@@ -10,6 +10,7 @@ import Dashboard from "./components/Dashboard/Dashboard";
 // import TabelDistribusi from './components/TabelDistribusi';
 import FormManifest from "./components/Transaksi/formManifest";
 import TabelDistribusi from "./components/Transaksi/TabelDistribusi";
+import KotakArsip from './components/Transaksi/KotakArsip'; // Sesuaikan dengan folder components/pages kelompokmu
 /**
  * ========================================================
  * 1. KOMPONEN PROTECTED ROUTE 

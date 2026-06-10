@@ -28,11 +28,10 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-/**
- * Tambahkan ini untuk tugas Zainab (Soft Delete)
- */
+// Fungsi bawaan untuk Manajer (Biarkan saja, jangan dihapus)
 const isManager = (req, res, next) => {
-    if (req.user && req.user.role === 'manajer') {
+    // Pakai .toLowerCase() agar aman jika ketikan di database huruf kecil/besar (manajer / Manajer)
+    if (req.user && req.user.role.toLowerCase() === 'manajer') {
         next();
     } else {
         res.status(403).json({
@@ -42,5 +41,19 @@ const isManager = (req, res, next) => {
     }
 };
 
-// Pastikan keduannya diekspor
-module.exports = { verifyToken, isManager };
+/**
+ * TAMBAHKAN INI UNTUK SPRINT REVISI DATA MASTER ANDA (HAK AKSES PETUGAS)
+ */
+const isPetugas = (req, res, next) => {
+    if (req.user && req.user.role.toLowerCase() === 'petugas') {
+        next();
+    } else {
+        res.status(403).json({
+            success: false,
+            message: "Gagal: Akses ditolak! Fitur ini hanya untuk role Petugas."
+        });
+    }
+};
+
+// Pastikan SEKARANG KETIGANYA diekspor (Tambahkan isPetugas di sini)
+module.exports = { verifyToken, isManager, isPetugas };

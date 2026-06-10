@@ -7,6 +7,9 @@ const { validateId, validateFileUpload } = require('../utils/validator');
 const path = require('path');
 const fs = require('fs');
 
+// PENTING: Import verifyToken dan isManager untuk pengamanan role
+const { verifyToken, isManager } = require('../middleware/auth');
+
 /**
  * STRATEGI TRANSAKSI:
  * 1. Saat CREATE: Validasi agar ID Master (Supir, Truk, dll) yang digunakan is_deleted = 0.
@@ -50,16 +53,6 @@ router.post(
           message: 'Data wajib tidak lengkap (Tanggal, Berat, Supir, dan Truk wajib diisi)'
         });
       }
-
-      // 2. VALIDASI DATA MASTER AKTIF (dikomen sementara, aman untuk testing)
-      // const [supir] = await db.query("SELECT idsupir FROM supir WHERE idsupir = ? AND is_deleted = 0", [supir_idsupir]);
-      // const [truk] = await db.query("SELECT idtruk FROM truk WHERE idtruk = ? AND is_deleted = 0", [truk_idtruk]);
-      // if (supir.length === 0 || truk.length === 0) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: 'Supir atau Truk yang dipilih sudah tidak aktif/dihapus dari sistem.'
-      //   });
-      // }
 
       // ============================================
       // ✅ SPRINT 7: VALIDASI FILE UPLOAD
@@ -145,11 +138,7 @@ router.post(
       });
 
     } catch (error) {
-      // 🔧 FIX: Error handling lebih informatif (AMAN, cuma log)
       console.error("❌ ERROR DI BACKEND:", error.message);
-      console.error("❌ Error code:", error.code);
-      console.error("❌ Error stack:", error.stack);
-      
       res.status(500).json({ 
         success: false, 
         message: 'Gagal membuat distribusi: ' + error.message, 
@@ -161,10 +150,59 @@ router.post(
 
 /**
  * ============================================
- * GET SEMUA DISTRIBUSI (Hanya yang tidak di-soft-delete)
+ * 🛠️ FIX REVISI: GET SEMUA DISTRIBUSI (BERDASARKAN ROLE)
  * ============================================
+ * - Petugas Lapangan: Melihat SEMUA riwayat data transaksi (is_deleted 0 dan 1).
+ * - Manajer Perusahaan: Hanya melihat data aktif yang belum diarsip (is_deleted = 0).
  */
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    let filterCondition = "";
+    
+    // Deteksi role user dari Token JWT (diubah ke huruf kecil agar seragam)
+    const userRole = req.user && req.user.role ? req.user.role.toLowerCase() : "";
+
+    if (userRole === "manajer" || userRole === "manager") {
+      // Jika Manajer, saring data: sembunyikan yang sudah diarsip (is_deleted = 1)
+      filterCondition = "WHERE d.is_deleted = 0";
+      console.log("👔 Role: Manajer -> Memfilter transaksi aktif saja");
+    } else {
+      // Jika Petugas Lapangan, tidak pakai WHERE filter arsip agar semua riwayat tetap muncul
+      filterCondition = "";
+      console.log("👷 Role: Petugas Lapangan -> Menampilkan semua riwayat transaksi");
+    }
+
+    const query = `
+      SELECT 
+        d.*,
+        k.nama_kebun,
+        s.nama_supir,
+        t.no_polisi,
+        p.nama_pabrik
+      FROM distribusi d
+      LEFT JOIN kebun k ON d.kebun_idkebun = k.idkebun
+      LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
+      LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
+      LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
+      ${filterCondition}
+      ORDER BY d.iddistribusi DESC
+    `;
+
+    const [rows] = await db.query(query);
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * ============================================
+ * ✨ FITUR BARU: GET KOTAK ARSIP (KHUSUS MANAJER)
+ * ============================================
+ * Endpoint ini hanya dipanggil oleh Tab/Menu Kotak Arsip di halaman Manajer.
+ * Menarik data yang statusnya sudah diarsipkan (is_deleted = 1).
+ */
+router.get('/archived', verifyToken, isManager, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -178,8 +216,8 @@ router.get('/', async (req, res) => {
       LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
       LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
       LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
-      WHERE d.is_deleted = 0
-      ORDER BY d.iddistribusi DESC
+      WHERE d.is_deleted = 1
+      ORDER BY d.updated_at DESC
     `;
 
     const [rows] = await db.query(query);
@@ -200,8 +238,8 @@ router.put('/:id/status', async (req, res) => {
     const { status: status_baru } = req.body;
     const alurStatus = ["menunggu_memuat", "dalam_perjalanan", "tiba_di_pabrik", "selesai"];
 
-    const [rows] = await db.query('SELECT status FROM distribusi WHERE iddistribusi = ? AND is_deleted = 0', [id]);
-    if (rows.length === 0) return res.status(404).json({ message: "Data distribusi tidak ditemukan atau sudah dihapus" });
+    const [rows] = await db.query('SELECT status FROM distribusi WHERE iddistribusi = ?', [id]);
+    if (rows.length === 0) return res.status(404).json({ message: "Data distribusi tidak ditemukan" });
 
     const status_sekarang = rows[0].status;
     const indexSekarang = alurStatus.indexOf(status_sekarang);
@@ -230,7 +268,7 @@ router.put('/:id/status', async (req, res) => {
 
 /**
  * ============================================
- * UPDATE DISTRIBUSI (LENGKAP) - SPRINT 7 (Polosan Tanpa VerifyToken)
+ * UPDATE DISTRIBUSI (LENGKAP) - SPRINT 7
  * ============================================
  */
 router.put(
@@ -256,13 +294,13 @@ router.put(
         pabrik_idpabrik
       } = req.body;
 
-      const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ? AND is_deleted = 0';
+      const checkQuery = 'SELECT * FROM distribusi WHERE iddistribusi = ?';
       const [existing] = await db.query(checkQuery, [id]);
 
       if (existing.length === 0) {
         return res.status(404).json({
           success: false,
-          message: 'Data distribusi tidak ditemukan atau sudah diarsipkan'
+          message: 'Data distribusi tidak ditemukan'
         });
       }
 
@@ -349,8 +387,9 @@ router.put(
 
 /**
  * ============================================
- * DELETE DISTRIBUSI (SOFT DELETE)
+ * DELETE DISTRIBUSI (ARSIPKAN VIA SOFT DELETE)
  * ============================================
+ * Mengubah is_deleted menjadi 1 dan mencatat updated_at sebagai waktu pengarsipan.
  */
 router.delete('/:id', async (req, res) => {
   try {
@@ -359,7 +398,7 @@ router.delete('/:id', async (req, res) => {
     if (idError) return res.status(400).json({ success: false, message: idError });
 
     const [result] = await db.query(
-      "UPDATE distribusi SET is_deleted = 1 WHERE iddistribusi = ?",
+      "UPDATE distribusi SET is_deleted = 1, updated_at = NOW() WHERE iddistribusi = ?",
       [id]
     );
 

@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/database");
-// Menggunakan destructuring karena auth.js sudah mengekspor verifyToken dan isManager
-const { verifyToken, isManager } = require("../middleware/auth");
+
+// PENTING: Mengambil verifyToken, isManager, dan isPetugas dari middleware auth.js
+const { verifyToken, isManager, isPetugas } = require("../middleware/auth");
 
 /**
  * HELPER FUNCTION: Centralized Error Handling
@@ -17,16 +18,17 @@ const handleError = (res, err) => {
 };
 
 /**
- * TUGAS ZAINAB: DATA MASTER & SOFT DELETE
- * Fokus pada pengelolaan data pondasi dan Audit Trail (updated_at).
+ * REVISI SPRINT 12: DATA MASTER & ROLE-BASED ACCESS CONTROL (RBAC)
+ * Operasi modifikasi data (CRUD) di bawah ini dikunci penuh hanya untuk role PETUGAS.
+ * Role MANAJER hanya diberikan akses membaca data (GET).
  */
 
 /////////////////////////
 // SUPIR
 /////////////////////////
 
-// A. Tambah Data Supir (Tugas Zainab)
-router.post("/supir", verifyToken, async (req, res) => {
+// A. Tambah Data Supir (Hanya Petugas)
+router.post("/supir", verifyToken, isPetugas, async (req, res) => {
   try {
     const { nama_supir, no_hp } = req.body;
     const [result] = await db.query(
@@ -43,7 +45,7 @@ router.post("/supir", verifyToken, async (req, res) => {
   }
 });
 
-// B. Tampil Data Supir (Tugas Zainab)
+// B. Tampil Data Supir (Petugas & Manajer bisa lihat)
 router.get("/supir", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM supir WHERE is_deleted = 0");
@@ -57,8 +59,8 @@ router.get("/supir", verifyToken, async (req, res) => {
   }
 });
 
-// C. Update Data Supir (TAMBAHAN - TUGAS ZAINAB)
-router.put("/supir/:id", verifyToken, async (req, res) => {
+// C. Update Data Supir (Hanya Petugas)
+router.put("/supir/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const { nama_supir, no_hp } = req.body;
@@ -75,8 +77,8 @@ router.put("/supir/:id", verifyToken, async (req, res) => {
   }
 });
 
-// D. Soft Delete Supir (Tugas Zainab - Auth Manajer)
-router.delete("/supir/:id", verifyToken, isManager, async (req, res) => {
+// D. Soft Delete Supir (Hanya Petugas)
+router.delete("/supir/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -106,8 +108,8 @@ router.delete("/supir/:id", verifyToken, isManager, async (req, res) => {
 // KEBUN
 /////////////////////////
 
-// POST - Tambah Kebun (TAMBAHAN)
-router.post("/kebun", verifyToken, async (req, res) => {
+// A. Tambah Kebun (Hanya Petugas)
+router.post("/kebun", verifyToken, isPetugas, async (req, res) => {
   try {
     const { nama_kebun, lokasi } = req.body;
     const [result] = await db.query(
@@ -124,7 +126,7 @@ router.post("/kebun", verifyToken, async (req, res) => {
   }
 });
 
-// GET - Tampil Kebun
+// B. Tampil Kebun (Petugas & Manajer bisa lihat)
 router.get("/kebun", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM kebun WHERE is_deleted = 0");
@@ -134,8 +136,8 @@ router.get("/kebun", verifyToken, async (req, res) => {
   }
 });
 
-// PUT - Update Kebun (TAMBAHAN - TUGAS ZAINAB)
-router.put("/kebun/:id", verifyToken, async (req, res) => {
+// C. Update Kebun (Hanya Petugas)
+router.put("/kebun/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const { nama_kebun, lokasi } = req.body;
@@ -152,8 +154,8 @@ router.put("/kebun/:id", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE - Soft Delete Kebun
-router.delete("/kebun/:id", verifyToken, isManager, async (req, res) => {
+// D. Soft Delete Kebun (Hanya Petugas)
+router.delete("/kebun/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const isUsed = await db.checkRelation("distribusi", "kebun_idkebun", id);
@@ -168,8 +170,8 @@ router.delete("/kebun/:id", verifyToken, isManager, async (req, res) => {
 // PABRIK
 /////////////////////////
 
-// POST - Tambah Pabrik (TAMBAHAN)
-router.post("/pabrik", verifyToken, async (req, res) => {
+// A. Tambah Pabrik (Hanya Petugas)
+router.post("/pabrik", verifyToken, isPetugas, async (req, res) => {
   try {
     const { nama_pabrik, lokasi } = req.body;
     const [result] = await db.query(
@@ -186,7 +188,7 @@ router.post("/pabrik", verifyToken, async (req, res) => {
   }
 });
 
-// GET - Tampil Pabrik
+// B. Tampil Pabrik (Petugas & Manajer bisa lihat)
 router.get("/pabrik", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM pabrik WHERE is_deleted = 0");
@@ -196,8 +198,8 @@ router.get("/pabrik", verifyToken, async (req, res) => {
   }
 });
 
-// PUT - Update Pabrik (TAMBAHAN - TUGAS ZAINAB)
-router.put("/pabrik/:id", verifyToken, async (req, res) => {
+// C. Update Pabrik (Hanya Petugas)
+router.put("/pabrik/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const { nama_pabrik, lokasi } = req.body;
@@ -214,8 +216,8 @@ router.put("/pabrik/:id", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE - Soft Delete Pabrik
-router.delete("/pabrik/:id", verifyToken, isManager, async (req, res) => {
+// D. Soft Delete Pabrik (Hanya Petugas)
+router.delete("/pabrik/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const isUsed = await db.checkRelation("distribusi", "pabrik_idpabrik", id);
@@ -230,8 +232,8 @@ router.delete("/pabrik/:id", verifyToken, isManager, async (req, res) => {
 // TRUK
 /////////////////////////
 
-// POST - Tambah Truk (TAMBAHAN)
-router.post("/truk", verifyToken, async (req, res) => {
+// A. Tambah Truk (Hanya Petugas)
+router.post("/truk", verifyToken, isPetugas, async (req, res) => {
   try {
     const { no_polisi, kapasitas_ton } = req.body;
     const [result] = await db.query(
@@ -248,7 +250,7 @@ router.post("/truk", verifyToken, async (req, res) => {
   }
 });
 
-// GET - Tampil Truk
+// B. Tampil Truk (Petugas & Manajer bisa lihat)
 router.get("/truk", verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM truk WHERE is_deleted = 0");
@@ -258,8 +260,8 @@ router.get("/truk", verifyToken, async (req, res) => {
   }
 });
 
-// PUT - Update Truk (TAMBAHAN - TUGAS ZAINAB)
-router.put("/truk/:id", verifyToken, async (req, res) => {
+// C. Update Truk (Hanya Petugas)
+router.put("/truk/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const { no_polisi, kapasitas_ton } = req.body;
@@ -276,8 +278,8 @@ router.put("/truk/:id", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE - Soft Delete Truk
-router.delete("/truk/:id", verifyToken, isManager, async (req, res) => {
+// D. Soft Delete Truk (Hanya Petugas)
+router.delete("/truk/:id", verifyToken, isPetugas, async (req, res) => {
   try {
     const { id } = req.params;
     const isUsed = await db.checkRelation("distribusi", "truk_idtruk", id);
@@ -295,9 +297,8 @@ router.delete("/truk/:id", verifyToken, isManager, async (req, res) => {
 });
 
 /////////////////////////
-// USERS
+// USERS (Khusus Menu Manajer)
 /////////////////////////
-
 router.get("/users", verifyToken, isManager, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT idusers, username, role FROM users WHERE status = 'active'");

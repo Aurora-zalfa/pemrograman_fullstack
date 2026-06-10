@@ -25,7 +25,8 @@ const LandingPage = () => {
   const toggleNav = () => setIsNavOpen(!isNavOpen);
 
   return (
-    <div className="App font-sans antialiased text-white min-h-screen">
+    // PERBAIKAN: Mengubah text-white global menjadi text-slate-800 agar teks card di bawah tidak dipaksa putih
+    <div className="App font-sans antialiased text-slate-800 min-h-screen bg-[#F8FAFC]">
       
       {/* 1. Menggunakan Navbar Pemisahan */}
       <Navbar isScrolled={isScrolled} isNavOpen={isNavOpen} toggleNav={toggleNav} />
@@ -49,107 +50,101 @@ const LandingPage = () => {
         </svg>
       </div>
 
-{/* ═══════════════════════════════════════
-   SEKSI FITUR UTAMA — Nyawit Hunter
-   ═══════════════════════════════════════ */}
-<section id="fitur" className="relative py-24 overflow-hidden" style={{ background: "#F8FAFC" }}>
-  
-  {/* Background decoration */}
-  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50rem] h-[50rem] bg-[#10B981]/3 rounded-full blur-3xl pointer-events-none" />
+      {/* SEKSI FITUR UTAMA */}
+      <section id="fitur" className="relative py-24 overflow-hidden bg-[#F8FAFC]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[50rem] h-[50rem] bg-[#10B981]/5 rounded-full blur-3xl pointer-events-none" />
 
-  <div className="container px-6 mx-auto relative z-10">
-    
-    {/* Section Header */}
-    <div className="text-center mb-16">
-      <span className="inline-block text-[#10B981] font-bold text-xs tracking-[0.2em] uppercase mb-3 bg-[#10B981]/10 px-4 py-1.5 rounded-full">
-        Fitur Unggulan
-      </span>
-      <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#064E3B] leading-tight">
-        Solusi Cerdas untuk{" "}
-        <span className="relative">
-          <span className="text-[#F59E0B]">Distribusi Sawit</span>
-          <svg className="absolute -bottom-2 left-0 w-full h-2 text-[#F59E0B]/30" viewBox="0 0 100 6" preserveAspectRatio="none">
-            <path d="M0,3 Q50,0 100,3" fill="none" stroke="currentColor" strokeWidth="3" />
-          </svg>
-        </span>
-      </h2>
-      <p className="text-[#064E3B]/50 text-base mt-4 max-w-xl mx-auto">
-        Tiga pilar utama yang menjadikan sistem kami andalan perkebunan modern.
-      </p>
-    </div>
+        <div className="container px-6 mx-auto relative z-10">
+          
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <span className="inline-block text-[#10B981] font-bold text-xs tracking-[0.2em] uppercase mb-3 bg-[#10B981]/10 px-4 py-1.5 rounded-full">
+              Fitur Unggulan
+            </span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#064E3B] leading-tight">
+              Solusi Cerdas untuk{" "}
+              <span className="relative">
+                <span className="text-[#F59E0B]">Distribusi Sawit</span>
+                <svg className="absolute -bottom-2 left-0 w-full h-2 text-[#F59E0B]/30" viewBox="0 0 100 6" preserveAspectRatio="none">
+                  <path d="M0,3 Q50,0 100,3" fill="none" stroke="currentColor" strokeWidth="3" />
+                </svg>
+              </span>
+            </h2>
+            <p className="text-gray-500 text-base mt-4 max-w-xl mx-auto">
+              Tiga pilar utama yang menjadikan sistem kami andalan perkebunan modern.
+            </p>
+          </div>
 
-    {/* Feature Cards */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-      
-      {/* Card 1 */}
-      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#10B981]/20 transition-all duration-500 hover:-translate-y-1">
-        {/* Top accent */}
-        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#10B981] to-[#064E3B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        {/* Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#10B981] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#10B981]/20 group-hover:scale-110 transition-all duration-500">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1" y="3" width="15" height="13" rx="2" />
-            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-            <circle cx="5.5" cy="18.5" r="2.5" />
-            <circle cx="18.5" cy="18.5" r="2.5" />
-          </svg>
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            
+            {/* Card 1 */}
+            <div className="group relative bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+              <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#10B981] to-[#064E3B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#10B981] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#10B981]/20 group-hover:scale-110 transition-all duration-500">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="3" width="15" height="13" rx="2" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                  <circle cx="5.5" cy="18.5" r="2.5" />
+                  <circle cx="18.5" cy="18.5" r="2.5" />
+                </svg>
+              </div>
+              
+              <h3 className="text-lg font-bold text-[#064E3B] mb-3 group-hover:text-[#10B981] transition-colors duration-300">
+                Pelacakan Manifes Riil
+              </h3>
+              {/* PERBAIKAN: Menggunakan warna abu-abu solid Tailwind agar terlihat jelas di semua laptop */}
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Memantau secara berkala alur pengiriman Tandan Buah Segar (TBS) dari berbagai kebun asal menuju pabrik tujuan secara dinamis lewat label status otomatis.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="group relative bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+              <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#10B981] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center mb-6 shadow-lg shadow-[#F59E0B]/10 group-hover:shadow-[#F59E0B]/20 group-hover:scale-110 transition-all duration-500">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  <polyline points="8 2 12 6 16 2" />
+                  <polyline points="8 22 12 18 16 22" />
+                </svg>
+              </div>
+              
+              <h3 className="text-lg font-bold text-[#064E3B] mb-3 group-hover:text-[#F59E0B] transition-colors duration-300">
+                Akurasi Timbangan TBS
+              </h3>
+              {/* PERBAIKAN: Menggunakan warna abu-abu solid Tailwind */}
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Pencatatan data tonase muatan bersih sawit yang presisi, terintegrasi otomatis ke sistem rekapitulasi database untuk mencegah manipulasi berat di lapangan.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="group relative bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+              <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#064E3B] to-[#F59E0B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#043A2C] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#064E3B]/20 group-hover:scale-110 transition-all duration-500">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <polyline points="9 12 11 14 15 10" />
+                </svg>
+              </div>
+              
+              <h3 className="text-lg font-bold text-[#064E3B] mb-3 group-hover:text-[#064E3B] transition-colors duration-300">
+                Otorisasi Jabatan Aman
+              </h3>
+              {/* PERBAIKAN: Menggunakan warna abu-abu solid Tailwind */}
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Pembatasan hak akses operasional yang ketat berbasis peran akun. Memisahkan fungsionalitas input Petugas Lapangan dengan pengawasan laporan Manajer.
+              </p>
+            </div>
+
+          </div>
         </div>
-        
-        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#10B981] transition-colors duration-300">
-          Pelacakan Manifes Riil
-        </h3>
-        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
-          Memantau secara berkala alur pengiriman Tandan Buah Segar (TBS) dari berbagai kebun asal menuju pabrik tujuan secara dinamis lewat label status otomatis.
-        </p>
-      </div>
-        
-
-      {/* Card 2 */}
-      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#F59E0B]/20 transition-all duration-500 hover:-translate-y-1">
-        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#10B981] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#F59E0B] to-[#D97706] flex items-center justify-center mb-6 shadow-lg shadow-[#F59E0B]/10 group-hover:shadow-[#F59E0B]/20 group-hover:scale-110 transition-all duration-500">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23" />
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            <polyline points="8 2 12 6 16 2" />
-            <polyline points="8 22 12 18 16 22" />
-          </svg>
-        </div>
-        
-        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#F59E0B] transition-colors duration-300">
-          Akurasi Timbangan TBS
-        </h3>
-        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
-          Pencatatan data tonase muatan bersih sawit yang presisi, terintegrasi otomatis ke sistem rekapitulasi database untuk mencegah manipulasi berat di lapangan.
-        </p>
-        
-        
-      </div>
-
-      {/* Card 3 */}
-      <div className="group relative bg-white rounded-2xl p-8 border border-[#064E3B]/5 shadow-sm hover:shadow-xl hover:border-[#064E3B]/30 transition-all duration-500 hover:-translate-y-1">
-        <div className="absolute top-0 left-8 right-8 h-0.5 bg-gradient-to-r from-[#064E3B] to-[#F59E0B] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#064E3B] to-[#043A2C] flex items-center justify-center mb-6 shadow-lg shadow-[#064E3B]/10 group-hover:shadow-[#064E3B]/20 group-hover:scale-110 transition-all duration-500">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            <polyline points="9 12 11 14 15 10" />
-          </svg>
-        </div>
-        
-        <h3 className="text-lg font-black text-[#064E3B] mb-3 group-hover:text-[#064E3B] transition-colors duration-300">
-          Otorisasi Jabatan Aman
-        </h3>
-        <p className="text-[#064E3B]/60 text-sm leading-relaxed">
-          Pembatasan hak akses operasional yang ketat berbasis peran akun. Memisahkan fungsionalitas input Petugas Lapangan dengan pengawasan laporan Manajer.
-        </p>
-      </div>
-
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* SEKSI TENTANG SISTEM */}
       <section id="tentang" className="py-20 bg-gray-50">
@@ -161,7 +156,7 @@ const LandingPage = () => {
                   Digitalisasi Ekosistem Distribusi Sawit yang Transparan dan Terintegrasi
                 </h2>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-6">
-                  <span className="text-green-700 font-semibold">PalmTrack</span> adalah platform manajemen dan monitoring logistik kelapa sawit berbasis web yang dirancang khusus untuk mentransformasi pencatatan konvensional menjadi ekosistem digital yang minim risiko kesalahan data.
+                  <span className="text-green-700 font-semibold">PalmTrack</span> adalah platform manajemen and monitoring logistik kelapa sawit berbasis web yang dirancang khusus untuk mentransformasi pencatatan konvensional menjadi ekosistem digital yang minim risiko kesalahan data.
                 </p>
                 <p className="text-gray-600 text-base md:text-lg leading-relaxed">
                   Dengan menjembatani aliran informasi dari sektor hulu (kebun kelapa sawit) hingga ke sektor hilir (pabrik pengolahan), aplikasi ini menyajikan visibilitas total terhadap pergerakan manifes truk dan akurasi data tonase secara <span className="text-green-700 font-semibold">real-time</span> demi meningkatkan efisiensi operasional harian perusahaan.
