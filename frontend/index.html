@@ -1,35 +1,67 @@
-
+<!DOCTYPE html>
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Tailwind Starter Template</title>
-    <meta name="description" content="Simple landing page" />
+    <title>Nyawit Hunter — Sistem Manajemen Distribusi TBS</title>
+    <meta name="description" content="Platform digital perkebunan kelapa sawit untuk monitoring produksi & pengiriman Tandan Buah Segar secara real-time" />
     
-    <!-- Import Font -->
-    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" />
+    <!-- ── Font Sora (Primary) ── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- ── Font Awesome Icons ── -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
-    <!-- Tailwind CSS CDN (Untuk development cepat, bisa diganti dengan konfigurasi Tailwind build) -->
-    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css"/>
-    
-    <!-- Style global Anda. Gradient dll bisa ditaruh di file CSS terpisah (App.css) dan diimpor di komponen -->
+    <!-- ── Global Style (Minimal) ── -->
     <style>
-      body {
-        font-family: 'Source Sans Pro', sans-serif;
+      /* Reset dasar */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      .gradient {
-        background: linear-gradient(90deg, #d53369 0%, #daae51 100%);
+      
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      body {
+        font-family: 'Sora', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* Hilangkan outline default tapi tetap accessible */
+      :focus-visible {
+        outline: 2px solid #10B981;
+        outline-offset: 2px;
+      }
+      
+      /* Scrollbar custom */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #042B21;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #064E3B;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #065f4a;
       }
     </style>
   </head>
-  <body class="leading-normal tracking-normal text-white gradient">
+  
+  <body>
     <!-- React akan merender seluruh aplikasi ke dalam div ini -->
     <div id="root"></div>
     
     <!-- Vite akan menyuntikkan script aplikasi secara otomatis -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
-
 </html>
