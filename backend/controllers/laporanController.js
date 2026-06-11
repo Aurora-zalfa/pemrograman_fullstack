@@ -5,10 +5,13 @@ const db = require('../config/database');
 exports.getLaporanHarian = async (req, res) => {
   try {
     const { tanggal_mulai, tanggal_selesai, kebun_id, pabrik_id, sort } = req.query;
+    console.log("=== FILTER LAPORAN ===");
+    console.log("tanggal_mulai:", tanggal_mulai);
+    console.log("tanggal_selesai:", tanggal_selesai);
 
-  
+
     // VALIDASI INPUT
-  
+
     if (!tanggal_mulai || !tanggal_selesai) {
       return res.status(400).json({
         status: "error",
@@ -39,7 +42,7 @@ exports.getLaporanHarian = async (req, res) => {
       });
     }
 
-  
+
     // SORTING
     let order = "DESC"; // default
 

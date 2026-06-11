@@ -35,7 +35,15 @@ const FilterLaporan = ({ onFilter, initialTanggalMulai, initialTanggalSelesai })
   };
 
   return (
-    <div style={{ background: 'white', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
+    <div
+      className={styles.filterLaporanPrintHide}
+      style={{
+        background: 'white',
+        padding: '20px',
+        borderRadius: '10px',
+        marginBottom: '20px'
+      }}
+    >
       <h3 style={{ marginBottom: '15px', color: '#1b5e20' }}>Filter Laporan</h3>
       <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <div>
