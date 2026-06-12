@@ -36,8 +36,17 @@ const MasterData = () => {
   };
 
   useEffect(() => {
-    loadMasterData();
-  }, [activeMasterType]);
+  console.log('🔥 MasterData mounted - type:', activeMasterType);
+  const loadData = async () => {
+    try {
+      await loadMasterData();
+      console.log('✅ Master data fetched');
+    } catch (error) {
+      console.error('❌ Error loading master data:', error);
+    }
+  };
+  loadData();
+}, [activeMasterType]);
 
   // Format tanggal
   const formatDate = (dateString) => {

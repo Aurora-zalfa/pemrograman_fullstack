@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from "react"; 
+import { useState, useEffect } from "react"; 
 import axiosInstance from "../../utils/axios";
 import styles from "../Dashboard/Dashboard.module.css";
 import Container from "../Container"; 
 
 const FormManifest = () => {
-  // 🔒 SECURITY GATE: Ambil role akun dari localStorage
-  const userRole = localStorage.getItem('user_role') || 'manajer';
+  // 🔒 SECURITY GATE: Ambil role akun dari localStorage (CASE-INSENSITIVE)
+  const userRoleRaw = localStorage.getItem('user_role') || '';
+  const userRole = userRoleRaw.toLowerCase().trim(); // NORMALIZE: lowercase & trim
+  
+  console.log('🔐 FormManifest - Raw Role:', userRoleRaw);
+  console.log('🔐 FormManifest - Normalized Role:', userRole);
 
   // State untuk form data (MATCH dengan backend distribusi.js)
   const [formData, setFormData] = useState({
     tanggal_kirim: "",
     berat_tbs: "",
-    users_idusers: localStorage.getItem('userId') || "", // Ambil dari login
+    users_idusers: localStorage.getItem('userId') || "",
     supir_idsupir: "",
     truk_idtruk: "",
     kebun_idkebun: "",
@@ -41,7 +45,7 @@ const FormManifest = () => {
 
   // Fetch master data dari API Zen (hanya dijalankan jika user BUKAN manajer untuk menghemat bandwidth)
   useEffect(() => {
-    if (userRole === 'manajer') return; // Bypass fetch data jika manajer
+    if (userRole === 'manajer' || userRole.includes('manajer')) return;
 
     const fetchMasterData = async () => {
       try {
@@ -182,16 +186,23 @@ const FormManifest = () => {
     const actualIdKey = idKey || `id${name.replace("_id", "")}`;
     
     return (
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+      <div className={`${styles['form-group-manifest']} ${styles['w-full']}`}>
+        <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
+          {label} <span className={styles['required']}>*</span>
+        </label>
         {masterLoading ? (
-          <input type="text" placeholder="Memuat data..." className="w-full p-2.5 border border-gray-300 rounded-lg bg-gray-100" disabled />
+          <input 
+            type="text" 
+            placeholder="Memuat data..." 
+            className={`${styles['form-control-manifest']} ${styles['bg-gray-100']}`} 
+            disabled 
+          />
         ) : hasData ? (
           <select
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
+            className={styles['form-control-manifest']}
             required
           >
             <option value="">-- Pilih {label} --</option>
@@ -212,7 +223,7 @@ const FormManifest = () => {
             value={formData[name]}
             onChange={handleChange}
             placeholder={placeholder}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
+            className={styles['form-control-manifest']}
             required
           />
         )}
@@ -220,15 +231,15 @@ const FormManifest = () => {
     );
   };
 
-  // 🔒 TUNING KONTRAST: Banner Manajer sekarang menggunakan warna yang tajam dan kontras tinggi
-  if (userRole === 'manajer') {
+  // 🔒 TUNING KONTRAST: Banner Manajer (WARNA HITAM) - CASE INSENSITIVE
+  if (userRole === 'manajer' || userRole.includes('manajer')) {
     return (
       <Container>
-        <div className="p-5 bg-amber-100 border border-amber-300 text-amber-950 rounded-xl text-left shadow-sm mb-6">
-          <p className="text-sm font-bold flex items-center gap-2 text-amber-950">
-             Hak Akses Terbatas (Manajer Pemantau)
+        <div className={`${styles['alert']} ${styles['alert-info']} ${styles['p-4']} ${styles['rounded-lg']} ${styles['mb-6']}`}>
+          <p className={`${styles['text-sm']} ${styles['font-bold']} ${styles['flex']} ${styles['items-center']} ${styles['gap-2']}`} style={{ color: '#000000' }}>
+            🚫 Hak Akses Terbatas (Manajer Pemantau)
           </p>
-          <p className="text-xs text-amber-950 mt-1.5 font-semibold leading-relaxed">
+          <p className={`${styles['text-xs']} ${styles['mt-2']} ${styles['font-semibold']}`} style={{ color: '#000000' }}>
             Formulir pendaftaran manifes distribusi baru disembunyikan secara otomatis. Otoritas akun Anda diset khusus untuk peninjauan log data (*Read-Only*) dan pengarsipan berkas demi keamanan data lapangan.
           </p>
         </div>
@@ -239,132 +250,180 @@ const FormManifest = () => {
   // JIKA BUKAN MANAJER (PETUGAS), TAMPILKAN FORM SEPERTI BIASA
   return (
     <Container>
-      <div className="p-6 w-full bg-white rounded-lg shadow-md text-left">
-        <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifes Distribusi Baru</h2>
+      <div className={`${styles['form-manifest-container']} ${styles['w-full']} ${styles['p-6']}`}>
+        <h2 className={`${styles['form-manifest-title']} ${styles['mb-6']}`}>
+          📝 Input Manifes Distribusi Baru
+        </h2>
         
+        {/* Pesan Alert */}
         {pesan.text && (
-          <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
-            pesan.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }`}>
+          <div className={`${styles['alert']} ${pesan.type === "success" ? styles['alert-success'] : styles['alert-error']} ${styles['mb-4']} ${styles['p-4']} ${styles['rounded-lg']} ${styles['text-sm']} ${styles['font-medium']}`}>
             {pesan.text}
           </div>
         )}
 
+        {/* Upload Progress */}
         {loading && uploadProgress > 0 && (
-          <div className="mb-4">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className={`${styles['mb-4']}`}>
+            <div className={`${styles['w-full']} ${styles['bg-gray-200']} ${styles['rounded-full']} ${styles['h-2.5']}`}>
               <div 
-                className="bg-green-600 h-2.5 rounded-full transition-all duration-300" 
+                className={`${styles['bg-green-600']} ${styles['h-2.5']} ${styles['rounded-full']} ${styles['transition-all']}`} 
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Mengupload: {uploadProgress}%</p>
+            <p className={`${styles['text-xs']} ${styles['text-gray-600']} ${styles['mt-2']}`}>Mengupload: {uploadProgress}%</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengiriman</label>
-              <input
-                type="date"
-                name="tanggal_kirim"
-                value={formData.tanggal_kirim}
-                onChange={handleChange}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          {/* Section 1: Informasi Pengiriman */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>📦 Informasi Pengiriman</h3>
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
+              <div className={styles['form-group-manifest']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
+                  Tanggal Pengiriman <span className={styles['required']}>*</span>
+                </label>
+                <input
+                  type="date"
+                  name="tanggal_kirim"
+                  value={formData.tanggal_kirim}
+                  onChange={handleChange}
+                  className={styles['form-control-manifest']}
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Berat TBS (kg)</label>
-              <input
-                type="number"
-                name="berat_tbs"
-                value={formData.berat_tbs}
-                onChange={handleChange}
-                placeholder="Contoh: 5000"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
-                required
-              />
+              <div className={styles['form-group-manifest']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
+                  Berat TBS (kg) <span className={styles['required']}>*</span>
+                </label>
+                <input
+                  type="number"
+                  name="berat_tbs"
+                  value={formData.berat_tbs}
+                  onChange={handleChange}
+                  placeholder="Contoh: 5000"
+                  className={styles['form-control-manifest']}
+                  required
+                />
+              </div>
             </div>
-
-            {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
-            {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
-            {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
-            {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Status Awal Pengiriman</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
+          {/* Section 2: Pihak Terkait */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>👥 Pihak Terkait</h3>
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
+              {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
+              {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
+              {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
+              {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
+            </div>
+          </div>
+
+          {/* Section 3: Status & Dokumen */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>📋 Status & Dokumen</h3>
+            
+            <div className={`${styles['form-group-manifest']} ${styles['mb-6']}`}>
+              <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>Status Awal Pengiriman</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className={styles['form-control-manifest']}
+              >
+                <option value="menunggu_memuat">Menunggu Memuat</option>
+                <option value="dalam_perjalanan">Dalam Perjalanan</option>
+                <option value="tiba_di_pabrik">Tiba di Pabrik</option>
+                <option value="selesai">Selesai</option>
+              </select>
+            </div>
+
+            {/* File Upload Section */}
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
+              <div className={styles['file-upload-section']}>
+                <label className={`${styles['file-upload-label']} ${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
+                  📄 Surat Jalan (Wajib)
+                </label>
+                <p className={styles['file-upload-hint']} style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                  Format: JPG, PNG, PDF | Max: 5MB
+                </p>
+                <label className={styles['file-upload-wrapper-manifest']}>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileChange(e, "surat_jalan")}
+                    required
+                  />
+                  <div className={styles['file-upload-text']}>
+                    <span>{suratJalan ? suratJalan.name : 'Klik untuk upload surat jalan'}</span>
+                    <span className={styles['file-upload-button']}>Choose File</span>
+                  </div>
+                </label>
+                {previewSuratJalan && (
+                  <div className={`${styles['mt-4']} ${styles['p-4']} ${styles['bg-gray-50']} ${styles['rounded-lg']} ${styles['border']}`}>
+                    <p className={`${styles['text-xs']} ${styles['text-gray-600']} ${styles['mb-2']} ${styles['font-medium']}`}>Preview:</p>
+                    {suratJalan?.type.includes("pdf") ? (
+                      <iframe src={previewSuratJalan} className={`${styles['w-full']} ${styles['h-40']} ${styles['border']} ${styles['rounded']}`} title="Preview Surat Jalan" />
+                    ) : (
+                      <img src={previewSuratJalan} alt="Preview" className={`${styles['max-h-40']} ${styles['rounded']} ${styles['border']} ${styles['object-contain']}`} />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles['file-upload-section']}>
+                <label className={`${styles['file-upload-label']} ${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
+                  ⚖️ Bukti Timbang (Wajib)
+                </label>
+                <p className={styles['file-upload-hint']} style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                  Format: JPG, PNG, PDF | Max: 5MB
+                </p>
+                <label className={styles['file-upload-wrapper-manifest']}>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileChange(e, "bukti_timbang")}
+                    required
+                  />
+                  <div className={styles['file-upload-text']}>
+                    <span>{buktiTimbang ? buktiTimbang.name : 'Klik untuk upload bukti timbang'}</span>
+                    <span className={styles['file-upload-button']}>Choose File</span>
+                  </div>
+                </label>
+                {previewBuktiTimbang && (
+                  <div className={`${styles['mt-4']} ${styles['p-4']} ${styles['bg-gray-50']} ${styles['rounded-lg']} ${styles['border']}`}>
+                    <p className={`${styles['text-xs']} ${styles['text-gray-600']} ${styles['mb-2']} ${styles['font-medium']}`}>Preview:</p>
+                    {buktiTimbang?.type.includes("pdf") ? (
+                      <iframe src={previewBuktiTimbang} className={`${styles['w-full']} ${styles['h-40']} ${styles['border']} ${styles['rounded']}`} title="Preview Bukti Timbang" />
+                    ) : (
+                      <img src={previewBuktiTimbang} alt="Preview" className={`${styles['max-h-40']} ${styles['rounded']} ${styles['border']} ${styles['object-contain']}`} />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className={`${styles['form-actions-manifest']} ${styles['flex']} ${styles['justify-end']} ${styles['gap-4']} ${styles['mt-6']} ${styles['pt-6']} ${styles['border-t']}`}>
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className={styles['btn-cancel-manifest']}
             >
-              <option value="menunggu_memuat">Menunggu Memuat</option>
-              <option value="dalam_perjalanan">Dalam Perjalanan</option>
-              <option value="tiba_di_pabrik">Tiba di Pabrik</option>
-              <option value="selesai">Selesai</option>
-            </select>
-          </div>
-
-          <div className="border-t pt-4 mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Surat Jalan (Wajib)</label>
-            <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileChange(e, "surat_jalan")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-              required
-            />
-            {previewSuratJalan && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
-                {suratJalan?.type.includes("pdf") ? (
-                  <iframe src={previewSuratJalan} className="w-full h-40 border rounded" title="Preview Surat Jalan" />
-                ) : (
-                  <img src={previewSuratJalan} alt="Preview" className="max-h-40 rounded border object-contain" />
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Bukti Timbang (Wajib)</label>
-            <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileChange(e, "bukti_timbang")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-              required
-            />
-            {previewBuktiTimbang && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
-                {buktiTimbang?.type.includes("pdf") ? (
-                  <iframe src={previewBuktiTimbang} className="w-full h-40 border rounded" title="Preview Bukti Timbang" />
-                ) : (
-                  <img src={previewBuktiTimbang} alt="Preview" className="max-h-40 rounded border object-contain" />
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="pt-4">
+              ❌ Batal
+            </button>
             <button
               type="submit"
               disabled={loading}
-              className={`w-full md:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-700 hover:to-green-600 text-white font-bold rounded-lg shadow-md transition-all ${
-                loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg"
-              }`}
+              className={styles['btn-submit-manifest']}
             >
               {loading 
                 ? (uploadProgress > 0 ? `Mengupload ${uploadProgress}%...` : "Menyimpan...") 
-                : "Simpan Manifes Distribusi"}
+                : "✅ Simpan Manifes Distribusi"}
             </button>
           </div>
         </form>
