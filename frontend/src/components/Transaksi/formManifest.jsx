@@ -107,7 +107,7 @@ const FormManifest = () => {
     }
   };
 
-  // Handle submit dengan upload file
+  // 🛠️ PERBAIKAN UTAMA: Handle submit dengan konversi tipe data payload ke angka murni
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -129,9 +129,22 @@ const FormManifest = () => {
       const data = new FormData();
       const userIdToSubmit = formData.users_idusers || localStorage.getItem('userId') || '1';
       
+      // Proses pembersihan data agar disukai oleh database MySQL backend
       Object.keys(formData).forEach((key) => {
         if (key === 'users_idusers') {
-          data.append(key, userIdToSubmit);
+          data.append(key, String(userIdToSubmit));
+        } else if (key === 'berat_tbs') {
+          data.append(key, Number(formData.berat_tbs)); // Konversi berat ke Number murni
+        } else if (
+          key === 'supir_idsupir' || 
+          key === 'truk_idtruk' || 
+          key === 'kebun_idkebun' || 
+          key === 'pabrik_idpabrik'
+        ) {
+          // Konversi String ID dari Dropdown menjadi Integer Angka untuk Foreign Key DB
+          if (formData[key]) {
+            data.append(key, parseInt(formData[key], 10));
+          }
         } else if (formData[key]) {
           data.append(key, formData[key]);
         }
@@ -150,6 +163,7 @@ const FormManifest = () => {
 
       setPesan({ type: "success", text: "Data distribusi berhasil dibuat!" });
       
+      // Reset State Form
       setFormData({
         tanggal_kirim: "",
         berat_tbs: "",
@@ -172,9 +186,10 @@ const FormManifest = () => {
 
     } catch (error) {
       console.error("Error submit:", error);
+      const pesanErrorBackend = error.response?.data?.message || error.response?.data?.error || error.message;
       setPesan({ 
         type: "error", 
-        text: "Gagal: " + (error.response?.data?.message || error.message) 
+        text: "Gagal Simpan: " + pesanErrorBackend 
       });
     } finally {
       setLoading(false);

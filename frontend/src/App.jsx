@@ -1,42 +1,11 @@
+// src/App.jsx
 import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom"; // Selesai diperbaiki: Menambahkan Link di sini
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 
-// Import halaman hasil pemisahan & komponen lain
-import LandingPage from "./pages/LandingPage";
-import Login from './components/Login/Login';
-import Dashboard from "./components/Dashboard/Dashboard"; 
-// import FormManifest from "./components/formManifest";
-// import TabelDistribusi from './components/TabelDistribusi';
-import FormManifest from "./components/Transaksi/formManifest";
-import TabelDistribusi from "./components/Transaksi/TabelDistribusi";
-import KotakArsip from './components/Transaksi/KotakArsip'; // Sesuaikan dengan folder components/pages kelompokmu
-/**
- * ========================================================
- * 1. KOMPONEN PROTECTED ROUTE 
- * ========================================================
- */
-const ProtectedRoute = ({ children, isAuthenticated, userRole, allowedRoles }) => {
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+// Import fungsi router dan guard dari file terpisah yang baru dibuat
+import { getAppRoutes, ProtectedRoute } from "./routes";
 
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-// Selesai diperbaiki: Fungsi duplikat "const LandingPage = () => { ... }" 
-// yang tabrakan di file ini sudah dihapus sepenuhnya karena kodenya sudah aman 
-// berada di dalam file eksternal terpisah yaitu "src/pages/LandingPage.jsx"!
-
-/**
- * ========================================================
- * 2. KOMPONEN ROUTER UTAMA (APP)
- * ========================================================
- */
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null); 
@@ -75,50 +44,34 @@ function App() {
     );
   }
 
+  // Ambil data array konfigurasi rute dari src/routes.js
+  const routes = getAppRoutes(handleLoginSuccess, handleLogout, isAuthenticated, userRole);
+
   return (
     <Router>
       <Routes>
-        {/* Rute Halaman Depan Umum */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
-        
-        {/* Rute Area Dashboard Utama */}
-        <Route 
-          path="/dashboard/*" 
-          element={
-            <ProtectedRoute 
-              isAuthenticated={isAuthenticated} 
-              userRole={userRole}
-              allowedRoles={["manajer", "petugas"]} 
-            >
-              <Dashboard userRole={userRole} onLogout={handleLogout} />
-            </ProtectedRoute>
-          } 
-        />
-        {/* <Route 
-          path="/manifest" 
-          element={
-            <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500 py-12">
-              <FormManifest />
-              <div className="my-10"></div>
-              <TabelDistribusi />
-            </div>
-          } 
-        /> */}
-        
-<Route 
-  path="/manifest"
-  element={
-    <div className="min-h-screen bg-gradient-to-r from-pink-500 via-red-400 to-yellow-500">
-      <FormManifest />
-      <div className="my-10"></div>
-      <TabelDistribusi />
-    </div>
-  }
-/>
+        {routes.map((route, index) => (
+          <Route 
+            key={index}
+            path={route.path}
+            element={
+              route.isProtected ? (
+                <ProtectedRoute
+                  isAuthenticated={isAuthenticated}
+                  userRole={userRole}
+                  allowedRoles={route.allowedRoles}
+                >
+                  {route.element}
+                </ProtectedRoute>
+              ) : (
+                route.element
+              )
+            }
+          />
+        ))}
       </Routes>
     </Router>
   );
-}; // <-- PASTIKAN ADA TITIK KOMA SETELAH KURUNG KURAWAL ( }; )
+}
 
 export default App;

@@ -16,10 +16,11 @@ const TabelDistribusi = () => {
   // 🔒 SECURITY ACCESS: Ambil role akun yang login (petugas / manajer)
   const userRole = localStorage.getItem('user_role') || 'manajer'; 
 
-  // --- AXIOS FETCHING ---
+  // --- AXIOS FETCHING STANDARD ---
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Mengambil seluruh data distribusi sekaligus tanpa parameter query pencarian
       const response = await axiosInstance.get('/api/distribusi');
       setDataDistribusi(response.data.data || []);
     } catch (error) {
@@ -111,12 +112,21 @@ const TabelDistribusi = () => {
       .join(' ');
   };
 
-  // --- CLIENT-SIDE SEARCH FILTER ---
+  // 🛠️ FILTER LOKAL DI FRONTEND (Menyaring nama supir, nomor polisi, dan format tanggal kustom)
   const filteredData = (dataDistribusi || []).filter((item) => {
     const keyword = searchKeyword.toLowerCase();
+    
     const namaSupir = item.nama_supir ? item.nama_supir.toLowerCase() : '';
     const noPolisi = item.no_polisi ? item.no_polisi.toLowerCase() : '';
-    return namaSupir.includes(keyword) || noPolisi.includes(keyword);
+    
+    // Dapatkan juga teks tanggal terformat agar user bisa mencari berdasarkan nama bulan atau tahun
+    const tanggalTerformat = item.tanggal_kirim ? formatTanggal(item.tanggal_kirim).toLowerCase() : '';
+
+    return (
+      namaSupir.includes(keyword) || 
+      noPolisi.includes(keyword) || 
+      tanggalTerformat.includes(keyword)
+    );
   });
 
   return (
