@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import heroImg from "../../assets/hero.png";
 
-const Login = ({ onLoginSuccess }) => {
+// 1. IMPORT AUTHCONTEXT UNTUK GLOBAL STATE MANAGEMENT
+import { AuthContext } from '../../context/AuthContext';
+
+const Login = () => {
   const navigate = useNavigate();
+
+  // 2. AMBIL FUNGSI LOGIN DARI GLOBAL STATE CONTEXT
+  const { login } = useContext(AuthContext);
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({ 
@@ -38,10 +44,10 @@ const Login = ({ onLoginSuccess }) => {
             if (userId) {
               localStorage.setItem('userId', userId);
             }
-            localStorage.setItem('token', token);
-            localStorage.setItem('user_role', role); 
             
-            onLoginSuccess(token, role);
+            // 3. PANGGIL FUNGSI LOGIN GLOBAL CONTEXT (OTOMATIS MENGESET LOCALSTORAGE & GLOBAL STATE)
+            login(token, role);
+
             alert(`Login Berhasil! Selamat datang ${formData.username}.`); 
             navigate('/dashboard'); 
           } else {
