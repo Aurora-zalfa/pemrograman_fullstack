@@ -339,8 +339,15 @@ const FormManifest = () => {
             </div>
           </div>
 
-          {/* ===== SECTION 3: Status & Dokumen ===== */}
-          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+          {/* ===== SECTION 3: Status & Dokumen (NO BORDER) ===== */}
+          <div 
+            className={`${styles['form-section-manifest']} ${styles['mb-6']}`}
+            style={{ 
+              borderBottom: 'none',
+              marginBottom: '0',
+              paddingBottom: '0'
+            }}
+          >
             <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`} style={{ color: '#012A0D' }}>
               📋 Status & Dokumen
             </h3>
@@ -362,7 +369,7 @@ const FormManifest = () => {
               </select>
             </div>
 
-            {/* ===== FILE UPLOAD SECTION - DIPERBAIKI ===== */}
+            {/* ===== FILE UPLOAD SECTION - CARD STYLE ===== */}
             <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-6']}`}>
               {/* Surat Jalan */}
               <div className={styles['file-upload-section']}>
@@ -379,20 +386,21 @@ const FormManifest = () => {
                   style={{
                     border: '2px dashed #dcfce7',
                     borderRadius: '12px',
-                    padding: '16px',
+                    padding: '20px',
                     textAlign: 'center',
                     transition: 'all 0.3s ease',
                     background: '#fafbfc',
                     cursor: 'pointer',
-                    display: 'block'
+                    display: 'block',
+                    minHeight: '140px'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.borderColor = '#F1AD00';
-                    e.target.style.background = '#f0fdf4';
+                    e.currentTarget.style.borderColor = '#F1AD00';
+                    e.currentTarget.style.background = '#f0fdf4';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.borderColor = '#dcfce7';
-                    e.target.style.background = '#fafbfc';
+                    e.currentTarget.style.borderColor = '#dcfce7';
+                    e.currentTarget.style.background = '#fafbfc';
                   }}
                 >
                   <input
@@ -403,9 +411,9 @@ const FormManifest = () => {
                     required
                     style={{ display: 'none' }}
                   />
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
-                    <span style={{ fontSize: '28px' }}>📁</span>
-                    <span style={{ color: '#012A0D', fontWeight: '500' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '32px' }}>📁</span>
+                    <span style={{ color: '#012A0D', fontWeight: '500', fontSize: '14px' }}>
                       {suratJalan ? suratJalan.name : 'Klik untuk upload surat jalan'}
                     </span>
                     <span 
@@ -413,12 +421,13 @@ const FormManifest = () => {
                         background: 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)',
                         color: '#F1AD00',
                         border: '2px solid #F1AD00',
-                        padding: '6px 16px',
+                        padding: '8px 20px',
                         borderRadius: '8px',
                         fontSize: '12px',
                         fontWeight: '600',
                         cursor: 'pointer',
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        marginTop: '4px'
                       }}
                     >
                       Pilih File
@@ -441,7 +450,7 @@ const FormManifest = () => {
                 )}
               </div>
 
-              {/* Bukti Timbang */}
+              {/* Bukti Timbang - ICON ⚖️ */}
               <div className={styles['file-upload-section']}>
                 <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-1']}`} style={{ color: '#012A0D' }}>
                   ⚖️ Bukti Timbang <span style={{ color: '#ef4444' }}>*</span>
@@ -456,20 +465,21 @@ const FormManifest = () => {
                   style={{
                     border: '2px dashed #dcfce7',
                     borderRadius: '12px',
-                    padding: '16px',
+                    padding: '20px',
                     textAlign: 'center',
                     transition: 'all 0.3s ease',
                     background: '#fafbfc',
                     cursor: 'pointer',
-                    display: 'block'
+                    display: 'block',
+                    minHeight: '140px'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.borderColor = '#F1AD00';
-                    e.target.style.background = '#f0fdf4';
+                    e.currentTarget.style.borderColor = '#F1AD00';
+                    e.currentTarget.style.background = '#f0fdf4';
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.borderColor = '#dcfce7';
-                    e.target.style.background = '#fafbfc';
+                    e.currentTarget.style.borderColor = '#dcfce7';
+                    e.currentTarget.style.background = '#fafbfc';
                   }}
                 >
                   <input
@@ -480,9 +490,9 @@ const FormManifest = () => {
                     required
                     style={{ display: 'none' }}
                   />
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
-                    <span style={{ fontSize: '28px' }}>📊</span>
-                    <span style={{ color: '#012A0D', fontWeight: '500' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '32px' }}>⚖️</span>
+                    <span style={{ color: '#012A0D', fontWeight: '500', fontSize: '14px' }}>
                       {buktiTimbang ? buktiTimbang.name : 'Klik untuk upload bukti timbang'}
                     </span>
                     <span 
@@ -490,12 +500,13 @@ const FormManifest = () => {
                         background: 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)',
                         color: '#F1AD00',
                         border: '2px solid #F1AD00',
-                        padding: '6px 16px',
+                        padding: '8px 20px',
                         borderRadius: '8px',
                         fontSize: '12px',
                         fontWeight: '600',
                         cursor: 'pointer',
-                        pointerEvents: 'none'
+                        pointerEvents: 'none',
+                        marginTop: '4px'
                       }}
                     >
                       Pilih File
@@ -520,14 +531,12 @@ const FormManifest = () => {
             </div>
           </div>
 
-          {/* ===== ACTION BUTTONS ===== */}
+          {/* ===== ACTION BUTTONS - NO BORDER ===== */}
           <div style={{
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
-            marginTop: '28px',
-            paddingTop: '24px',
-            borderTop: '2px solid #e5f0e8'
+            marginTop: '28px'
           }}>
             <button
               type="button"
