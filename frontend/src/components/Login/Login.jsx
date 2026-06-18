@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import heroImg from "../../assets/hero.png";
 
-const Login = ({ onLoginSuccess }) => {
+// 1. IMPORT AUTHCONTEXT UNTUK GLOBAL STATE MANAGEMENT
+import { AuthContext } from '../../context/AuthContext';
+
+const Login = () => {
   const navigate = useNavigate();
+
+  // 2. AMBIL FUNGSI LOGIN DARI GLOBAL STATE CONTEXT
+  const { login } = useContext(AuthContext);
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [formData, setFormData] = useState({ 
@@ -38,10 +44,10 @@ const Login = ({ onLoginSuccess }) => {
             if (userId) {
               localStorage.setItem('userId', userId);
             }
-            localStorage.setItem('token', token);
-            localStorage.setItem('user_role', role); 
             
-            onLoginSuccess(token, role);
+            // 3. PANGGIL FUNGSI LOGIN GLOBAL CONTEXT (OTOMATIS MENGESET LOCALSTORAGE & GLOBAL STATE)
+            login(token, role);
+
             alert(`Login Berhasil! Selamat datang ${formData.username}.`); 
             navigate('/dashboard'); 
           } else {
@@ -72,25 +78,25 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #042B21 0%, #064E3B 50%, #053D2F 100%)" }}>
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950">
       
       {/* Background Decorations */}
-      <div className="absolute top-[-10%] right-[-5%] w-[30rem] h-[30rem] bg-[#F59E0B]/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[25rem] h-[25rem] bg-[#10B981]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-[#065F46]/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-[10%] -right-[5%] w-[30rem] h-[30rem] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-[10%] -left-[5%] w-[25rem] h-[25rem] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-emerald-800/30 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Card */}
       <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row min-h-[550px] transition-all duration-500">
         
         {/* LEFT SIDE - BRANDING */}
-        <div className="md:w-1/2 bg-[#064E3B] p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="md:w-1/2 bg-emerald-900 p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
           {/* Decorative blobs */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-[#F59E0B]/15 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-[#10B981]/10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-20 -right-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl"></div>
 
           {/* Top label */}
           <div className="relative z-10">
-            <span className="inline-block text-[10px] font-bold tracking-[0.25em] uppercase text-[#A7F3D0]/60 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+            <span className="inline-block text-[10px] font-bold tracking-[0.25em] uppercase text-emerald-200/60 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
               Nyawit Hunter
             </span>
           </div>
@@ -101,7 +107,7 @@ const Login = ({ onLoginSuccess }) => {
             <h2 className="text-2xl md:text-3xl font-black leading-tight mb-3 text-white">
               {isLoginMode ? "Selamat Datang Kembali" : "Bergabung Bersama Kami"}
             </h2>
-            <p className="text-sm text-[#D1FAE5]/70 leading-relaxed">
+            <p className="text-sm text-emerald-100/70 leading-relaxed">
               {isLoginMode 
                 ? "Login untuk memantau data distribusi dan berat TBS kelapa sawit secara real-time."
                 : "Daftarkan akun untuk mulai mengelola sistem distribusi digital terintegrasi."}
@@ -109,20 +115,20 @@ const Login = ({ onLoginSuccess }) => {
           </div>
 
           {/* Bottom info */}
-          <div className="relative z-10 text-[10px] text-[#6EE7B7]/40 text-center md:text-left tracking-wider uppercase font-semibold">
+          <div className="relative z-10 text-[10px] text-emerald-300/40 text-center md:text-left tracking-wider uppercase font-semibold">
             &copy; 2026 Nyawit Hunter &middot; v1.0
           </div>
         </div>
 
         {/* RIGHT SIDE - FORM */}
-        <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-[#F8FAFC]">
+        <div className="md:w-1/2 p-8 sm:p-12 flex flex-col justify-center bg-slate-50">
           
           {/* Form Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-black text-[#064E3B] mb-1">
+            <h2 className="text-3xl font-black text-emerald-900 mb-1">
               {isLoginMode ? "Login" : "Daftar"}
             </h2>
-            <p className="text-sm text-[#064E3B]/50">
+            <p className="text-sm text-emerald-900/50">
               {isLoginMode ? "Akses panel monitoring distribusi sawit" : "Lengkapi data untuk membuat akun baru"}
             </p>
           </div>
@@ -131,11 +137,11 @@ const Login = ({ onLoginSuccess }) => {
             
             {/* USERNAME */}
             <div>
-              <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+              <label className="block text-[11px] font-bold text-emerald-900/60 uppercase mb-1.5 tracking-wider">
                 Username
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-500">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="7" r="4" />
@@ -147,7 +153,7 @@ const Login = ({ onLoginSuccess }) => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Masukkan username"
-                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent text-sm transition-all shadow-sm text-[#064E3B] placeholder-[#064E3B]/30 font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-emerald-900/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition-all shadow-sm text-emerald-900 placeholder-emerald-900/30 font-medium"
                   required
                 />
               </div>
@@ -155,11 +161,11 @@ const Login = ({ onLoginSuccess }) => {
 
             {/* PASSWORD */}
             <div>
-              <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+              <label className="block text-[11px] font-bold text-emerald-900/60 uppercase mb-1.5 tracking-wider">
                 Password
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-500">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -171,7 +177,7 @@ const Login = ({ onLoginSuccess }) => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Masukkan password"
-                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] focus:border-transparent text-sm transition-all shadow-sm text-[#064E3B] placeholder-[#064E3B]/30 font-medium"
+                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-emerald-900/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm transition-all shadow-sm text-emerald-900 placeholder-emerald-900/30 font-medium"
                   required
                 />
               </div>
@@ -180,11 +186,11 @@ const Login = ({ onLoginSuccess }) => {
             {/* ROLE DROPDOWN - Register only */}
             {!isLoginMode && (
               <div>
-                <label className="block text-[11px] font-bold text-[#064E3B]/60 uppercase mb-1.5 tracking-wider">
+                <label className="block text-[11px] font-bold text-emerald-900/60 uppercase mb-1.5 tracking-wider">
                   Jabatan / Otoritas
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#10B981]">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-500">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
@@ -193,7 +199,7 @@ const Login = ({ onLoginSuccess }) => {
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#064E3B]/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981] text-sm shadow-sm text-[#064E3B] font-medium cursor-pointer appearance-none"
+                    className="w-full pl-10 pr-4 py-3 bg-white border-2 border-emerald-900/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm shadow-sm text-emerald-900 font-medium cursor-pointer appearance-none"
                   >
                     <option value="petugas">Petugas Lapangan (Input & Validasi)</option>
                     <option value="manajer">Manajer (Pemantau Statistik)</option>
@@ -206,12 +212,7 @@ const Login = ({ onLoginSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 font-bold rounded-xl shadow-lg transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{
-                background: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
-                color: "#064E3B",
-                boxShadow: "0 4px 20px rgba(245,158,11,0.3)",
-              }}
+              className="w-full py-3.5 font-bold rounded-xl shadow-lg shadow-amber-500/30 transform active:scale-[0.98] transition-all text-sm tracking-wide mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-400 text-emerald-900"
             >
               {loading ? (
                 <>
@@ -246,11 +247,11 @@ const Login = ({ onLoginSuccess }) => {
 
           {/* TOGGLE LOGIN/REGISTER */}
           <div className="mt-8 text-center">
-            <p className="text-sm text-[#064E3B]/50">
+            <p className="text-sm text-emerald-900/50">
               {isLoginMode ? "Belum memiliki akun?" : "Sudah terdaftar?"}{" "}
               <button
                 onClick={() => setIsLoginMode(!isLoginMode)}
-                className="text-[#10B981] font-bold hover:text-[#F59E0B] transition-colors focus:outline-none underline decoration-[#10B981]/30 hover:decoration-[#F59E0B] underline-offset-4"
+                className="text-emerald-500 font-bold hover:text-amber-500 transition-colors focus:outline-none underline decoration-emerald-500/30 hover:decoration-amber-500 underline-offset-4"
               >
                 {isLoginMode ? "Buat Akun Baru" : "Login Sekarang"}
               </button>

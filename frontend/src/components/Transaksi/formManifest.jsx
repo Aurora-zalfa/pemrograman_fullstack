@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from "react"; 
+import { useState, useEffect } from "react"; 
 import axiosInstance from "../../utils/axios";
 import styles from "../Dashboard/Dashboard.module.css";
 import Container from "../Container"; 
 
 const FormManifest = () => {
-  // 🔒 SECURITY GATE: Ambil role akun dari localStorage
-  const userRole = localStorage.getItem('user_role') || 'manajer';
+  // 🔒 SECURITY GATE: Ambil role akun dari localStorage (CASE-INSENSITIVE)
+  const userRoleRaw = localStorage.getItem('user_role') || '';
+  const userRole = userRoleRaw.toLowerCase().trim();
+  
+  console.log('🔐 FormManifest - Raw Role:', userRoleRaw);
+  console.log('🔐 FormManifest - Normalized Role:', userRole);
 
-  // State untuk form data (MATCH dengan backend distribusi.js)
+  // State untuk form data
   const [formData, setFormData] = useState({
     tanggal_kirim: "",
     berat_tbs: "",
-    users_idusers: localStorage.getItem('userId') || "", // Ambil dari login
+    users_idusers: localStorage.getItem('userId') || "",
     supir_idsupir: "",
     truk_idtruk: "",
     kebun_idkebun: "",
@@ -30,7 +34,7 @@ const FormManifest = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [pesan, setPesan] = useState({ type: "", text: "" });
 
-  // State untuk master data (dropdown) - GRACEFUL FALLBACK
+  // State untuk master data
   const [masterData, setMasterData] = useState({
     supir: [],
     truk: [],
@@ -39,9 +43,9 @@ const FormManifest = () => {
   });
   const [masterLoading, setMasterLoading] = useState(true);
 
-  // Fetch master data dari API Zen (hanya dijalankan jika user BUKAN manajer untuk menghemat bandwidth)
+  // Fetch master data dari API
   useEffect(() => {
-    if (userRole === 'manajer') return; // Bypass fetch data jika manajer
+    if (userRole === 'manajer' || userRole.includes('manajer')) return;
 
     const fetchMasterData = async () => {
       try {
@@ -103,7 +107,7 @@ const FormManifest = () => {
     }
   };
 
-  // Handle submit dengan upload file
+  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -127,7 +131,18 @@ const FormManifest = () => {
       
       Object.keys(formData).forEach((key) => {
         if (key === 'users_idusers') {
-          data.append(key, userIdToSubmit);
+          data.append(key, String(userIdToSubmit));
+        } else if (key === 'berat_tbs') {
+          data.append(key, Number(formData.berat_tbs));
+        } else if (
+          key === 'supir_idsupir' || 
+          key === 'truk_idtruk' || 
+          key === 'kebun_idkebun' || 
+          key === 'pabrik_idpabrik'
+        ) {
+          if (formData[key]) {
+            data.append(key, parseInt(formData[key], 10));
+          }
         } else if (formData[key]) {
           data.append(key, formData[key]);
         }
@@ -146,6 +161,7 @@ const FormManifest = () => {
 
       setPesan({ type: "success", text: "Data distribusi berhasil dibuat!" });
       
+      // Reset form
       setFormData({
         tanggal_kirim: "",
         berat_tbs: "",
@@ -168,9 +184,10 @@ const FormManifest = () => {
 
     } catch (error) {
       console.error("Error submit:", error);
+      const pesanErrorBackend = error.response?.data?.message || error.response?.data?.error || error.message;
       setPesan({ 
         type: "error", 
-        text: "Gagal: " + (error.response?.data?.message || error.message) 
+        text: "Gagal Simpan: " + pesanErrorBackend 
       });
     } finally {
       setLoading(false);
@@ -182,16 +199,23 @@ const FormManifest = () => {
     const actualIdKey = idKey || `id${name.replace("_id", "")}`;
     
     return (
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
+      <div className={`${styles['form-group-manifest']} ${styles['w-full']}`}>
+        <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`} style={{ color: '#012A0D' }}>
+          {label} <span style={{ color: '#ef4444' }}>*</span>
+        </label>
         {masterLoading ? (
-          <input type="text" placeholder="Memuat data..." className="w-full p-2.5 border border-gray-300 rounded-lg bg-gray-100" disabled />
+          <input 
+            type="text" 
+            placeholder="Memuat data..." 
+            className={`${styles['form-control-manifest']} ${styles['bg-gray-100']}`} 
+            disabled 
+          />
         ) : hasData ? (
           <select
             name={name}
             value={formData[name]}
             onChange={handleChange}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
+            className={styles['form-control-manifest']}
             required
           >
             <option value="">-- Pilih {label} --</option>
@@ -212,7 +236,7 @@ const FormManifest = () => {
             value={formData[name]}
             onChange={handleChange}
             placeholder={placeholder}
-            className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
+            className={styles['form-control-manifest']}
             required
           />
         )}
@@ -220,15 +244,15 @@ const FormManifest = () => {
     );
   };
 
-  // 🔒 TUNING KONTRAST: Banner Manajer sekarang menggunakan warna yang tajam dan kontras tinggi
-  if (userRole === 'manajer') {
+  // 🔒 TUNING KONTRAST: Banner Manajer
+  if (userRole === 'manajer' || userRole.includes('manajer')) {
     return (
       <Container>
-        <div className="p-5 bg-amber-100 border border-amber-300 text-amber-950 rounded-xl text-left shadow-sm mb-6">
-          <p className="text-sm font-bold flex items-center gap-2 text-amber-950">
-             Hak Akses Terbatas (Manajer Pemantau)
+        <div className={`${styles['alert']} ${styles['alert-info']} ${styles['p-4']} ${styles['rounded-lg']} ${styles['mb-6']}`}>
+          <p className={`${styles['text-sm']} ${styles['font-bold']} ${styles['flex']} ${styles['items-center']} ${styles['gap-2']}`} style={{ color: '#000000' }}>
+            🚫 Hak Akses Terbatas (Manajer Pemantau)
           </p>
-          <p className="text-xs text-amber-950 mt-1.5 font-semibold leading-relaxed">
+          <p className={`${styles['text-xs']} ${styles['mt-2']} ${styles['font-semibold']}`} style={{ color: '#000000' }}>
             Formulir pendaftaran manifes distribusi baru disembunyikan secara otomatis. Otoritas akun Anda diset khusus untuk peninjauan log data (*Read-Only*) dan pengarsipan berkas demi keamanan data lapangan.
           </p>
         </div>
@@ -236,135 +260,346 @@ const FormManifest = () => {
     );
   }
 
-  // JIKA BUKAN MANAJER (PETUGAS), TAMPILKAN FORM SEPERTI BIASA
+  // JIKA BUKAN MANAJER (PETUGAS), TAMPILKAN FORM
   return (
     <Container>
-      <div className="p-6 w-full bg-white rounded-lg shadow-md text-left">
-        <h2 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Input Manifes Distribusi Baru</h2>
+      <div className={`${styles['form-manifest-container']} ${styles['w-full']} ${styles['p-6']}`}>
+        <h2 className={`${styles['form-manifest-title']} ${styles['mb-6']}`} style={{ color: '#012A0D' }}>
+          📝 Input Manifes Distribusi Baru
+        </h2>
         
+        {/* Pesan Alert */}
         {pesan.text && (
-          <div className={`mb-4 p-3 rounded-lg text-sm font-medium ${
-            pesan.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }`}>
+          <div className={`${styles['alert']} ${pesan.type === "success" ? styles['alert-success'] : styles['alert-error']} ${styles['mb-4']} ${styles['p-4']} ${styles['rounded-lg']} ${styles['text-sm']} ${styles['font-medium']}`}>
             {pesan.text}
           </div>
         )}
 
+        {/* Upload Progress */}
         {loading && uploadProgress > 0 && (
-          <div className="mb-4">
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className={`${styles['mb-4']}`}>
+            <div className={`${styles['w-full']} ${styles['bg-gray-200']} ${styles['rounded-full']} ${styles['h-2.5']}`}>
               <div 
-                className="bg-green-600 h-2.5 rounded-full transition-all duration-300" 
+                className={`${styles['bg-green-600']} ${styles['h-2.5']} ${styles['rounded-full']} ${styles['transition-all']}`} 
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Mengupload: {uploadProgress}%</p>
+            <p className={`${styles['text-xs']} ${styles['text-gray-600']} ${styles['mt-2']}`}>Mengupload: {uploadProgress}%</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal Pengiriman</label>
-              <input
-                type="date"
-                name="tanggal_kirim"
-                value={formData.tanggal_kirim}
-                onChange={handleChange}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          {/* ===== SECTION 1: Informasi Pengiriman ===== */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`} style={{ color: '#012A0D' }}>
+              📦 Informasi Pengiriman
+            </h3>
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
+              <div className={styles['form-group-manifest']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`} style={{ color: '#012A0D' }}>
+                  Tanggal Pengiriman <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="date"
+                  name="tanggal_kirim"
+                  value={formData.tanggal_kirim}
+                  onChange={handleChange}
+                  className={styles['form-control-manifest']}
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Berat TBS (kg)</label>
-              <input
-                type="number"
-                name="berat_tbs"
-                value={formData.berat_tbs}
-                onChange={handleChange}
-                placeholder="Contoh: 5000"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-gray-800"
-                required
-              />
+              <div className={styles['form-group-manifest']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`} style={{ color: '#012A0D' }}>
+                  Berat TBS (kg) <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  name="berat_tbs"
+                  value={formData.berat_tbs}
+                  onChange={handleChange}
+                  placeholder="Contoh: 5000"
+                  className={styles['form-control-manifest']}
+                  required
+                />
+              </div>
             </div>
-
-            {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
-            {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
-            {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
-            {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Status Awal Pengiriman</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-gray-800"
+          {/* ===== SECTION 2: Pihak Terkait ===== */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`} style={{ color: '#012A0D' }}>
+              👥 Pihak Terkait
+            </h3>
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
+              {renderMasterField("Nama Supir", "supir_idsupir", masterData.supir, "Nama supir", "nama_supir", "idsupir")}
+              {renderMasterField("No. Polisi", "truk_idtruk", masterData.truk, "Contoh: BM 1234 AA", "no_polisi", "idtruk")}
+              {renderMasterField("Kebun Asal", "kebun_idkebun", masterData.kebun, "Nama kebun", "nama_kebun", "idkebun")}
+              {renderMasterField("Pabrik Tujuan", "pabrik_idpabrik", masterData.pabrik, "Nama pabrik", "nama_pabrik", "idpabrik")}
+            </div>
+          </div>
+
+          {/* ===== SECTION 3: Status & Dokumen ===== */}
+          <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
+            <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`} style={{ color: '#012A0D' }}>
+              📋 Status & Dokumen
+            </h3>
+            
+            <div className={`${styles['form-group-manifest']} ${styles['mb-6']}`}>
+              <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`} style={{ color: '#012A0D' }}>
+                Status Awal Pengiriman
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className={styles['form-control-manifest']}
+              >
+                <option value="menunggu_memuat">Menunggu Memuat</option>
+                <option value="dalam_perjalanan">Dalam Perjalanan</option>
+                <option value="tiba_di_pabrik">Tiba di Pabrik</option>
+                <option value="selesai">Selesai</option>
+              </select>
+            </div>
+
+            {/* ===== FILE UPLOAD SECTION - DIPERBAIKI ===== */}
+            <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-6']}`}>
+              {/* Surat Jalan */}
+              <div className={styles['file-upload-section']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-1']}`} style={{ color: '#012A0D' }}>
+                  📄 Surat Jalan <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <p style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '6px' }}>
+                  Format: JPG, PNG, PDF | Max: 5MB
+                </p>
+                
+                <label 
+                  htmlFor="surat_jalan_input"
+                  className={styles['file-upload-wrapper-manifest']}
+                  style={{
+                    border: '2px dashed #dcfce7',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    background: '#fafbfc',
+                    cursor: 'pointer',
+                    display: 'block'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#F1AD00';
+                    e.target.style.background = '#f0fdf4';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#dcfce7';
+                    e.target.style.background = '#fafbfc';
+                  }}
+                >
+                  <input
+                    id="surat_jalan_input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileChange(e, "surat_jalan")}
+                    required
+                    style={{ display: 'none' }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '28px' }}>📁</span>
+                    <span style={{ color: '#012A0D', fontWeight: '500' }}>
+                      {suratJalan ? suratJalan.name : 'Klik untuk upload surat jalan'}
+                    </span>
+                    <span 
+                      style={{
+                        background: 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)',
+                        color: '#F1AD00',
+                        border: '2px solid #F1AD00',
+                        padding: '6px 16px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      Pilih File
+                    </span>
+                    {!suratJalan && (
+                      <span style={{ fontSize: '11px', color: '#9ca3af' }}>Belum ada file dipilih</span>
+                    )}
+                  </div>
+                </label>
+                
+                {previewSuratJalan && (
+                  <div style={{ marginTop: '12px', padding: '12px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: '500' }}>Preview:</p>
+                    {suratJalan?.type?.includes("pdf") ? (
+                      <iframe src={previewSuratJalan} style={{ width: '100%', height: '160px', border: '1px solid #e5f0e8', borderRadius: '8px' }} title="Preview Surat Jalan" />
+                    ) : (
+                      <img src={previewSuratJalan} alt="Preview" style={{ maxHeight: '160px', borderRadius: '8px', border: '1px solid #e5f0e8', objectFit: 'contain' }} />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bukti Timbang */}
+              <div className={styles['file-upload-section']}>
+                <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-1']}`} style={{ color: '#012A0D' }}>
+                  ⚖️ Bukti Timbang <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <p style={{ fontSize: '0.7rem', color: '#6b7280', marginBottom: '6px' }}>
+                  Format: JPG, PNG, PDF | Max: 5MB
+                </p>
+                
+                <label 
+                  htmlFor="bukti_timbang_input"
+                  className={styles['file-upload-wrapper-manifest']}
+                  style={{
+                    border: '2px dashed #dcfce7',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    textAlign: 'center',
+                    transition: 'all 0.3s ease',
+                    background: '#fafbfc',
+                    cursor: 'pointer',
+                    display: 'block'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#F1AD00';
+                    e.target.style.background = '#f0fdf4';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#dcfce7';
+                    e.target.style.background = '#fafbfc';
+                  }}
+                >
+                  <input
+                    id="bukti_timbang_input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => handleFileChange(e, "bukti_timbang")}
+                    required
+                    style={{ display: 'none' }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', pointerEvents: 'none' }}>
+                    <span style={{ fontSize: '28px' }}>📊</span>
+                    <span style={{ color: '#012A0D', fontWeight: '500' }}>
+                      {buktiTimbang ? buktiTimbang.name : 'Klik untuk upload bukti timbang'}
+                    </span>
+                    <span 
+                      style={{
+                        background: 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)',
+                        color: '#F1AD00',
+                        border: '2px solid #F1AD00',
+                        padding: '6px 16px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      Pilih File
+                    </span>
+                    {!buktiTimbang && (
+                      <span style={{ fontSize: '11px', color: '#9ca3af' }}>Belum ada file dipilih</span>
+                    )}
+                  </div>
+                </label>
+                
+                {previewBuktiTimbang && (
+                  <div style={{ marginTop: '12px', padding: '12px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #dcfce7' }}>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: '500' }}>Preview:</p>
+                    {buktiTimbang?.type?.includes("pdf") ? (
+                      <iframe src={previewBuktiTimbang} style={{ width: '100%', height: '160px', border: '1px solid #e5f0e8', borderRadius: '8px' }} title="Preview Bukti Timbang" />
+                    ) : (
+                      <img src={previewBuktiTimbang} alt="Preview" style={{ maxHeight: '160px', borderRadius: '8px', border: '1px solid #e5f0e8', objectFit: 'contain' }} />
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ===== ACTION BUTTONS ===== */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            marginTop: '28px',
+            paddingTop: '24px',
+            borderTop: '2px solid #e5f0e8'
+          }}>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  tanggal_kirim: "",
+                  berat_tbs: "",
+                  users_idusers: localStorage.getItem('userId') || "",
+                  supir_idsupir: "",
+                  truk_idtruk: "",
+                  kebun_idkebun: "",
+                  pabrik_idpabrik: "",
+                  status: "menunggu_memuat",
+                });
+                setSuratJalan(null);
+                setBuktiTimbang(null);
+                setPreviewSuratJalan(null);
+                setPreviewBuktiTimbang(null);
+                setPesan({ type: "", text: "" });
+              }}
+              style={{
+                background: 'white',
+                color: '#012A0D',
+                border: '2px solid #012A0D',
+                padding: '12px 28px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#dcfce7';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'white';
+              }}
             >
-              <option value="menunggu_memuat">Menunggu Memuat</option>
-              <option value="dalam_perjalanan">Dalam Perjalanan</option>
-              <option value="tiba_di_pabrik">Tiba di Pabrik</option>
-              <option value="selesai">Selesai</option>
-            </select>
-          </div>
-
-          <div className="border-t pt-4 mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Surat Jalan (Wajib)</label>
-            <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileChange(e, "surat_jalan")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-              required
-            />
-            {previewSuratJalan && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
-                {suratJalan?.type.includes("pdf") ? (
-                  <iframe src={previewSuratJalan} className="w-full h-40 border rounded" title="Preview Surat Jalan" />
-                ) : (
-                  <img src={previewSuratJalan} alt="Preview" className="max-h-40 rounded border object-contain" />
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Bukti Timbang (Wajib)</label>
-            <p className="text-xs text-gray-500 mb-2">Format: JPG, PNG, PDF | Max: 5MB</p>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.pdf"
-              onChange={(e) => handleFileChange(e, "bukti_timbang")}
-              className="w-full p-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-              required
-            />
-            {previewBuktiTimbang && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-xs text-gray-600 mb-2 font-medium">Preview:</p>
-                {buktiTimbang?.type.includes("pdf") ? (
-                  <iframe src={previewBuktiTimbang} className="w-full h-40 border rounded" title="Preview Bukti Timbang" />
-                ) : (
-                  <img src={previewBuktiTimbang} alt="Preview" className="max-h-40 rounded border object-contain" />
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="pt-4">
+              ❌ Batal
+            </button>
+            
             <button
               type="submit"
               disabled={loading}
-              className={`w-full md:w-auto px-8 py-3 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-700 hover:to-green-600 text-white font-bold rounded-lg shadow-md transition-all ${
-                loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg"
-              }`}
+              style={{
+                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)',
+                color: '#F1AD00',
+                border: '2px solid #F1AD00',
+                padding: '12px 28px',
+                borderRadius: '12px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: '700',
+                transition: 'all 0.3s ease',
+                opacity: loading ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.target.style.background = 'linear-gradient(135deg, #F1AD00 0%, #f59e0b 100%)';
+                  e.target.style.color = '#012A0D';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.target.style.background = 'linear-gradient(135deg, #012A0D 0%, #023d15 100%)';
+                  e.target.style.color = '#F1AD00';
+                }
+              }}
             >
               {loading 
-                ? (uploadProgress > 0 ? `Mengupload ${uploadProgress}%...` : "Menyimpan...") 
-                : "Simpan Manifes Distribusi"}
+                ? (uploadProgress > 0 ? `⏳ ${uploadProgress}%` : "⏳ Menyimpan...") 
+                : "✅ Simpan Manifes Distribusi"}
             </button>
           </div>
         </form>
