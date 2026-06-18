@@ -7,7 +7,6 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  /* DIHAPUS: background-color: #f0f7f0; (Biar bg-[#F4F7FE] dari Tailwind jalan) */
   margin: 0;
   padding: 0;
 }
@@ -18,12 +17,10 @@ body {
   min-height: 100vh;
 }
 
-/* ============ SIDEBAR STYLES (Diubah jadi gaya putih Horizon) ============ */
+/* ============ SIDEBAR STYLES ============ */
 .sidebar {
   width: 260px;
-  /* DIUBAH: Sidebar jadi putih, bukan gradasi hijau */
   background: white;
-  /* DIUBAH: Warna font sidebar jadi biru gelap, bukan putih */
   color: #A3AED0;
   display: flex;
   flex-direction: column;
@@ -31,7 +28,6 @@ body {
   position: fixed;
   height: 100vh;
   z-index: 1000;
-  /* DITAMBAH: Shadow halus untuk pembatas sidebar */
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
 }
 
@@ -50,14 +46,12 @@ body {
   text-align: center;
   margin-bottom: 30px;
   border-bottom: 1px solid #F4F7FE;
-  /* Diubah warna bordernya */
 }
 
 .sidebar-header h3 {
   font-size: 1.3rem;
   font-weight: 700;
   color: #2B3674;
-  /* Font logo Horizon */
 }
 
 .sidebar-nav {
@@ -70,28 +64,24 @@ body {
   align-items: center;
   padding: 12px 20px;
   color: #A3AED0;
-  /* Teks abu-abu */
   text-decoration: none;
   transition: all 0.3s ease;
   margin: 5px 10px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
+  gap: 12px;
 }
 
 .nav-item:hover {
   background: #F4F7FE;
-  /* Hover abu-abu muda */
   transform: translateX(5px);
 }
 
 .nav-item.active {
-  /* Diubah warnanya jadi aktif ala Horizon */
   background: #F4F7FE;
   color: #4318FF;
-  /* Ikon dan teks ungu saat aktif */
   border-right: 3px solid #4318FF;
-  /* Garis aktif di kanan, bukan kiri */
 }
 
 .nav-item i {
@@ -109,10 +99,8 @@ body {
   width: 100%;
   padding: 12px;
   background: #ffebee;
-  /* Merah muda lembut */
   border: none;
   color: #c62828;
-  /* Merah untuk logout */
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -132,16 +120,14 @@ body {
   flex: 1;
   margin-left: 260px;
   transition: all 0.3s ease;
-  /* background biarkan kosong agar Tailwind yang mengisi */
 }
 
 .sidebar.collapsed+.main-content {
   margin-left: 70px;
 }
 
-/* Navbar Styles (Diubah jadi transparan/menyatu) */
+/* Navbar Styles */
 .navbar {
-  /* DIHAPUS: background: white; border-bottom: 3px solid #2e7d32; */
   padding: 15px 30px;
   display: flex;
   justify-content: space-between;
@@ -150,14 +136,12 @@ body {
   top: 0;
   z-index: 999;
   backdrop-filter: blur(10px);
-  /* Efek blur kaca khas Horizon */
 }
 
 .navbar-toggle {
   cursor: pointer;
   font-size: 1.2rem;
   color: #A3AED0;
-  /* Disesuaikan */
 }
 
 .navbar-user {
@@ -173,7 +157,6 @@ body {
 
 .user-role {
   background: #4318FF;
-  /* Ungu Horizon */
   color: white;
   padding: 5px 12px;
   border-radius: 20px;
@@ -183,24 +166,19 @@ body {
 
 /* Content Wrapper */
 .content-wrapper {
-  /* DIHAPUS padding dan warna, biar diatur di .jsx */
   min-height: calc(100vh - 70px);
 }
 
 /* ============ DASHBOARD STYLES ============ */
-/* Bagian Stats-grid dan Stat-card sudah dihapus karena kita panggil via Tailwind di .jsx */
-
 
 /* ============ DATA MASTER STYLES ============ */
 .master-container {
   padding: 20px;
-  /* DIHAPUS: background: #f0f7f0; */
   border-radius: 10px;
 }
 
 .page-title {
   color: #2B3674;
-  /* Disesuaikan */
   margin-bottom: 25px;
   font-size: 24px;
   font-weight: 600;
@@ -233,7 +211,6 @@ body {
 
 .tab-btn.active {
   background: #4318FF;
-  /* Ungu Horizon */
   color: white;
   border-radius: 10px;
 }
@@ -247,7 +224,6 @@ body {
 /* ============ BUTTON STYLES ============ */
 .btn-add {
   background: #4318FF;
-  /* Ungu Horizon */
   color: white;
   border: none;
   padding: 10px 20px;
@@ -284,7 +260,6 @@ body {
 
 .btn-save {
   background: #05CD99;
-  /* Hijau Horizon */
   color: white;
   border: none;
   padding: 10px 20px;
@@ -377,13 +352,12 @@ body {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
 }
 
-/* ============ MODAL STYLES (Disesuaikan warnanya) ============ */
+/* ============ MODAL STYLES ============ */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -391,7 +365,6 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(11, 20, 55, 0.5);
-  /* Blur gelap Horizon */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -437,6 +410,107 @@ body {
   box-shadow: 0 0 0 2px rgba(67, 24, 255, 0.1);
 }
 
+/* ============ FILTER LAPORAN STYLES ============ */
+.filterLaporanPrintHide {
+  /* Filter laporan normal - akan disembunyikan saat print */
+}
+
+.printButtonContainer {
+  /* Tombol cetak - akan disembunyikan saat print */
+}
+
+@media print {
+  
+  /* Sembunyikan filter laporan */
+  .filterLaporanPrintHide {
+    display: none !important;
+  }
+  
+  /* Sembunyikan semua tombol */
+  button,
+  .btn-add,
+  .btn-delete,
+  .btn-save,
+  .btn-cancel,
+  .btn-logout,
+  .printButtonContainer,
+  [class*="btn-"] {
+    display: none !important;
+  }
+  
+  /* Sembunyikan sidebar */
+  .sidebar {
+    display: none !important;
+  }
+  
+  /* Sembunyikan navbar */
+  .navbar,
+  .navbar-toggle,
+  .navbar-user {
+    display: none !important;
+  }
+  
+  /* Sembunyikan header dashboard yang tidak perlu */
+  .dashboard-header,
+  .stats-grid {
+    display: none !important;
+  }
+  
+  /* Main content jadi full width tanpa margin */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Content wrapper */
+  .content-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+  }
+  
+  /* Background putih untuk semua */
+  body,
+  .app-container,
+  .main-content,
+  .content-wrapper,
+  .master-container,
+  div[class*="bg-"] {
+    background-color: white !important;
+  }
+  
+  /* Tabel tetap rapi saat dicetak */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse !important;
+  }
+  
+  .data-table th,
+  .data-table td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    text-align: left !important;
+  }
+  
+  .data-table th {
+    background-color: #f3f4f6 !important;
+    font-weight: bold !important;
+  }
+  
+  /* Pastikan teks hitam saat print */
+  * {
+    color: black !important;
+  }
+  
+  /* Halaman jadi rapi */
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+}
+
 /* ============ SCROLLBAR STYLES ============ */
 ::-webkit-scrollbar {
   width: 6px;
@@ -454,49 +528,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #4318FF;
-}
-
-.filterLaporanPrintHide {
-}
-
-.printButtonContainer {
-}
-
-@media print {
-
-  .filterLaporanPrintHide {
-    display: none !important;
-  }
-
-  .printButtonContainer {
-    display: none !important;
-  }
-
-  .sidebar {
-    display: none !important;
-  }
-
-  .navbar {
-    display: none !important;
-  }
-
-  .btn-logout {
-    display: none !important;
-  }
-
-  .print-button-container {
-    display: none !important;
-  }
-
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
-
-  .content-wrapper {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 20px !important;
-  }
-
 }

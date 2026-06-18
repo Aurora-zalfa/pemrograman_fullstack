@@ -5,10 +5,9 @@ import styles from './Dashboard.module.css';
 // IMPOR KOMPONEN LAIN
 import MasterData from '../Master/MasterData';
 import FilterLaporan from '../Laporan/FilterLaporan';
-import CetakLaporan from '../Laporan/CetakLaporan';
 import FormManifest from '../Transaksi/formManifest';
 import TabelDistribusi from '../Transaksi/TabelDistribusi';
-import KotakArsip from '../Transaksi/KotakArsip'; // Berhasil ditambahkan
+import KotakArsip from '../Transaksi/KotakArsip';
 
 // IMPOR CHART LIBRARY
 import {
@@ -16,23 +15,11 @@ import {
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 
-// IMPOR ICON dari react-icons
+// IMPOR ICON
 import {
-  FaWeightHanging,
-  FaTruck,
-  FaUsers,
-  FaTrailer,
-  FaTree,
-  FaIndustry,
-  FaChartLine,
-  FaLeaf,
-  FaPrint,
-  FaSignOutAlt,
-  FaTachometerAlt,
-  FaDatabase,
-  FaExchangeAlt,
-  FaFileAlt,
-  FaBars
+  FaWeightHanging, FaTruck, FaUsers, FaTrailer, FaTree, FaIndustry,
+  FaChartLine, FaLeaf, FaPrint, FaSignOutAlt, FaTachometerAlt,
+  FaDatabase, FaExchangeAlt, FaFileAlt, FaBars
 } from 'react-icons/fa';
 
 const Dashboard = () => {
@@ -40,34 +27,39 @@ const Dashboard = () => {
   const [userRole] = useState(localStorage.getItem('user_role') || 'manajer');
   const token = localStorage.getItem('token') || '';
 
-  // State untuk Data Ringkasan Dashboard
+  // STATE untuk filter tanggal - baca dari localStorage (dari halaman Laporan)
+  const [filterStartDate, setFilterStartDate] = useState(() => {
+    const saved = localStorage.getItem('dashboard_start_date');
+    if (saved) return saved;
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+
+  const [filterEndDate, setFilterEndDate] = useState(() => {
+    const saved = localStorage.getItem('dashboard_end_date');
+    if (saved) return saved;
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${lastDay}`;
+  });
+
   const [stats, setStats] = useState({
-    totalBerat: 0,
-    totalPengiriman: 0,
-    totalSupir: 0,
-    totalTruk: 0,
-    totalKebun: 0,
-    totalPabrik: 0
+    totalBerat: 0, totalPengiriman: 0, totalSupir: 0,
+    totalTruk: 0, totalKebun: 0, totalPabrik: 0
   });
 
   const [laporanData, setLaporanData] = useState([]);
   const [transaksiList, setTransaksiList] = useState([]);
   const [formTransaksi, setFormTransaksi] = useState({
-    supir: '',
-    plat: '',
-    berat: '',
-    status: 'menunggu_memuat'
+    supir: '', plat: '', berat: '', status: 'menunggu_memuat'
   });
 
-  // Fetch Data Dashboard
+  // FETCH DATA DASHBOARD berdasarkan filter tanggal
   const fetchDashboardData = async () => {
+    console.log("🔄 Fetching dashboard data for period:", filterStartDate, "s/d", filterEndDate);
     try {
-      const now = new Date();
-      const tanggalMulai = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-      const tanggalSelesai = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, '0')}`;
-
       const laporanRes = await fetch(
-        `http://localhost:3000/api/laporan?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`,
+        `http://localhost:3000/api/laporan?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const laporanResult = await laporanRes.json();
@@ -75,8 +67,14 @@ const Dashboard = () => {
       setLaporanData(data);
 
       let totalBerat = 0;
-      data.forEach(item => { totalBerat += parseFloat(item.berat_tbs || 0); });
+      data.forEach(item => {
+        totalBerat += parseFloat(item.berat_tbs || 0);
+      });
+      
+      console.log("📊 Total berat periode ini:", totalBerat);
+      console.log("📦 Jumlah pengiriman:", data.length);
 
+      // Fetch master data
       const [supirRes, trukRes, kebunRes, pabrikRes] = await Promise.all([
         fetch('http://localhost:3000/api/master/supir', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('http://localhost:3000/api/master/truk', { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -117,10 +115,54 @@ const Dashboard = () => {
     }
   };
 
+  // USE EFFECTS
   useEffect(() => {
     fetchDashboardData();
     fetchTransaksi();
   }, []);
+
+  // Refresh saat filter tanggal berubah
+  useEffect(() => {
+    if (filterStartDate && filterEndDate) {
+      fetchDashboardData();
+    }
+  }, [filterStartDate, filterEndDate]);
+
+  // Refresh saat pindah ke dashboard
+  useEffect(() => {
+    if (location.pathname === '/dashboard') {
+      const savedStart = localStorage.getItem('dashboard_start_date');
+      const savedEnd = localStorage.getItem('dashboard_end_date');
+      if (savedStart && savedEnd && (savedStart !== filterStartDate || savedEnd !== filterEndDate)) {
+        setFilterStartDate(savedStart);
+        setFilterEndDate(savedEnd);
+      } else {
+        fetchDashboardData();
+        fetchTransaksi();
+      }
+    }
+  }, [location.pathname]);
+
+  // Dengarkan perubahan dari halaman Laporan
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'dashboard_start_date') {
+        const newStart = e.newValue;
+        if (newStart && newStart !== filterStartDate) {
+          setFilterStartDate(newStart);
+        }
+      }
+      if (e.key === 'dashboard_end_date') {
+        const newEnd = e.newValue;
+        if (newEnd && newEnd !== filterEndDate) {
+          setFilterEndDate(newEnd);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [filterStartDate, filterEndDate]);
 
   const handleTransaksiSubmit = async (e) => {
     e.preventDefault();
@@ -163,6 +205,12 @@ const Dashboard = () => {
     return new Date(dateString).toLocaleDateString('id-ID');
   };
 
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  // Data untuk chart
   const barChartData = laporanData.map((item) => ({
     tanggal: formatDate(item.tanggal),
     berat: parseFloat(item.berat_tbs || 0)
@@ -187,11 +235,9 @@ const Dashboard = () => {
     return Object.keys(statusMap).map(key => ({ name: key, value: statusMap[key] }));
   })();
 
-  const bulanSekarang = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
   return (
     <div className={styles['app-container']} style={{ backgroundColor: '#F8FAFC' }}>
-      {/* SIDEBAR NAVIGATION */}
+      {/* SIDEBAR */}
       <aside className={styles.sidebar} id="sidebar">
         <div className={styles['sidebar-header']}>
           <h3>Distribusi App</h3>
@@ -209,8 +255,6 @@ const Dashboard = () => {
           <Link to="/dashboard/laporan" className={`${styles['nav-item']} ${location.pathname.includes('/laporan') ? styles.active : ''}`}>
             <FaFileAlt /><span>Laporan</span>
           </Link>
-          
-          {/* Menu Dinamis Kotak Arsip Khusus Manajer */}
           {userRole === 'manajer' && (
             <Link to="/dashboard/arsip" className={`${styles['nav-item']} ${location.pathname.includes('/arsip') ? styles.active : ''}`}>
               <FaDatabase /><span>Kotak Arsip</span>
@@ -227,7 +271,7 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* MAIN CONTENT */}
       <main className={styles['main-content']}>
         <nav className={styles.navbar} style={{ backgroundColor: '#F8FAFC' }}>
           <div className={styles['navbar-toggle']}>
@@ -241,58 +285,60 @@ const Dashboard = () => {
           </div>
         </nav>
 
-        {/* CONTROLLER OUTLET DENGAN REACT ROUTER DOM */}
         <div className={styles['content-wrapper']} style={{ padding: 0 }}>
           <Routes>
-            {/* SUB-ROUTE 1: MAIN DASHBOARD */}
+            {/* DASHBOARD MAIN */}
             <Route index element={
               <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F8FAFC' }}>
                 <div className="mb-8">
-                  <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                    <FaLeaf className="text-green-500 text-3xl" />
-                    Dashboard Monitoring Sawit
-                  </h1>
-                  <p className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-2">
-                    <FaChartLine className="text-gray-400" />
-                    Volume Sawit - Periode: {bulanSekarang}
-                  </p>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                      <FaLeaf className="text-green-500 text-3xl" />
+                      Dashboard Monitoring Sawit
+                    </h1>
+                    <p className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-2">
+                      <FaChartLine className="text-gray-400" />
+                      Menampilkan data: {formatDisplayDate(filterStartDate)} - {formatDisplayDate(filterEndDate)}
+                    </p>
+                  </div>
                 </div>
-                
+
+                {/* 6 KARTU STATISTIK */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaWeightHanging className="text-blue-600 text-xl" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400">Bulan ini</span>
+                      <span className="text-xs font-medium text-gray-400">Periode</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-800 mt-3">{stats.totalBerat.toLocaleString()}</p>
                     <p className="text-sm font-medium text-gray-500 mt-1">Total Berat (Kg)</p>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaTruck className="text-blue-600 text-xl" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400">Pengiriman</span>
+                      <span className="text-xs font-medium text-gray-400">Periode</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-800 mt-3">{stats.totalPengiriman}</p>
                     <p className="text-sm font-medium text-gray-500 mt-1">Total pengiriman</p>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaUsers className="text-blue-600 text-xl" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400">Supir</span>
+                      <span className="text-xs font-medium text-gray-400">Terdaftar</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-800 mt-3">{stats.totalSupir}</p>
                     <p className="text-sm font-medium text-gray-500 mt-1">Supir terdaftar</p>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaTrailer className="text-blue-600 text-xl" />
@@ -303,31 +349,32 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-500 mt-1">Unit truk aktif</p>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaTree className="text-blue-600 text-xl" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400">Kebun</span>
+                      <span className="text-xs font-medium text-gray-400">Terdaftar</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-800 mt-3">{stats.totalKebun}</p>
                     <p className="text-sm font-medium text-gray-500 mt-1">Kebun terdaftar</p>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
                         <FaIndustry className="text-blue-600 text-xl" />
                       </div>
-                      <span className="text-xs font-medium text-gray-400">Pabrik</span>
+                      <span className="text-xs font-medium text-gray-400">Terdaftar</span>
                     </div>
                     <p className="text-2xl font-bold text-gray-800 mt-3">{stats.totalPabrik}</p>
                     <p className="text-sm font-medium text-gray-500 mt-1">Pabrik terdaftar</p>
                   </div>
                 </div>
 
+                {/* CHARTS */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-6">Tren Berat Pengiriman</h3>
                     <div style={{ height: 280 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -335,14 +382,14 @@ const Dashboard = () => {
                           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                           <XAxis dataKey="tanggal" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                          <Tooltip formatter={(value) => [`${value} Kg`, 'Berat']} contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0px 4px 18px 0px rgba(0,0,0,0.05)' }} />
+                          <Tooltip formatter={(value) => [`${value} Kg`, 'Berat']} />
                           <Line type="monotone" dataKey="berat" stroke="#2563eb" strokeWidth={4} dot={{ r: 0 }} activeDot={{ r: 6 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-6">Volume Pengiriman Harian</h3>
                     <div style={{ height: 280 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -350,7 +397,7 @@ const Dashboard = () => {
                           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                           <XAxis dataKey="tanggal" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-                          <Tooltip formatter={(value) => [`${value} Kg`, 'Volume']} contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0px 4px 18px 0px rgba(0,0,0,0.05)' }} />
+                          <Tooltip formatter={(value) => [`${value} Kg`, 'Volume']} />
                           <Bar dataKey="berat" fill="#38bdf8" radius={[6, 6, 0, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -358,8 +405,9 @@ const Dashboard = () => {
                   </div>
                 </div>
 
+                {/* PIE CHARTS */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-6">Kontribusi per Kebun</h3>
                     <div style={{ height: 260 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -374,13 +422,13 @@ const Dashboard = () => {
                               <Cell key={`cell-${index}`} fill={['#2563eb', '#38bdf8', '#e2e8f0', '#f59e0b', '#10b981'][index % 5]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => `${value.toLocaleString()} Kg`} contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0px 4px 18px 0px rgba(0,0,0,0.05)' }} />
+                          <Tooltip formatter={(value) => `${value.toLocaleString()} Kg`} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border-none">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-6">Status Pengiriman</h3>
                     <div style={{ height: 260 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -395,7 +443,7 @@ const Dashboard = () => {
                               <Cell key={`status-cell-${index}`} fill={['#10b981', '#f59e0b'][index % 2]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => `${value} pengiriman`} contentStyle={{ borderRadius: '15px', border: 'none', boxShadow: '0px 4px 18px 0px rgba(0,0,0,0.05)' }} />
+                          <Tooltip formatter={(value) => `${value} pengiriman`} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -412,20 +460,20 @@ const Dashboard = () => {
 
                 {laporanData.length === 0 && (
                   <div className="mt-4 bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-                    <p className="text-gray-500 font-medium text-sm">⚠️ Belum ada data pengiriman pada periode ini.</p>
+                    <p className="text-gray-500 font-medium text-sm">⚠️ Belum ada data pengiriman pada periode {formatDisplayDate(filterStartDate)} - {formatDisplayDate(filterEndDate)}.</p>
                   </div>
                 )}
               </div>
             } />
 
-            {/* SUB-ROUTE 2: DATA MASTER */}
+            {/* ROUTE MASTER */}
             <Route path="master" element={
               <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F8FAFC' }}>
                 <MasterData />
               </div>
             } />
 
-            {/* SUB-ROUTE 3: TRANSAKSI DISTRIBUSI */}
+            {/* ROUTE TRANSAKSI */}
             <Route path="transaksi" element={
               <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F8FAFC' }}>
                 <div className="mb-6">
@@ -449,31 +497,56 @@ const Dashboard = () => {
               </div>
             } />
 
-            {/* SUB-ROUTE 4: LAPORAN */}
+            {/* ROUTE LAPORAN - DIPERBAIKI */}
             <Route path="laporan" element={
               <div className={`${styles['master-container']} w-full min-h-screen p-6 rounded-tl-[20px]`} style={{ backgroundColor: '#F8FAFC' }}>
                 <h1 className="text-3xl font-bold text-gray-800 mb-6">Laporan Pengiriman</h1>
+                
                 <FilterLaporan onFilter={(mulai, selesai) => {
                   const fetchFilteredData = async () => {
                     try {
+                      console.log("📅 Filter API:", `tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`);
+                      
                       const response = await fetch(
                         `http://localhost:3000/api/laporan?tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`,
                         { headers: { 'Authorization': `Bearer ${token}` } }
                       );
                       const result = await response.json();
-                      setLaporanData(result.data || []);
+                      
+                      console.log("📊 Data dari API:", result);
+                      
+                      // AMBIL DATA DARI API
+                      const data = result.data || [];
+                      
+                      // UPDATE laporanData UNTUK DITAMPILKAN DI TABEL
+                      setLaporanData(data);
+                      
+                      // UPDATE stats
+                      let totalBerat = 0;
+                      data.forEach(item => {
+                        totalBerat += parseFloat(item.berat_tbs || 0);
+                      });
+                      setStats(prev => ({
+                        ...prev,
+                        totalBerat: totalBerat,
+                        totalPengiriman: data.length
+                      }));
+
+                      // SIMPAN KE LOCALSTORAGE UNTUK DASHBOARD
+                      if (mulai && selesai) {
+                        localStorage.setItem('dashboard_start_date', mulai);
+                        localStorage.setItem('dashboard_end_date', selesai);
+                        window.dispatchEvent(new Event('storage'));
+                      }
                     } catch (error) {
                       console.error("Error filtering laporan:", error);
                     }
                   };
                   fetchFilteredData();
                 }} />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-                  <button onClick={() => window.print()} className={`${styles['btn-add']} bg-gray-800 hover:bg-gray-900 text-white rounded-xl px-4 py-2 transition`}>
-                    <FaPrint style={{ marginRight: '8px' }} /> Cetak Laporan
-                  </button>
-                </div>
-                <div className={`${styles['table-responsive']} bg-white rounded-2xl p-5 shadow-sm`}>
+                
+                {/* TABEL LAPORAN */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm overflow-x-auto">
                   <table className={styles['data-table']}>
                     <thead>
                       <tr>
@@ -486,15 +559,32 @@ const Dashboard = () => {
                     <tbody>
                       {laporanData.length === 0 ? (
                         <tr>
-                          <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }} className="text-gray-500">Tidak ada data laporan.</td>
+                          <td colSpan="4" style={{ textAlign: 'center', padding: '40px' }} className="text-gray-500">
+                            Tidak ada data laporan untuk periode yang dipilih.
+                          </td>
                         </tr>
                       ) : (
                         laporanData.map((item, idx) => (
                           <tr key={idx}>
                             <td className="text-gray-800 font-medium">#LAP-{1000 + idx}</td>
-                            <td className="text-gray-800 font-medium">{formatDate(item.tanggal)}</td>
-                            <td className="text-gray-800"><strong>{item.berat_tbs} Kg</strong></td>
-                            <td><span style={{ background: '#d1fae5', color: '#059669', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700' }}>Sukses Terdata</span></td>
+                            <td className="text-gray-800 font-medium">
+                              {new Date(item.tanggal).toLocaleDateString('id-ID')}
+                            </td>
+                            <td className="text-gray-800">
+                              <strong>{parseFloat(item.berat_tbs).toLocaleString()} Kg</strong>
+                            </td>
+                            <td>
+                              <span style={{ 
+                                background: '#d1fae5', 
+                                color: '#059669', 
+                                padding: '4px 12px', 
+                                borderRadius: '20px', 
+                                fontSize: '12px', 
+                                fontWeight: '700' 
+                              }}>
+                                {item.status === 'selesai' ? 'Selesai' : 'Dalam Proses'}
+                              </span>
+                            </td>
                           </tr>
                         ))
                       )}
@@ -504,7 +594,7 @@ const Dashboard = () => {
               </div>
             } />
 
-            {/* SUB-ROUTE 5: KOTAK ARSIP BARU (KHUSUS MANAJER) */}
+            {/* ROUTE ARSIP */}
             {userRole === 'manajer' && (
               <Route path="arsip" element={
                 <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F8FAFC' }}>
