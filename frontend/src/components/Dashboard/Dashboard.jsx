@@ -5,6 +5,7 @@ import styles from './Dashboard.module.css';
 // IMPOR KOMPONEN LAIN
 import MasterData from '../Master/MasterData';
 import FilterLaporan from '../Laporan/FilterLaporan';
+import CetakLaporan from '../Laporan/CetakLaporan';
 import FormManifest from '../Transaksi/formManifest';
 import TabelDistribusi from '../Transaksi/TabelDistribusi';
 import KotakArsip from '../Transaksi/KotakArsip';
@@ -528,11 +529,11 @@ const Dashboard = () => {
               </div>
             } />
 
-            {/* ROUTE LAPORAN */}
+            {/* ROUTE LAPORAN - TANPA ICON DI STATUS */}
             <Route path="laporan" element={
               <div className={`${styles['master-container']} w-full min-h-screen p-6 rounded-tl-[20px]`} style={{ backgroundColor: '#F4F7FE' }}>
                 <h1 className="text-3xl font-bold mb-6" style={{ color: '#012A0D' }}>
-                  Laporan Pengiriman
+                  📋 Laporan Pengiriman
                 </h1>
 
                 <FilterLaporan onFilter={(mulai, selesai) => {
@@ -571,25 +572,13 @@ const Dashboard = () => {
                   fetchFilteredData();
                 }} />
 
+                {/* Tombol Cetak Laporan */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-                  <button
-                    onClick={() => window.print()}
-                    className={styles['btn-add']}
-                    style={{
-                      background: '#012A0D',
-                      color: '#F1AD00',
-                      border: '2px solid #F1AD00',
-                      padding: '10px 20px',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    <FaPrint /> Cetak Laporan
-                  </button>
+                  <CetakLaporan 
+                    laporanData={laporanData}
+                    tanggalMulai={localStorage.getItem('dashboard_start_date') || filterStartDate}
+                    tanggalSelesai={localStorage.getItem('dashboard_end_date') || filterEndDate}
+                  />
                 </div>
 
                 <div className="bg-white rounded-2xl p-5 shadow-sm overflow-x-auto border-2" style={{ borderColor: '#012A0D' }}>
@@ -610,27 +599,30 @@ const Dashboard = () => {
                           </td>
                         </tr>
                       ) : (
-                        laporanData.map((item, idx) => (
-                          <tr key={idx}>
-                            <td style={{ color: '#012A0D', fontWeight: 600 }}>#LAP-{1000 + idx}</td>
-                            <td style={{ color: '#012A0D' }}>{formatDate(item.tanggal)}</td>
-                            <td><strong style={{ color: '#F1AD00' }}>{parseFloat(item.berat_tbs).toLocaleString()} Kg</strong></td>
-                            <td>
-                              <span style={{
-                                background: '#dcfce7',
-                                color: '#012A0D',
-                                border: '2px solid #F1AD00',
-                                padding: '4px 12px',
-                                borderRadius: '20px',
-                                fontSize: '12px',
-                                fontWeight: '700',
-                                display: 'inline-block'
-                              }}>
-                                {item.status === 'selesai' ? 'Selesai' : 'Dalam Proses'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
+                        laporanData.map((item, idx) => {
+                          const isSelesai = item.status === 'selesai' || item.status === 'Selesai';
+                          return (
+                            <tr key={idx}>
+                              <td style={{ color: '#012A0D', fontWeight: 600 }}>#LAP-{1000 + idx}</td>
+                              <td style={{ color: '#012A0D' }}>{formatDate(item.tanggal)}</td>
+                              <td><strong style={{ color: '#F1AD00' }}>{parseFloat(item.berat_tbs).toLocaleString()} Kg</strong></td>
+                              <td>
+                                <span style={{
+                                  background: isSelesai ? '#dcfce7' : '#fef3c7',
+                                  color: isSelesai ? '#012A0D' : '#92400e',
+                                  border: isSelesai ? '2px solid #86efac' : '2px solid #fcd34d',
+                                  padding: '4px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  display: 'inline-block'
+                                }}>
+                                  {isSelesai ? 'Selesai' : 'Dalam Proses'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
