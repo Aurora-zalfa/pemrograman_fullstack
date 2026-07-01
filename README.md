@@ -178,29 +178,18 @@ Seluruh fitur berfungsi optimal dengan server lokal sesuai panduan Local Setup d
 Jika ingin mendeploy ke produksi, sesuaikan variabel lingkungan dan konfigurasi database dengan layanan hosting pilihan Anda.
 
 ## 7. Application Features
-Autentikasi — Login/register dengan JWT, role-based access (petugas/manajer).
-
-Dashboard — Ringkasan statistik (total berat, pengiriman, supir, armada, kebun, pabrik) disertai grafik:
-
-Tren berat pengiriman (line chart)
-
-Volume pengiriman harian (bar chart)
-
-Kontribusi per kebun (pie chart)
-
-Status pengiriman (pie chart)
-
-Manajemen Master Data — CRUD untuk Supir, Truk, Kebun, Pabrik.
-
-Transaksi — Input manifes baru (berat, supir, plat, status) dan daftar transaksi terkini. Hanya petugas yang dapat menambah.
-
-Laporan — Filter berdasarkan rentang tanggal, tampilan tabel, dan cetak laporan.
-
-Kotak Arsip — Khusus manajer untuk melihat riwayat transaksi yang sudah selesai.
-
-Sidebar Navigasi — Menu dinamis sesuai role pengguna.
-
-Logout — Hapus token dan redirect ke halaman login.
+- Autentikasi — Login/register dengan JWT, role-based access (petugas/manajer).
+- Dashboard — Ringkasan statistik (total berat, pengiriman, supir, armada, kebun, pabrik) disertai grafik:
+- Tren berat pengiriman (line chart)
+- Volume pengiriman harian (bar chart)
+- Kontribusi per kebun (pie chart)
+- Status pengiriman (pie chart)
+- Manajemen Master Data — CRUD untuk Supir, Truk, Kebun, Pabrik.
+- Transaksi — Input manifes baru (berat, supir, plat, status) dan daftar transaksi terkini. Hanya petugas yang dapat menambah.
+- Laporan — Filter berdasarkan rentang tanggal, tampilan tabel, dan cetak laporan.
+- Kotak Arsip — Khusus manajer untuk melihat riwayat transaksi yang sudah selesai
+- Sidebar Navigasi — Menu dinamis sesuai role pengguna.
+- Logout — Hapus token dan redirect ke halaman login.
 
 ## 8. Notes on Data Layer
 Backend menggunakan MySQL sebagai database utama dengan model-model yang didefinisikan di folder models/. Seluruh operasi CRUD dilakukan melalui query SQL langsung atau dengan bantuan ORM (jika digunakan).
