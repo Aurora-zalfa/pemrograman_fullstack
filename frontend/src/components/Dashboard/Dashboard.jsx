@@ -28,6 +28,9 @@ const Dashboard = () => {
   const [userRole] = useState(localStorage.getItem('user_role') || 'manajer');
   const token = localStorage.getItem('token') || '';
 
+  // ✅ AMBIL USERNAME DARI LOCALSTORAGE, FALLBACK 'Aurora'
+  const username = localStorage.getItem('username') || 'Aurora';
+
   // STATE untuk filter tanggal - baca dari localStorage
   const [filterStartDate, setFilterStartDate] = useState(() => {
     const saved = localStorage.getItem('dashboard_start_date');
@@ -346,7 +349,8 @@ const [formTransaksi, setFormTransaksi] = useState({
             <FaBars style={{ color: '#012A0D' }} />
           </div>
           <div className={styles['navbar-user']}>
-            <span className="font-bold" style={{ color: '#012A0D' }}>Aurora</span>
+            {/* ✅ GANTI "Aurora" DENGAN USERNAME DARI LOCALSTORAGE */}
+            <span className="font-bold" style={{ color: '#012A0D' }}>{username}</span>
             <span className={styles['user-role']} style={{ background: '#F1AD00', color: '#012A0D' }}>
               {userRole === 'petugas' ? 'Petugas Lapangan' : 'Manajer Perusahaan'}
             </span>

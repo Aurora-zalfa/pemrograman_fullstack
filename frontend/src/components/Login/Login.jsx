@@ -45,6 +45,11 @@ const Login = () => {
               localStorage.setItem('userId', userId);
             }
             
+            // ================= REVISI BARU =================
+            // Menyimpan username yang sedang login agar nama di Sidebar/Navbar menjadi dinamis
+            localStorage.setItem('username', formData.username);
+            // ===============================================
+            
             // 3. PANGGIL FUNGSI LOGIN GLOBAL CONTEXT (OTOMATIS MENGESET LOCALSTORAGE & GLOBAL STATE)
             login(token, role);
 
