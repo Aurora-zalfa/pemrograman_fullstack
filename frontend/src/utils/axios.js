@@ -3,8 +3,8 @@ import axios from 'axios';
 import { getToken } from './auth';
 
 const service = axios.create({
-  // UBAH DARI 5000 MENJADI 3000 AGAR COCOK DENGAN BACKEND KAMU
-  baseURL: 'http://localhost:3000', 
+  // UBAH DARI 5000 MENJADI 5000 AGAR COCOK DENGAN BACKEND KAMU
+  baseURL: 'http://localhost:5000', 
   timeout: 5000
 });
 

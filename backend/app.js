@@ -57,7 +57,7 @@ app.use((err, req, res, next) => {
 });
 
 // 6. START SERVER
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server berjalan di port ${PORT}`);
   console.log(`Sinkronisasi Database Master aktif di: http://localhost:${PORT}/api/master`);

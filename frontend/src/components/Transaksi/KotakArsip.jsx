@@ -14,7 +14,7 @@ const KotakArsip = () => {
         setLoading(true);
         const token = localStorage.getItem('token'); 
 
-        const response = await axios.get('http://localhost:3000/api/distribusi/archived', {
+        const response = await axios.get('http://localhost:5000/api/distribusi/archived', {
           headers: {
             Authorization: `Bearer ${token}`
           }

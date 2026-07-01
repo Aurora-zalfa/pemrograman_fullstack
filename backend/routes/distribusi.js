@@ -86,4 +86,22 @@ router.delete('/:id', distribusiController.deleteDistribusi);
 // ============================================
 router.delete('/:id/permanent', distribusiController.deleteDistribusiPermanent);
 
+// ============================================
+// ARCHIVE (Manajer only)
+// ============================================
+router.put('/:id/archive', verifyToken, isManager, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      'UPDATE distribusi SET is_deleted = 1 WHERE iddistribusi = ?',
+      [req.params.id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Data tidak ditemukan' });
+    }
+    res.json({ success: true, message: 'Data berhasil diarsipkan' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

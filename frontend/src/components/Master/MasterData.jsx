@@ -17,7 +17,7 @@ const MasterData = () => {
   const loadMasterData = async () => {
     setIsMasterLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
+      const response = await fetch(`http://localhost:5000/api/master/${activeMasterType}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -80,7 +80,7 @@ const MasterData = () => {
         cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
       }
 
-      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}`, {
+      const response = await fetch(`http://localhost:5000/api/master/${activeMasterType}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,7 +124,7 @@ const MasterData = () => {
         cleanData = { nama_pabrik: inputData.nama_pabrik, lokasi: inputData.lokasi };
       }
 
-      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}/${editId}`, {
+      const response = await fetch(`http://localhost:5000/api/master/${activeMasterType}/${editId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -160,7 +160,7 @@ const MasterData = () => {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/master/${activeMasterType}/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/master/${activeMasterType}/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

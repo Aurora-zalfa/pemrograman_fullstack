@@ -1353,8 +1353,8 @@ select.form-control-manifest {
 
 .btn-cancel-manifest {
   background: white;
-  color: #012A0D;
-  border: 2px solid #012A0D;
+  color: #000000;
+  border: 2px solid #000000;
   padding: 12px 28px;
   border-radius: 12px;
   cursor: pointer;
@@ -1364,8 +1364,9 @@ select.form-control-manifest {
 }
 
 .btn-cancel-manifest:hover {
-  background: #dcfce7;
-  border-color: #012A0D;
+  background: #f3f4f6;
+  border-color: #000000;
+  color: #000000;
   transform: translateY(-2px);
 }
 

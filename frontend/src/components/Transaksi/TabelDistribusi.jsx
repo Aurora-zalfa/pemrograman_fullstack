@@ -115,6 +115,30 @@ const TabelDistribusi = ({ transaksiList, setTransaksiList, onEdit, onDelete }) 
     }
   }, []);
 
+  // ✅ ARSIPKAN (Soft Delete - Manajer Only)
+// ✅ ARSIPKAN (Soft Delete - Manajer Only)
+const handleArsip = async (id) => {
+  if (!window.confirm("Apakah Anda yakin ingin mengarsipkan data distribusi ini?")) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`http://localhost:5000/api/distribusi/${id}/archive`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      alert("Data berhasil diarsipkan!");
+      window.location.reload();
+    } else {
+      alert("Gagal mengarsipkan: " + result.message);
+    }
+  } catch (error) {
+    alert("Error: " + error.message);
+  }
+};
+
   // ✅ FUNGSI DELETE
   const handleSoftDelete = async (idDistribusi) => {
     const konfirmasi = window.confirm(
@@ -350,22 +374,22 @@ const TabelDistribusi = ({ transaksiList, setTransaksiList, onEdit, onDelete }) 
                             </>
                           )}
 
-                          {userRole === 'manajer' && (
-                            <button
-                              onClick={() => handleSoftDelete(item.iddistribusi || item.id)}
-                              style={{
-                                background: '#fef3c7',
-                                color: '#92400e',
-                                border: '2px solid #fcd34d',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '12px'
-                              }}
-                            >
-                              📦 Arsipkan
-                            </button>
-                          )}
+                        {userRole === 'manajer' && (
+                          <button
+                            onClick={() => handleArsip(item.iddistribusi)}
+                            style={{
+                              background: '#f59e0b',
+                              color: 'white',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              marginRight: '5px'
+                            }}
+                          >
+                            Arsipkan
+                          </button>
+                        )}
                         </div>
                       </td>
                     </tr>
@@ -377,162 +401,159 @@ const TabelDistribusi = ({ transaksiList, setTransaksiList, onEdit, onDelete }) 
         )}
       </div>
 
-      {/* ✅ MODAL EDIT - DROPDOWN */}
-      {editingItem && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999
-        }}>
-          <div style={{
-            background: 'white',
-            padding: '30px',
-            borderRadius: '16px',
-            width: '450px',
-            maxWidth: '90%',
-            border: '2px solid #012A0D'
-          }}>
-            <h2 style={{ color: '#012A0D', marginBottom: '20px' }}>✏️ Edit Transaksi Distribusi</h2>
-            <form onSubmit={handleEditSubmit}>
-              
-              {/* DROPDOWN NAMA SUPIR */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
-                  Nama Supir <span style={{ color: 'red' }}>*</span>
-                </label>
-                <select
-                  value={editForm.supir_idsupir}
-                  onChange={(e) => setEditForm({...editForm, supir_idsupir: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: '2px solid #d1d5db',
-                    fontSize: '14px'
-                  }}
-                  required
-                >
-                  <option value="">-- Pilih Supir --</option>
-                  {masterData.supir.map((supir) => (
-                    <option key={supir.idsupir} value={supir.idsupir}>
-                      {supir.nama_supir}
-                    </option>
-                  ))}
-                </select>
-              </div>
+{/* ✅ MODAL EDIT - DROPDOWN */}
+{editingItem && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999
+  }}>
+    <div style={{
+      background: 'white',
+      padding: '30px',
+      borderRadius: '16px',
+      width: '450px',
+      maxWidth: '90%',
+      border: '2px solid #012A0D'
+    }}>
+      {/* JUDUL + X */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ color: '#012A0D', margin: 0 }}>✏️ Edit Transaksi Distribusi</h2>
+        <span 
+          onClick={() => setEditingItem(null)} 
+          style={{ cursor: 'pointer', fontSize: '24px', color: '#000000', fontWeight: 'bold', lineHeight: '24px' }}
+          title="Tutup"
+        >
+          ✕
+        </span>
+      </div>
 
-              {/* DROPDOWN NO POLISI */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
-                  No Polisi <span style={{ color: 'red' }}>*</span>
-                </label>
-                <select
-                  value={editForm.truk_idtruk}
-                  onChange={(e) => setEditForm({...editForm, truk_idtruk: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: '2px solid #d1d5db',
-                    fontSize: '14px'
-                  }}
-                  required
-                >
-                  <option value="">-- Pilih Truk --</option>
-                  {masterData.truk.map((truk) => (
-                    <option key={truk.idtruk} value={truk.idtruk}>
-                      {truk.no_polisi}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* BERAT TBS */}
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
-                  Berat TBS (Kg) <span style={{ color: 'red' }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  value={editForm.berat_tbs}
-                  onChange={(e) => setEditForm({...editForm, berat_tbs: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: '2px solid #d1d5db',
-                    fontSize: '14px'
-                  }}
-                  required
-                />
-              </div>
-
-              {/* STATUS */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
-                  Status <span style={{ color: 'red' }}>*</span>
-                </label>
-                <select
-                  value={editForm.status}
-                  onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: '2px solid #d1d5db',
-                    fontSize: '14px'
-                  }}
-                  required
-                >
-                  <option value="menunggu_memuat">Menunggu Memuat</option>
-                  <option value="dalam_perjalanan">Dalam Perjalanan</option>
-                  <option value="tiba_di_pabrik">Tiba di Pabrik</option>
-                  <option value="selesai">Selesai</option>
-                </select>
-              </div>
-
-              {/* BUTTON */}
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => setEditingItem(null)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: '2px solid #d1d5db',
-                    background: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '600'
-                  }}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: '#012A0D',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontWeight: '600'
-                  }}
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
-          </div>
+      <form onSubmit={handleEditSubmit}>
+        
+        {/* DROPDOWN NAMA SUPIR */}
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
+            Nama Supir <span style={{ color: 'red' }}>*</span>
+          </label>
+          <select
+            value={editForm.supir_idsupir}
+            onChange={(e) => setEditForm({...editForm, supir_idsupir: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '2px solid #d1d5db',
+              fontSize: '14px'
+            }}
+            required
+          >
+            <option value="">-- Pilih Supir --</option>
+            {masterData.supir.map((supir) => (
+              <option key={supir.idsupir} value={supir.idsupir}>
+                {supir.nama_supir}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+
+        {/* DROPDOWN NO POLISI */}
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
+            No Polisi <span style={{ color: 'red' }}>*</span>
+          </label>
+          <select
+            value={editForm.truk_idtruk}
+            onChange={(e) => setEditForm({...editForm, truk_idtruk: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '2px solid #d1d5db',
+              fontSize: '14px'
+            }}
+            required
+          >
+            <option value="">-- Pilih Truk --</option>
+            {masterData.truk.map((truk) => (
+              <option key={truk.idtruk} value={truk.idtruk}>
+                {truk.no_polisi}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* BERAT TBS */}
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
+            Berat TBS (Kg) <span style={{ color: 'red' }}>*</span>
+          </label>
+          <input
+            type="number"
+            value={editForm.berat_tbs}
+            onChange={(e) => setEditForm({...editForm, berat_tbs: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '2px solid #d1d5db',
+              fontSize: '14px'
+            }}
+            required
+          />
+        </div>
+
+        {/* STATUS */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: '600', marginBottom: '5px', color: '#012A0D' }}>
+            Status <span style={{ color: 'red' }}>*</span>
+          </label>
+          <select
+            value={editForm.status}
+            onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+            style={{
+              width: '100%',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '2px solid #d1d5db',
+              fontSize: '14px'
+            }}
+            required
+          >
+            <option value="menunggu_memuat">Menunggu Memuat</option>
+            <option value="dalam_perjalanan">Dalam Perjalanan</option>
+            <option value="tiba_di_pabrik">Tiba di Pabrik</option>
+            <option value="selesai">Selesai</option>
+          </select>
+        </div>
+
+        {/* BUTTON SIMPAN */}
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button
+            type="submit"
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#012A0D',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: '600'
+            }}
+          >
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </Container>
   );
 };

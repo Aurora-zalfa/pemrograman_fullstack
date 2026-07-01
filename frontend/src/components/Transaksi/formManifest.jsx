@@ -428,13 +428,6 @@ const FormManifest = ({ formTransaksi, setFormTransaksi, handleTransaksiSubmit }
 
           <div className={`${styles['form-actions-manifest']} ${styles['flex']} ${styles['justify-end']} ${styles['gap-4']} ${styles['mt-6']} ${styles['pt-6']} ${styles['border-t']}`}>
             <button
-              type="button"
-              onClick={() => window.history.back()}
-              className={styles['btn-cancel-manifest']}
-            >
-              ❌ Batal
-            </button>
-            <button
               type="submit"
               disabled={loading}
               className={styles['btn-submit-manifest']}

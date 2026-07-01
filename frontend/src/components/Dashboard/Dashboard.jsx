@@ -16,11 +16,11 @@ import {
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 
-// IMPOR ICON
+// IMPOR ICON - HAPUS FaBars
 import {
   FaWeightHanging, FaTruck, FaUsers, FaTrailer, FaTree, FaIndustry,
   FaChartLine, FaLeaf, FaPrint, FaSignOutAlt, FaTachometerAlt,
-  FaDatabase, FaExchangeAlt, FaFileAlt, FaBars
+  FaDatabase, FaExchangeAlt, FaFileAlt
 } from 'react-icons/fa';
 
 const Dashboard = () => {
@@ -55,32 +55,35 @@ const Dashboard = () => {
   const [laporanData, setLaporanData] = useState([]);
   const [transaksiList, setTransaksiList] = useState([]);
   
-const [formTransaksi, setFormTransaksi] = useState({
-  supir: '', 
-  plat: '', 
-  berat: '', 
-  status: 'menunggu_memuat',
-  tanggal_kirim: '' // ← KOSONGKAN
-});
+  const [formTransaksi, setFormTransaksi] = useState({
+    supir: '', 
+    plat: '', 
+    berat: '', 
+    status: 'menunggu_memuat',
+    tanggal_kirim: ''
+  });
 
   // 🎨 Color Palette - NYAWIT HUNTER THEME
   const PIE_COLORS = [
-    '#012A0D',  // Dark Green
-    '#10b981',  // Emerald Green  
-    '#34d399',  // Light Green
-    '#F1AD00',  // Gold
-    '#fbbf24',  // Amber
-    '#f59e0b',  // Orange
-    '#d97706',  // Brown-Orange
-    '#84cc16',  // Lime
+    '#012A0D', '#10b981', '#34d399', '#F1AD00',
+    '#fbbf24', '#f59e0b', '#d97706', '#84cc16',
   ];
+
+  // ✅ FORMAT BERAT: Auto Ton jika >= 1000 Kg
+const formatBerat = (kg) => {
+  const num = parseFloat(kg);
+  if (num >= 1000) {
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num / 1000) + ' Ton';
+  }
+  return new Intl.NumberFormat('id-ID').format(num) + ' Kg';
+};
 
   // FETCH DATA DASHBOARD
   const fetchDashboardData = async () => {
     console.log("🔄 Fetching dashboard data for period:", filterStartDate, "s/d", filterEndDate);
     try {
       const laporanRes = await fetch(
-        `http://localhost:3000/api/laporan?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`,
+        `http://localhost:5000/api/laporan?tanggal_mulai=${filterStartDate}&tanggal_selesai=${filterEndDate}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const laporanResult = await laporanRes.json();
@@ -96,10 +99,10 @@ const [formTransaksi, setFormTransaksi] = useState({
       console.log("📦 Jumlah pengiriman:", data.length);
 
       const [supirRes, trukRes, kebunRes, pabrikRes] = await Promise.all([
-        fetch('http://localhost:3000/api/master/supir', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('http://localhost:3000/api/master/truk', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('http://localhost:3000/api/master/kebun', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('http://localhost:3000/api/master/pabrik', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch('http://localhost:5000/api/master/supir', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('http://localhost:5000/api/master/truk', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('http://localhost:5000/api/master/kebun', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('http://localhost:5000/api/master/pabrik', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       const supirResult = await supirRes.json();
@@ -121,10 +124,10 @@ const [formTransaksi, setFormTransaksi] = useState({
     }
   };
 
-  // ✅ FIX: FETCH TRANSAKSI - PAKAI /api/distribusi
+  // FETCH TRANSAKSI
   const fetchTransaksi = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/distribusi', {
+      const response = await fetch('http://localhost:5000/api/distribusi', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -182,12 +185,11 @@ const [formTransaksi, setFormTransaksi] = useState({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [filterStartDate, filterEndDate]);
 
-  // ✅ FIX: DELETE - PAKAI /api/distribusi
   const handleDeleteTransaksi = async (id) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus data transaksi ini?")) {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:3000/api/distribusi/${id}`, {
+        const response = await fetch(`http://localhost:5000/api/distribusi/${id}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -207,7 +209,6 @@ const [formTransaksi, setFormTransaksi] = useState({
     }
   };
 
-  // ✅ FIX: CREATE - PAKAI /api/distribusi + tambah tanggal_kirim
   const handleTransaksiSubmit = async (e) => {
     e.preventDefault();
     if (userRole === 'manajer') {
@@ -215,21 +216,20 @@ const [formTransaksi, setFormTransaksi] = useState({
       return;
     }
 
-    // Validasi tanggal
     if (!formTransaksi.tanggal_kirim) {
       alert('Tanggal pengiriman wajib diisi!');
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/distribusi', {
+      const response = await fetch('http://localhost:5000/api/distribusi', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          tanggal_kirim: formTransaksi.tanggal_kirim, // ← TAMBAHKAN
+          tanggal_kirim: formTransaksi.tanggal_kirim,
           nama_supir: formTransaksi.supir,
           no_polisi: formTransaksi.plat,
           berat_tbs: parseFloat(formTransaksi.berat),
@@ -240,14 +240,13 @@ const [formTransaksi, setFormTransaksi] = useState({
       const result = await response.json();
       if (result.success) {
         alert('Data Distribusi Berhasil Ditambahkan!');
-        // Reset form dengan tanggal hari ini
-      setFormTransaksi({ 
-        supir: '', 
-        plat: '', 
-        berat: '', 
-        status: 'menunggu_memuat',
-        tanggal_kirim: '' // ← KOSONGKAN
-      });
+        setFormTransaksi({ 
+          supir: '', 
+          plat: '', 
+          berat: '', 
+          status: 'menunggu_memuat',
+          tanggal_kirim: ''
+        });
         fetchTransaksi();
         fetchDashboardData();
       } else {
@@ -268,7 +267,6 @@ const [formTransaksi, setFormTransaksi] = useState({
     return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
-  // Data untuk chart
   const barChartData = laporanData.map((item) => ({
     tanggal: formatDate(item.tanggal),
     berat: parseFloat(item.berat_tbs || 0)
@@ -293,7 +291,9 @@ const [formTransaksi, setFormTransaksi] = useState({
     return Object.keys(statusMap).map(key => ({ name: key, value: statusMap[key] }));
   })();
 
-  const bulanSekarang = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const bulanSekarang = filterStartDate 
+  ? new Date(filterStartDate + 'T00:00:00').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) 
+  : new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   return (
     <div className={styles['app-container']} style={{ backgroundColor: '#F4F7FE' }}>
@@ -345,13 +345,23 @@ const [formTransaksi, setFormTransaksi] = useState({
       {/* MAIN CONTENT */}
       <main className={styles['main-content']}>
         <nav className={styles.navbar} style={{ backgroundColor: '#F4F7FE' }}>
-          <div className={styles['navbar-toggle']}>
-            <FaBars style={{ color: '#012A0D' }} />
-          </div>
-          <div className={styles['navbar-user']}>
-            {/* ✅ GANTI "Aurora" DENGAN USERNAME DARI LOCALSTORAGE */}
+          {/* BAGIAN NAVBAR-TOGGLE DIHAPUS */}
+          <div className={styles['navbar-user']} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            marginLeft: 'auto',
+            justifyContent: 'flex-end'
+          }}>
             <span className="font-bold" style={{ color: '#012A0D' }}>{username}</span>
-            <span className={styles['user-role']} style={{ background: '#F1AD00', color: '#012A0D' }}>
+            <span className={styles['user-role']} style={{ 
+              background: '#F1AD00', 
+              color: '#012A0D',
+              padding: '4px 16px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              fontWeight: '600'
+            }}>
               {userRole === 'petugas' ? 'Petugas Lapangan' : 'Manajer Perusahaan'}
             </span>
           </div>
@@ -373,18 +383,21 @@ const [formTransaksi, setFormTransaksi] = useState({
                   </p>
                 </div>
 
-                {/* 6 KARTU STATISTIK */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border-2" style={{ borderColor: '#012A0D' }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f0fdf4' }}>
-                        <FaWeightHanging style={{ color: '#F1AD00' }} className="text-xl" />
-                      </div>
-                      <span className="text-xs font-medium" style={{ color: '#6b7280' }}>Bulan ini</span>
-                    </div>
-                    <p className="text-2xl font-bold mt-3" style={{ color: '#012A0D' }}>{stats.totalBerat.toLocaleString()}</p>
-                    <p className="text-sm font-medium mt-1" style={{ color: '#023d15' }}>Total Berat (Kg)</p>
+            {/* 6 KARTU STATISTIK */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
+              {/* TOTAL BERAT - AUTO TON/KG */}
+              <div className="bg-white p-5 rounded-2xl shadow-sm border-2" style={{ borderColor: '#012A0D' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f0fdf4' }}>
+                    <FaWeightHanging style={{ color: '#F1AD00' }} className="text-xl" />
                   </div>
+                  <span className="text-xs font-medium" style={{ color: '#6b7280' }}>Bulan ini</span>
+                </div>
+                <p className="text-xl font-bold mt-3" style={{ color: '#012A0D' }} title={stats.totalBerat.toLocaleString('id-ID') + ' Kg'}>
+                  {formatBerat(stats.totalBerat)}
+                </p>
+                <p className="text-xs font-medium mt-1" style={{ color: '#023d15' }}>Total Berat</p>
+              </div>
 
                   <div className="bg-white p-5 rounded-2xl shadow-sm border-2" style={{ borderColor: '#012A0D' }}>
                     <div className="flex items-center justify-between mb-2">
@@ -555,30 +568,29 @@ const [formTransaksi, setFormTransaksi] = useState({
               </div>
             } />
 
-<Route path="transaksi" element={
-  <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F4F7FE' }}>
-    <div className="mb-6">
-      <h1 className="text-3xl font-bold" style={{ color: '#012A0D' }}>Transaksi Distribusi</h1>
-      <p className="text-sm mt-1 font-medium" style={{ color: '#023d15' }}>Pencatatan manifes baru dan pemantauan real-time.</p>
-    </div>
-    <div className="flex flex-col gap-6 w-full">
-      <div className="w-full">
-        <TabelDistribusi transaksiList={transaksiList} setTransaksiList={setTransaksiList} />
-      </div>
-      {userRole !== 'manajer' && (
-        <div className="w-full">
-          <FormManifest
-            formTransaksi={formTransaksi}
-            setFormTransaksi={setFormTransaksi}
-            // handleTransaksiSubmit={handleTransaksiSubmit}  // ← HAPUS BARIS INI!
-          />
-        </div>
-      )}
-    </div>
-  </div>
-} />
+            <Route path="transaksi" element={
+              <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F4F7FE' }}>
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold" style={{ color: '#012A0D' }}>Transaksi Distribusi</h1>
+                  <p className="text-sm mt-1 font-medium" style={{ color: '#023d15' }}>Pencatatan manifes baru dan pemantauan real-time.</p>
+                </div>
+                <div className="flex flex-col gap-6 w-full">
+                  <div className="w-full">
+                    <TabelDistribusi transaksiList={transaksiList} setTransaksiList={setTransaksiList} />
+                  </div>
+                  {userRole !== 'manajer' && (
+                    <div className="w-full">
+                      <FormManifest
+                        formTransaksi={formTransaksi}
+                        setFormTransaksi={setFormTransaksi}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            } />
 
-            {/* ROUTE LAPORAN - TANPA ICON DI STATUS */}
+            {/* ROUTE LAPORAN */}
             <Route path="laporan" element={
               <div className={`${styles['master-container']} w-full min-h-screen p-6 rounded-tl-[20px]`} style={{ backgroundColor: '#F4F7FE' }}>
                 <h1 className="text-3xl font-bold mb-6" style={{ color: '#012A0D' }}>
@@ -588,14 +600,11 @@ const [formTransaksi, setFormTransaksi] = useState({
                 <FilterLaporan onFilter={(mulai, selesai) => {
                   const fetchFilteredData = async () => {
                     try {
-                      console.log("📅 Filter API:", `tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`);
-
                       const response = await fetch(
-                        `http://localhost:3000/api/laporan?tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`,
+                        `http://localhost:5000/api/laporan?tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`,
                         { headers: { 'Authorization': `Bearer ${token}` } }
                       );
                       const result = await response.json();
-
                       const data = result.data || [];
                       setLaporanData(data);
 
@@ -621,7 +630,6 @@ const [formTransaksi, setFormTransaksi] = useState({
                   fetchFilteredData();
                 }} />
 
-                {/* Tombol Cetak Laporan */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
                   <CetakLaporan 
                     laporanData={laporanData}
