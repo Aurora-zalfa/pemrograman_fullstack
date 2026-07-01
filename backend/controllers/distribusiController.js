@@ -1,48 +1,92 @@
 // controllers/distribusiController.js
-const distribusiModel = require("../models/distribusiModel");
-const { validateDistribusi, validateId, validateFileUpload } = require("../utils/validator");
-const errorHandler = require("../utils/errorhandler");
+const db = require("../config/database");
 const fs = require('fs');
 const path = require('path');
 
 // ============================================
 // GET ALL
 // ============================================
-exports.getDistribusi = (req, res) => {
-  distribusiModel.getDistribusi((err, result) => {
-    if (err) {
-      res.status(500).json(err);
+exports.getDistribusi = async (req, res) => {
+  try {
+    let filterCondition = "";
+    
+    const userRole = req.user && req.user.role ? req.user.role.toLowerCase() : "";
+
+    if (userRole === "manajer" || userRole === "manager") {
+      filterCondition = "WHERE d.is_deleted = 0";
+      console.log("👔 Manajer: Menampilkan data aktif saja");
     } else {
-      res.json(result);
+      filterCondition = "";
+      console.log("👷 Petugas: Menampilkan semua data");
     }
-  });
+
+    const query = `
+      SELECT 
+        d.*,
+        k.nama_kebun,
+        s.nama_supir,
+        t.no_polisi,
+        p.nama_pabrik
+      FROM distribusi d
+      LEFT JOIN kebun k ON d.kebun_idkebun = k.idkebun
+      LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
+      LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
+      LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
+      ${filterCondition}
+      ORDER BY d.iddistribusi DESC
+    `;
+
+    const [rows] = await db.query(query);
+    console.log(`📊 Data ditemukan: ${rows.length} row(s)`);
+    
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("❌ Error getDistribusi:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 // ============================================
 // GET BY ID
 // ============================================
-exports.getDistribusiById = (req, res) => {
-  const id = req.params.id;
-  distribusiModel.getDistribusiById(id, (err, result) => {
-    if (err) {
-      res.status(500).json(err);
-    } else if (result.length === 0) {
-      res.status(404).json({ message: "Data tidak ditemukan" });
-    } else {
-      res.json(result[0]);
+exports.getDistribusiById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = `
+      SELECT 
+        d.*,
+        k.nama_kebun,
+        s.nama_supir,
+        t.no_polisi,
+        p.nama_pabrik
+      FROM distribusi d
+      LEFT JOIN kebun k ON d.kebun_idkebun = k.idkebun
+      LEFT JOIN supir s ON d.supir_idsupir = s.idsupir
+      LEFT JOIN truk t ON d.truk_idtruk = t.idtruk
+      LEFT JOIN pabrik p ON d.pabrik_idpabrik = p.idpabrik
+      WHERE d.iddistribusi = ? AND d.is_deleted = 0
+    `;
+    const [rows] = await db.query(query, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Data tidak ditemukan" });
     }
-  });
+    res.json({ success: true, data: rows[0] });
+  } catch (error) {
+    console.error("❌ Error getDistribusiById:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 // ============================================
-// CREATE DENGAN UPLOAD FILE (SPRINT 8/9)
+// CREATE (TAMBAH DATA) - FIXED LENGKAP
 // ============================================
 exports.createDistribusi = async (req, res) => {
   try {
     const data = req.body;
-
-    // Status awal wajib 'menunggu_memuat' untuk tracking
-    data.status = 'menunggu_memuat';
+    
+    console.log("📝 [CREATE] Data:", data);
+    console.log("📁 [CREATE] Files:", req.files ? 'ADA' : 'TIDAK ADA');
 
     // Validasi field wajib
     if (!data.tanggal_kirim || !data.berat_tbs) {
@@ -52,7 +96,7 @@ exports.createDistribusi = async (req, res) => {
       });
     }
 
-    // Validasi file upload (jika ada req.files dari multer)
+    // Validasi file upload
     if (!req.files || !req.files.surat_jalan || !req.files.bukti_timbang) {
       return res.status(400).json({ 
         success: false, 
@@ -60,264 +104,271 @@ exports.createDistribusi = async (req, res) => {
       });
     }
 
-    // Path file yang diupload (konversi backslash untuk Windows)
     const suratJalanPath = req.files.surat_jalan[0].path.replace(/\\/g, '/');
     const buktiTimbangPath = req.files.bukti_timbang[0].path.replace(/\\/g, '/');
 
-    // ================= TAMBAHAN VALIDASI SPRINT =================
-    // Cek ketersediaan Supir (jika supir_idsupir ada)
-    if (data.supir_idsupir) {
-      const supir = await distribusiModel.checkSupirStatus(data.supir_idsupir);
-      if (!supir) {
-        return res.status(404).json({ message: "Data supir tidak ditemukan" });
-      }
-      if (supir.status !== 'tersedia') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Gagal! Supir saat ini sedang '${supir.status}'. Pilih supir lain yang tersedia.` 
+    // 🔧 AMBIL users_idusers
+    let userId = data.users_idusers || req.user?.idusers;
+    if (!userId) {
+      const [users] = await db.query("SELECT idusers FROM users LIMIT 1");
+      if (users.length > 0) {
+        userId = users[0].idusers;
+        console.log("🤖 Auto menggunakan user ID:", userId);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Tidak ada user yang tersedia."
         });
       }
     }
 
-    // Cek ketersediaan Truk (jika truk_idtruk ada)
-    if (data.truk_idtruk) {
-      const truk = await distribusiModel.checkTrukStatus(data.truk_idtruk);
-      if (!truk) {
-        return res.status(404).json({ message: "Data truk tidak ditemukan" });
-      }
-      if (truk.status !== 'tersedia') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Gagal! Truk saat ini sedang '${truk.status}'. Pilih truk lain yang tersedia.` 
-        });
-      }
-    }
-    // ============================================================
+    // 🔧 KONVERSI ID ke integer
+    const supirId = data.supir_idsupir ? parseInt(data.supir_idsupir) : null;
+    const trukId = data.truk_idtruk ? parseInt(data.truk_idtruk) : null;
+    const kebunId = data.kebun_idkebun ? parseInt(data.kebun_idkebun) : null;
+    const pabrikId = data.pabrik_idpabrik ? parseInt(data.pabrik_idpabrik) : null;
 
-    // Siapkan data untuk insert ke database
-    const distribusiData = {
-      tanggal_kirim: data.tanggal_kirim,
-      berat_tbs: data.berat_tbs,
-      surat_jalan: suratJalanPath,
-      bukti_timbang: buktiTimbangPath,
-      status: data.status,
-      supir_idsupir: data.supir_idsupir || null,
-      truk_idtruk: data.truk_idtruk || null,
-      kebun_idkebun: data.kebun_idkebun || null,
-      pabrik_idpabrik: data.pabrik_idpabrik || null,
-    };
+    console.log("🔢 IDs setelah konversi:", { supirId, trukId, kebunId, pabrikId });
 
-    // Insert ke database
-    distribusiModel.createDistribusi(distribusiData, (err, result) => {
-      if (err) {
-        // Jika insert gagal, hapus file yang sudah terupload (rollback)
-        if (fs.existsSync(suratJalanPath)) fs.unlinkSync(suratJalanPath);
-        if (fs.existsSync(buktiTimbangPath)) fs.unlinkSync(buktiTimbangPath);
-        
-        return res.status(500).json({ 
-          success: false, 
-          message: "Gagal menyimpan ke database", 
-          error: err.message 
-        });
-      }
+    // ✅ QUERY INSERT LENGKAP
+    const query = `
+      INSERT INTO distribusi 
+      (tanggal_kirim, nama_supir, no_polisi, berat_tbs, status, surat_jalan, bukti_timbang, 
+       users_idusers, supir_idsupir, truk_idtruk, kebun_idkebun, pabrik_idpabrik, 
+       is_deleted, created_at, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW())
+    `;
 
-      res.status(201).json({
-        success: true,
-        message: "Distribusi berhasil dibuat dengan upload dokumen",
-        data: {
-          iddistribusi: result.insertId,
-          surat_jalan: suratJalanPath,
-          bukti_timbang: buktiTimbangPath,
-          status_awal: data.status
-        }
-      });
+    const values = [
+      data.tanggal_kirim,
+      data.nama_supir || null,
+      data.no_polisi || null,
+      parseFloat(data.berat_tbs),
+      data.status || 'menunggu_memuat',
+      suratJalanPath,
+      buktiTimbangPath,
+      userId,
+      supirId,
+      trukId,
+      kebunId,
+      pabrikId
+    ];
+
+    console.log("🔍 Query:", query);
+    console.log("🔍 Values:", values);
+
+    const [result] = await db.query(query, values);
+
+    res.status(201).json({
+      success: true,
+      message: "Data distribusi berhasil ditambahkan",
+      data: { iddistribusi: result.insertId }
     });
 
   } catch (error) {
-    console.error("Create distribusi error:", error);
+    console.error("❌ [CREATE] Error:", error);
     res.status(500).json({ 
       success: false, 
-      message: "Terjadi kesalahan server", 
-      error: error.message 
+      message: error.message 
     });
   }
 };
 
 // ============================================
-// UPDATE STATUS (SUDAH ADA - TIDAK DIUBAH)
-// ============================================
-exports.updateStatus = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const status_baru = req.body.status;
-
-    const alurStatus = [
-      'menunggu_memuat',
-      'dalam_perjalanan',
-      'tiba_di_pabrik',
-      'selesai'
-    ];
-
-    // 1. Ambil data lama
-    const rows = await distribusiModel.getById(id);
-    
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ message: "Data distribusi tidak ditemukan" });
-    }
-
-    const status_sekarang = rows[0].status;
-    const indexSekarang = alurStatus.indexOf(status_sekarang);
-    const indexBaru = alurStatus.indexOf(status_baru);
-
-    // 2. Logika Validasi Alur
-    if (indexBaru === indexSekarang + 1 || status_baru === 'ditolak') {
-      
-      // Update status
-      await distribusiModel.updateStatus(id, status_baru);
-      
-      res.json({
-        success: true,
-        message: `Status berhasil diperbarui dari [${status_sekarang}] menjadi [${status_baru}]`,
-        updatedBy: req.user?.username || 'unknown'
-      });
-
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: `Urutan status salah! Dari '${status_sekarang}' tidak bisa langsung ke '${status_baru}'.`
-      });
-    }
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
-
-// ============================================
-// UPDATE DISTRIBUSI (Dengan File Deletion - Sprint 7)
+// UPDATE (EDIT DATA)
 // ============================================
 exports.updateDistribusi = async (req, res) => {
   try {
     const id = req.params.id;
     const data = req.body;
 
-    // Cek data lama untuk file deletion
-    const oldData = await distribusiModel.getById(id);
-    if (!oldData || oldData.length === 0) {
-      return res.status(404).json({ message: "Data tidak ditemukan" });
-    }
+    console.log("📝 [UPDATE] ID:", id);
+    console.log("📦 [UPDATE] Data:", data);
 
-    // Jika ada file baru diupload, hapus file lama
-    const updatedFiles = {};
-    
-    if (req.files?.surat_jalan && oldData[0].surat_jalan) {
-      const oldPath = path.join(__dirname, '..', oldData[0].surat_jalan);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-        console.log('✅ Old file deleted:', oldPath);
-      }
-      updatedFiles.surat_jalan = req.files.surat_jalan[0].path.replace(/\\/g, '/');
-    }
-    
-    if (req.files?.bukti_timbang && oldData[0].bukti_timbang) {
-      const oldPath = path.join(__dirname, '..', oldData[0].bukti_timbang);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-        console.log('✅ Old file deleted:', oldPath);
-      }
-      updatedFiles.bukti_timbang = req.files.bukti_timbang[0].path.replace(/\\/g, '/');
-    }
-
-    // Update data
-    const updateData = { ...data };
-    if (updatedFiles.surat_jalan) updateData.surat_jalan = updatedFiles.surat_jalan;
-    if (updatedFiles.bukti_timbang) updateData.bukti_timbang = updatedFiles.bukti_timbang;
-
-    distribusiModel.updateDistribusi(id, updateData, (err, result) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: "Gagal update", error: err.message });
-      }
-
-      res.json({
-        success: true,
-        message: "Distribusi berhasil diupdate",
-        data: {
-          iddistribusi: id,
-          updatedFiles: Object.keys(updatedFiles).length > 0 ? updatedFiles : undefined,
-          updated_at: new Date().toISOString()
-        }
+    if (!data.nama_supir || !data.no_polisi || !data.berat_tbs || !data.status) {
+      return res.status(400).json({
+        success: false,
+        message: "Semua field harus diisi: nama_supir, no_polisi, berat_tbs, status"
       });
-    });
+    }
 
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+    const checkQuery = "SELECT * FROM distribusi WHERE iddistribusi = ?";
+    const [rows] = await db.query(checkQuery, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Data tidak ditemukan"
+      });
+    }
 
-// ============================================
-// DELETE (SOFT DELETE - File TETAP Ada)
-// ============================================
-exports.deleteDistribusi = (req, res) => {
-  const id = req.params.id;
-  
-  distribusiModel.deleteDistribusi(id, (err, result) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: "Gagal hapus data", error: err.message });
+    const updateQuery = `
+      UPDATE distribusi 
+      SET 
+        nama_supir = ?,
+        no_polisi = ?,
+        berat_tbs = ?,
+        status = ?,
+        updated_at = NOW()
+      WHERE iddistribusi = ?
+    `;
+
+    const values = [
+      data.nama_supir,
+      data.no_polisi,
+      parseFloat(data.berat_tbs),
+      data.status,
+      id
+    ];
+
+    const [result] = await db.query(updateQuery, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Gagal update, tidak ada perubahan"
+      });
     }
 
     res.json({
       success: true,
-      message: "Data distribusi berhasil diarsipkan (Soft Delete) - File tetap tersimpan untuk restore",
-      data: { iddistribusi: id }
+      message: "Data distribusi berhasil diupdate"
     });
-  });
+
+  } catch (error) {
+    console.error("❌ [UPDATE] Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
 };
 
 // ============================================
-// HARD DELETE (File JUGA Dihapus Permanen)
+// DELETE (SOFT DELETE)
+// ============================================
+exports.deleteDistribusi = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    console.log("📝 [DELETE] ID:", id);
+
+    const checkQuery = "SELECT * FROM distribusi WHERE iddistribusi = ?";
+    const [rows] = await db.query(checkQuery, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Data tidak ditemukan"
+      });
+    }
+
+    const deleteQuery = "UPDATE distribusi SET is_deleted = 1, updated_at = NOW() WHERE iddistribusi = ?";
+    const [result] = await db.query(deleteQuery, [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Gagal menghapus data"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Data distribusi berhasil dihapus"
+    });
+
+  } catch (error) {
+    console.error("❌ [DELETE] Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
+// ============================================
+// UPDATE STATUS
+// ============================================
+exports.updateStatus = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { status } = req.body;
+
+    const validStatus = ['menunggu_memuat', 'dalam_perjalanan', 'tiba_di_pabrik', 'selesai', 'ditolak'];
+    if (!validStatus.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status tidak valid. Pilih: ${validStatus.join(', ')}`
+      });
+    }
+
+    const query = "UPDATE distribusi SET status = ?, updated_at = NOW() WHERE iddistribusi = ?";
+    const [result] = await db.query(query, [status, id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Data tidak ditemukan"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Status berhasil diupdate"
+    });
+
+  } catch (error) {
+    console.error("❌ [updateStatus] Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
+// ============================================
+// HARD DELETE (Permanent)
 // ============================================
 exports.deleteDistribusiPermanent = async (req, res) => {
   try {
     const id = req.params.id;
+
+    const checkQuery = "SELECT * FROM distribusi WHERE iddistribusi = ?";
+    const [rows] = await db.query(checkQuery, [id]);
     
-    // Ambil data dulu untuk hapus file
-    const rows = await distribusiModel.getById(id);
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ message: "Data tidak ditemukan" });
+    if (rows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Data tidak ditemukan" 
+      });
     }
 
     const data = rows[0];
-    const deletedFiles = {};
 
-    // Hapus file fisik jika ada
     if (data.surat_jalan && fs.existsSync(data.surat_jalan)) {
       fs.unlinkSync(data.surat_jalan);
-      deletedFiles.surat_jalan = data.surat_jalan;
-      console.log('✅ File permanently deleted:', data.surat_jalan);
+      console.log('✅ File deleted:', data.surat_jalan);
     }
     
     if (data.bukti_timbang && fs.existsSync(data.bukti_timbang)) {
       fs.unlinkSync(data.bukti_timbang);
-      deletedFiles.bukti_timbang = data.bukti_timbang;
-      console.log('✅ File permanently deleted:', data.bukti_timbang);
+      console.log('✅ File deleted:', data.bukti_timbang);
     }
 
-    // Hapus dari database (hard delete)
-    distribusiModel.deleteDistribusiPermanent(id, (err, result) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: "Gagal hapus permanen", error: err.message });
-      }
+    const deleteQuery = "DELETE FROM distribusi WHERE iddistribusi = ?";
+    const [result] = await db.query(deleteQuery, [id]);
 
-      res.json({
-        success: true,
-        message: "Data distribusi dan file terkait berhasil dihapus permanen",
-        data: {
-          iddistribusi: id,
-          deletedFiles: Object.keys(deletedFiles).length > 0 ? deletedFiles : undefined
-        }
-      });
+    res.json({
+      success: true,
+      message: "Data berhasil dihapus permanen"
     });
 
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("❌ [deletePermanent] Error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
 };

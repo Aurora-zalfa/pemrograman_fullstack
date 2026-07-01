@@ -1,40 +1,23 @@
-import { useState, useEffect } from "react"; 
+import { useState, useEffect } from "react";
 import axiosInstance from "../../utils/axios";
 import styles from "../Dashboard/Dashboard.module.css";
-import Container from "../Container"; 
+import Container from "../Container";
 
-const FormManifest = () => {
-  // 🔒 SECURITY GATE: Ambil role akun dari localStorage (CASE-INSENSITIVE)
+const FormManifest = ({ formTransaksi, setFormTransaksi, handleTransaksiSubmit }) => {
   const userRoleRaw = localStorage.getItem('user_role') || '';
-  const userRole = userRoleRaw.toLowerCase().trim(); // NORMALIZE: lowercase & trim
-  
+  const userRole = userRoleRaw.toLowerCase().trim();
+
   console.log('🔐 FormManifest - Raw Role:', userRoleRaw);
   console.log('🔐 FormManifest - Normalized Role:', userRole);
 
-  // State untuk form data (MATCH dengan backend distribusi.js)
-  const [formData, setFormData] = useState({
-    tanggal_kirim: "",
-    berat_tbs: "",
-    users_idusers: localStorage.getItem('userId') || "",
-    supir_idsupir: "",
-    truk_idtruk: "",
-    kebun_idkebun: "",
-    pabrik_idpabrik: "",
-    status: "menunggu_memuat",
-  });
-
-  // State untuk file upload
   const [suratJalan, setSuratJalan] = useState(null);
   const [buktiTimbang, setBuktiTimbang] = useState(null);
   const [previewSuratJalan, setPreviewSuratJalan] = useState(null);
   const [previewBuktiTimbang, setPreviewBuktiTimbang] = useState(null);
-
-  // State untuk UI
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [pesan, setPesan] = useState({ type: "", text: "" });
 
-  // State untuk master data (dropdown) - GRACEFUL FALLBACK
   const [masterData, setMasterData] = useState({
     supir: [],
     truk: [],
@@ -43,7 +26,6 @@ const FormManifest = () => {
   });
   const [masterLoading, setMasterLoading] = useState(true);
 
-  // Fetch master data dari API Zen (hanya dijalankan jika user BUKAN manajer untuk menghemat bandwidth)
   useEffect(() => {
     if (userRole === 'manajer' || userRole.includes('manajer')) return;
 
@@ -72,13 +54,11 @@ const FormManifest = () => {
     fetchMasterData();
   }, [userRole]);
 
-  // Handle change untuk input text & select
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormTransaksi({ ...formTransaksi, [name]: value });
   };
 
-  // Handle file change + preview + validation
   const handleFileChange = (e, fileType) => {
     const file = e.target.files[0];
     
@@ -107,17 +87,34 @@ const FormManifest = () => {
     }
   };
 
-  // 🛠️ PERBAIKAN UTAMA: Handle submit dengan konversi tipe data payload ke angka murni
+  // ✅ FIX SUBMIT - PASTIKAN SEMUA DATA TERKIRIM
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log("📝 Form data sebelum submit:", formTransaksi);
+
     if (!suratJalan || !buktiTimbang) {
       setPesan({ type: "error", text: "Surat Jalan dan Bukti Timbang wajib diupload!" });
       return;
     }
 
-    if (!formData.tanggal_kirim || !formData.berat_tbs || !formData.supir_idsupir || !formData.truk_idtruk) {
-      setPesan({ type: "error", text: "Tanggal, Berat, Supir, dan Truk wajib diisi!" });
+    if (!formTransaksi.tanggal_kirim) {
+      setPesan({ type: "error", text: "Tanggal pengiriman wajib diisi!" });
+      return;
+    }
+
+    if (!formTransaksi.berat_tbs) {
+      setPesan({ type: "error", text: "Berat TBS wajib diisi!" });
+      return;
+    }
+
+    if (!formTransaksi.supir_idsupir) {
+      setPesan({ type: "error", text: "Supir wajib dipilih!" });
+      return;
+    }
+
+    if (!formTransaksi.truk_idtruk) {
+      setPesan({ type: "error", text: "Truk wajib dipilih!" });
       return;
     }
 
@@ -127,33 +124,41 @@ const FormManifest = () => {
 
     try {
       const data = new FormData();
-      const userIdToSubmit = formData.users_idusers || localStorage.getItem('userId') || '1';
       
-      // Proses pembersihan data agar disukai oleh database MySQL backend
-      Object.keys(formData).forEach((key) => {
-        if (key === 'users_idusers') {
-          data.append(key, String(userIdToSubmit));
-        } else if (key === 'berat_tbs') {
-          data.append(key, Number(formData.berat_tbs)); // Konversi berat ke Number murni
-        } else if (
-          key === 'supir_idsupir' || 
-          key === 'truk_idtruk' || 
-          key === 'kebun_idkebun' || 
-          key === 'pabrik_idpabrik'
-        ) {
-          // Konversi String ID dari Dropdown menjadi Integer Angka untuk Foreign Key DB
-          if (formData[key]) {
-            data.append(key, parseInt(formData[key], 10));
-          }
-        } else if (formData[key]) {
-          data.append(key, formData[key]);
-        }
-      });
+      // ✅ KIRIM SEMUA FIELD SECARA EXPLICIT
+      data.append("tanggal_kirim", formTransaksi.tanggal_kirim);
+      data.append("berat_tbs", Number(formTransaksi.berat_tbs));
+      data.append("status", formTransaksi.status || 'menunggu_memuat');
+      
+      // User ID
+      const userId = formTransaksi.users_idusers || localStorage.getItem('userId') || '1';
+      data.append("users_idusers", String(userId));
+      
+      // Foreign keys
+      if (formTransaksi.supir_idsupir) {
+        data.append("supir_idsupir", parseInt(formTransaksi.supir_idsupir, 10));
+      }
+      if (formTransaksi.truk_idtruk) {
+        data.append("truk_idtruk", parseInt(formTransaksi.truk_idtruk, 10));
+      }
+      if (formTransaksi.kebun_idkebun) {
+        data.append("kebun_idkebun", parseInt(formTransaksi.kebun_idkebun, 10));
+      }
+      if (formTransaksi.pabrik_idpabrik) {
+        data.append("pabrik_idpabrik", parseInt(formTransaksi.pabrik_idpabrik, 10));
+      }
 
+      // File upload
       data.append("surat_jalan", suratJalan);
       data.append("bukti_timbang", buktiTimbang);
 
-      await axiosInstance.post("/api/distribusi", data, {
+      // Debug
+      console.log("📦 FormData yang dikirim:");
+      for (let pair of data.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
+      const response = await axiosInstance.post("/api/distribusi", data, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -161,11 +166,13 @@ const FormManifest = () => {
         },
       });
 
+      console.log("✅ Response:", response.data);
+
       setPesan({ type: "success", text: "Data distribusi berhasil dibuat!" });
       
-      // Reset State Form
-      setFormData({
-        tanggal_kirim: "",
+      // Reset form (KOSONGKAN SEMUA FIELD)
+      setFormTransaksi({
+        tanggal_kirim: "", // ← KOSONG, TIDAK ADA DEFAULT
         berat_tbs: "",
         users_idusers: localStorage.getItem('userId') || "",
         supir_idsupir: "",
@@ -180,12 +187,17 @@ const FormManifest = () => {
       setPreviewBuktiTimbang(null);
       setUploadProgress(0);
 
+      if (handleTransaksiSubmit) {
+        handleTransaksiSubmit(e);
+      }
+
       setTimeout(() => {
         window.location.reload();
       }, 1500);
 
     } catch (error) {
-      console.error("Error submit:", error);
+      console.error("❌ Error submit:", error);
+      console.error("❌ Response error:", error.response?.data);
       const pesanErrorBackend = error.response?.data?.message || error.response?.data?.error || error.message;
       setPesan({ 
         type: "error", 
@@ -215,7 +227,7 @@ const FormManifest = () => {
         ) : hasData ? (
           <select
             name={name}
-            value={formData[name]}
+            value={formTransaksi[name]}
             onChange={handleChange}
             className={styles['form-control-manifest']}
             required
@@ -235,7 +247,7 @@ const FormManifest = () => {
           <input
             type="text"
             name={name}
-            value={formData[name]}
+            value={formTransaksi[name]}
             onChange={handleChange}
             placeholder={placeholder}
             className={styles['form-control-manifest']}
@@ -246,7 +258,6 @@ const FormManifest = () => {
     );
   };
 
-  // 🔒 TUNING KONTRAST: Banner Manajer (WARNA HITAM) - CASE INSENSITIVE
   if (userRole === 'manajer' || userRole.includes('manajer')) {
     return (
       <Container>
@@ -255,14 +266,13 @@ const FormManifest = () => {
             🚫 Hak Akses Terbatas (Manajer Pemantau)
           </p>
           <p className={`${styles['text-xs']} ${styles['mt-2']} ${styles['font-semibold']}`} style={{ color: '#000000' }}>
-            Formulir pendaftaran manifes distribusi baru disembunyikan secara otomatis. Otoritas akun Anda diset khusus untuk peninjauan log data (*Read-Only*) dan pengarsipan berkas demi keamanan data lapangan.
+            Formulir pendaftaran manifes distribusi baru disembunyikan secara otomatis.
           </p>
         </div>
       </Container>
     );
   }
 
-  // JIKA BUKAN MANAJER (PETUGAS), TAMPILKAN FORM SEPERTI BIASA
   return (
     <Container>
       <div className={`${styles['form-manifest-container']} ${styles['w-full']} ${styles['p-6']}`}>
@@ -270,14 +280,12 @@ const FormManifest = () => {
           📝 Input Manifes Distribusi Baru
         </h2>
         
-        {/* Pesan Alert */}
         {pesan.text && (
           <div className={`${styles['alert']} ${pesan.type === "success" ? styles['alert-success'] : styles['alert-error']} ${styles['mb-4']} ${styles['p-4']} ${styles['rounded-lg']} ${styles['text-sm']} ${styles['font-medium']}`}>
             {pesan.text}
           </div>
         )}
 
-        {/* Upload Progress */}
         {loading && uploadProgress > 0 && (
           <div className={`${styles['mb-4']}`}>
             <div className={`${styles['w-full']} ${styles['bg-gray-200']} ${styles['rounded-full']} ${styles['h-2.5']}`}>
@@ -291,7 +299,6 @@ const FormManifest = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Section 1: Informasi Pengiriman */}
           <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
             <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>📦 Informasi Pengiriman</h3>
             <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
@@ -302,7 +309,7 @@ const FormManifest = () => {
                 <input
                   type="date"
                   name="tanggal_kirim"
-                  value={formData.tanggal_kirim}
+                  value={formTransaksi.tanggal_kirim || ""}
                   onChange={handleChange}
                   className={styles['form-control-manifest']}
                   required
@@ -316,7 +323,7 @@ const FormManifest = () => {
                 <input
                   type="number"
                   name="berat_tbs"
-                  value={formData.berat_tbs}
+                  value={formTransaksi.berat_tbs}
                   onChange={handleChange}
                   placeholder="Contoh: 5000"
                   className={styles['form-control-manifest']}
@@ -326,7 +333,6 @@ const FormManifest = () => {
             </div>
           </div>
 
-          {/* Section 2: Pihak Terkait */}
           <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
             <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>👥 Pihak Terkait</h3>
             <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
@@ -337,7 +343,6 @@ const FormManifest = () => {
             </div>
           </div>
 
-          {/* Section 3: Status & Dokumen */}
           <div className={`${styles['form-section-manifest']} ${styles['mb-6']}`}>
             <h3 className={`${styles['form-section-manifest-title']} ${styles['mb-4']}`}>📋 Status & Dokumen</h3>
             
@@ -345,7 +350,7 @@ const FormManifest = () => {
               <label className={`${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>Status Awal Pengiriman</label>
               <select
                 name="status"
-                value={formData.status}
+                value={formTransaksi.status}
                 onChange={handleChange}
                 className={styles['form-control-manifest']}
               >
@@ -356,7 +361,6 @@ const FormManifest = () => {
               </select>
             </div>
 
-            {/* File Upload Section */}
             <div className={`${styles['grid']} ${styles['grid-cols-1']} ${styles['md:grid-cols-2']} ${styles['gap-4']}`}>
               <div className={styles['file-upload-section']}> 
                 <label className={`${styles['file-upload-label']} ${styles['block']} ${styles['text-sm']} ${styles['font-semibold']} ${styles['mb-2']}`}>
@@ -422,7 +426,6 @@ const FormManifest = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className={`${styles['form-actions-manifest']} ${styles['flex']} ${styles['justify-end']} ${styles['gap-4']} ${styles['mt-6']} ${styles['pt-6']} ${styles['border-t']}`}>
             <button
               type="button"

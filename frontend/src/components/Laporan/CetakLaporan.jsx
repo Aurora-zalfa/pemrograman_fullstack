@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "../Dashboard/Dashboard.module.css";
 import { FaPrint } from "react-icons/fa";
+import html2pdf from "html2pdf.js";
 
 const CetakLaporan = ({ laporanData, tanggalMulai, tanggalSelesai }) => {
   const formatDate = (dateString) => {
@@ -12,147 +13,52 @@ const CetakLaporan = ({ laporanData, tanggalMulai, tanggalSelesai }) => {
     });
   };
 
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
+  // ✅ FUNGSI GENERATE NAMA FILE OTOMATIS
+  const generateFileName = () => {
+    let bulan = '';
+    let tahun = '';
     
-    if (!printWindow) {
-      alert('Mohon izinkan popup untuk mencetak laporan.');
-      return;
+    if (tanggalMulai) {
+      const startDate = new Date(tanggalMulai);
+      bulan = startDate.toLocaleDateString('id-ID', { month: 'long' });
+      tahun = startDate.getFullYear();
+    } else {
+      const now = new Date();
+      bulan = now.toLocaleDateString('id-ID', { month: 'long' });
+      tahun = now.getFullYear();
     }
 
+    return `Laporan_Pengiriman_${bulan}_${tahun}.pdf`;
+  };
+
+  // ✅ FUNGSI DOWNLOAD PDF OTOMATIS DENGAN html2pdf
+  const handleDownloadPDF = () => {
+    // Buat elemen sementara untuk di-convert ke PDF
+    const element = document.createElement('div');
+    
     let totalBerat = 0;
     laporanData.forEach(item => {
       totalBerat += parseFloat(item.berat_tbs || 0);
     });
 
-    const stylesHTML = `
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          padding: 40px;
-          margin: 0;
-          background: white;
-        }
-        .print-header {
-          text-align: center;
-          border-bottom: 3px solid #012A0D;
-          padding-bottom: 20px;
-          margin-bottom: 30px;
-        }
-        .print-header h1 {
-          color: #012A0D;
-          margin: 0;
-          font-size: 24px;
-        }
-        .print-header h1 span { color: #F1AD00; }
-        .print-header p {
-          color: #666;
-          margin: 5px 0 0;
-          font-size: 14px;
-        }
-        .print-header .sub {
-          font-size: 12px;
-          color: #999;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 20px;
-        }
-        table th {
-          background: #012A0D;
-          color: white;
-          padding: 12px;
-          text-align: left;
-          font-size: 13px;
-        }
-        table td {
-          padding: 10px 12px;
-          border-bottom: 1px solid #e5e7eb;
-          font-size: 13px;
-        }
-        table tr:nth-child(even) {
-          background: #f9fafb;
-        }
-        .status-badge {
-          display: inline-block;
-          padding: 4px 14px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-        }
-        .status-selesai {
-          background: #dcfce7;
-          color: #012A0D;
-          border: 1px solid #86efac;
-        }
-        .status-proses {
-          background: #fef3c7;
-          color: #92400e;
-          border: 1px solid #fcd34d;
-        }
-        .total-section {
-          margin-top: 30px;
-          padding: 20px;
-          background: #f0fdf4;
-          border-radius: 8px;
-          display: flex;
-          justify-content: space-around;
-          border: 2px solid #012A0D;
-        }
-        .total-section div {
-          text-align: center;
-        }
-        .total-section .label {
-          font-size: 12px;
-          color: #666;
-        }
-        .total-section .value {
-          font-size: 20px;
-          font-weight: bold;
-          color: #012A0D;
-        }
-        .total-section .value span {
-          color: #F1AD00;
-        }
-        .print-footer {
-          margin-top: 40px;
-          text-align: center;
-          font-size: 12px;
-          color: #999;
-          border-top: 1px solid #e5e7eb;
-          padding-top: 20px;
-        }
-        .no-data {
-          text-align: center;
-          padding: 40px;
-          color: #999;
-        }
-        .berat-cell {
-          font-weight: bold;
-          color: #F1AD00;
-        }
-      </style>
-    `;
-
     let tableRows = '';
     if (laporanData.length === 0) {
-      tableRows = `<tr><td colspan="4" class="no-data">📭 Tidak ada data laporan pada periode ini.</td></tr>`;
+      tableRows = `<tr><td colspan="4" style="text-align:center;padding:40px;color:#999;font-size:14px;">📭 Tidak ada data laporan pada periode ini.</td></tr>`;
     } else {
       laporanData.forEach((item, idx) => {
         const isSelesai = item.status === 'selesai' || item.status === 'Selesai';
-        // TANPA ICON, hanya teks polosan
         const statusText = isSelesai ? 'Selesai' : 'Dalam Proses';
-        const statusClass = isSelesai ? 'status-selesai' : 'status-proses';
+        const statusBg = isSelesai ? '#dcfce7' : '#fef3c7';
+        const statusColor = isSelesai ? '#012A0D' : '#92400e';
+        const statusBorder = isSelesai ? '1px solid #86efac' : '1px solid #fcd34d';
         
         tableRows += `
           <tr>
-            <td><strong>#LAP-${1000 + idx}</strong></td>
-            <td>${formatDate(item.tanggal)}</td>
-            <td class="berat-cell">${parseFloat(item.berat_tbs).toLocaleString()} Kg</td>
-            <td>
-              <span class="status-badge ${statusClass}">
+            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;"><strong>#LAP-${1000 + idx}</strong></td>
+            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">${formatDate(item.tanggal)}</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:bold;color:#F1AD00;">${parseFloat(item.berat_tbs).toLocaleString()} Kg</td>
+            <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;">
+              <span style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:600;background:${statusBg};color:${statusColor};border:${statusBorder};">
                 ${statusText}
               </span>
             </td>
@@ -161,62 +67,74 @@ const CetakLaporan = ({ laporanData, tanggalMulai, tanggalSelesai }) => {
       });
     }
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Laporan Pengiriman</title>
-          ${stylesHTML}
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>📋 <span>LAPORAN</span> PENGIRIMAN</h1>
-            <p>Periode: ${formatDate(tanggalMulai)} - ${formatDate(tanggalSelesai)}</p>
-            <p class="sub">Dicetak: ${new Date().toLocaleString('id-ID')}</p>
-          </div>
+    // Bangun HTML untuk PDF
+    element.innerHTML = `
+      <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:40px;background:white;max-width:1000px;margin:0 auto;">
+        <!-- HEADER -->
+        <div style="text-align:center;border-bottom:3px solid #012A0D;padding-bottom:20px;margin-bottom:30px;">
+          <h1 style="color:#012A0D;margin:0;font-size:28px;font-weight:700;">
+            📋 <span style="color:#F1AD00;">LAPORAN</span> PENGIRIMAN
+          </h1>
+          <p style="color:#555;margin:8px 0 0;font-size:16px;font-weight:500;">
+            Periode: ${formatDate(tanggalMulai)} - ${formatDate(tanggalSelesai)}
+          </p>
+          <p style="font-size:13px;color:#999;margin-top:4px;">
+            Dicetak: ${new Date().toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
 
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 20%;">No Laporan</th>
-                <th style="width: 30%;">Tanggal Pengiriman</th>
-                <th style="width: 25%;">Berat Muatan</th>
-                <th style="width: 25%;">Keterangan Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
+        <!-- TABLE -->
+        <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+          <thead>
+            <tr>
+              <th style="background:#012A0D;color:white;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;width:20%;">No Laporan</th>
+              <th style="background:#012A0D;color:white;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;width:30%;">Tanggal Pengiriman</th>
+              <th style="background:#012A0D;color:white;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;width:25%;">Berat Muatan</th>
+              <th style="background:#012A0D;color:white;padding:12px 14px;text-align:left;font-size:14px;font-weight:600;width:25%;">Keterangan Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
 
-          <div class="total-section">
-            <div>
-              <div class="label">📦 Total Pengiriman</div>
-              <div class="value">${laporanData.length}</div>
-            </div>
-            <div>
-              <div class="label">⚖️ Total Berat</div>
-              <div class="value"><span>${totalBerat.toLocaleString()}</span> Kg</div>
+        <!-- FOOTER TOTAL -->
+        <div style="margin-top:30px;padding:20px 30px;background:#f0fdf4;border-radius:10px;display:flex;justify-content:space-around;border:2px solid #012A0D;">
+          <div style="text-align:center;">
+            <div style="font-size:13px;color:#666;font-weight:500;">📦 Total Pengiriman</div>
+            <div style="font-size:24px;font-weight:700;color:#012A0D;margin-top:4px;">${laporanData.length}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:13px;color:#666;font-weight:500;">⚖️ Total Berat</div>
+            <div style="font-size:24px;font-weight:700;color:#012A0D;margin-top:4px;">
+              <span style="color:#F1AD00;">${totalBerat.toLocaleString()}</span> Kg
             </div>
           </div>
-        </body>
-      </html>
+        </div>
+
+        <!-- FOOTER NOTE -->
+        <div style="margin-top:30px;text-align:center;font-size:12px;color:#999;border-top:1px solid #e5e7eb;padding-top:15px;">
+          Dokumen ini dibuat secara otomatis oleh Sistem Distribusi TBS
+        </div>
+      </div>
     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    
-    printWindow.onload = function() {
-      printWindow.print();
-      printWindow.onafterprint = function() {
-        printWindow.close();
-      };
+    // Konfigurasi PDF
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: generateFileName(),
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
+
+    // Download PDF
+    html2pdf().set(opt).from(element).save();
   };
 
   return (
     <button
-      onClick={handlePrint}
+      onClick={handleDownloadPDF}
       style={{
         background: '#012A0D',
         color: '#F1AD00',

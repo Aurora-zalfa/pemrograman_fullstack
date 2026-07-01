@@ -51,9 +51,14 @@ const Dashboard = () => {
 
   const [laporanData, setLaporanData] = useState([]);
   const [transaksiList, setTransaksiList] = useState([]);
-  const [formTransaksi, setFormTransaksi] = useState({
-    supir: '', plat: '', berat: '', status: 'menunggu_memuat'
-  });
+  
+const [formTransaksi, setFormTransaksi] = useState({
+  supir: '', 
+  plat: '', 
+  berat: '', 
+  status: 'menunggu_memuat',
+  tanggal_kirim: '' // ← KOSONGKAN
+});
 
   // 🎨 Color Palette - NYAWIT HUNTER THEME
   const PIE_COLORS = [
@@ -113,13 +118,14 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ FIX: FETCH TRANSAKSI - PAKAI /api/distribusi
   const fetchTransaksi = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/transaksi', {
+      const response = await fetch('http://localhost:3000/api/distribusi', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
-      if (result.status === 'success') {
+      if (result.success) {
         setTransaksiList(result.data || []);
       }
     } catch (error) {
@@ -173,6 +179,32 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [filterStartDate, filterEndDate]);
 
+  // ✅ FIX: DELETE - PAKAI /api/distribusi
+  const handleDeleteTransaksi = async (id) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data transaksi ini?")) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:3000/api/distribusi/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          alert("Transaksi berhasil dihapus!");
+          fetchTransaksi();
+        } else {
+          alert("Gagal menghapus transaksi.");
+        }
+      } catch (error) {
+        console.error("Error deleting transaksi:", error);
+        alert("Terjadi kesalahan sistem saat menghapus.");
+      }
+    }
+  };
+
+  // ✅ FIX: CREATE - PAKAI /api/distribusi + tambah tanggal_kirim
   const handleTransaksiSubmit = async (e) => {
     e.preventDefault();
     if (userRole === 'manajer') {
@@ -180,25 +212,39 @@ const Dashboard = () => {
       return;
     }
 
+    // Validasi tanggal
+    if (!formTransaksi.tanggal_kirim) {
+      alert('Tanggal pengiriman wajib diisi!');
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:3000/api/transaksi', {
+      const response = await fetch('http://localhost:3000/api/distribusi', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          supir: formTransaksi.supir,
-          plat: formTransaksi.plat,
+          tanggal_kirim: formTransaksi.tanggal_kirim, // ← TAMBAHKAN
+          nama_supir: formTransaksi.supir,
+          no_polisi: formTransaksi.plat,
           berat_tbs: parseFloat(formTransaksi.berat),
           status: formTransaksi.status
         })
       });
 
       const result = await response.json();
-      if (result.status === 'success') {
+      if (result.success) {
         alert('Data Distribusi Berhasil Ditambahkan!');
-        setFormTransaksi({ supir: '', plat: '', berat: '', status: 'menunggu_memuat' });
+        // Reset form dengan tanggal hari ini
+      setFormTransaksi({ 
+        supir: '', 
+        plat: '', 
+        berat: '', 
+        status: 'menunggu_memuat',
+        tanggal_kirim: '' // ← KOSONGKAN
+      });
         fetchTransaksi();
         fetchDashboardData();
       } else {
@@ -505,29 +551,28 @@ const Dashboard = () => {
               </div>
             } />
 
-            {/* ROUTE TRANSAKSI */}
-            <Route path="transaksi" element={
-              <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F4F7FE' }}>
-                <div className="mb-6">
-                  <h1 className="text-3xl font-bold" style={{ color: '#012A0D' }}>Transaksi Distribusi</h1>
-                  <p className="text-sm mt-1 font-medium" style={{ color: '#023d15' }}>Pencatatan manifes baru dan pemantauan real-time.</p>
-                </div>
-                <div className="flex flex-col gap-6 w-full">
-                  <div className="w-full">
-                    <TabelDistribusi transaksiList={transaksiList} setTransaksiList={setTransaksiList} />
-                  </div>
-                  {userRole !== 'manajer' && (
-                    <div className="w-full">
-                      <FormManifest
-                        formTransaksi={formTransaksi}
-                        setFormTransaksi={setFormTransaksi}
-                        handleTransaksiSubmit={handleTransaksiSubmit}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            } />
+<Route path="transaksi" element={
+  <div className="w-full min-h-screen p-6 rounded-tl-[20px]" style={{ backgroundColor: '#F4F7FE' }}>
+    <div className="mb-6">
+      <h1 className="text-3xl font-bold" style={{ color: '#012A0D' }}>Transaksi Distribusi</h1>
+      <p className="text-sm mt-1 font-medium" style={{ color: '#023d15' }}>Pencatatan manifes baru dan pemantauan real-time.</p>
+    </div>
+    <div className="flex flex-col gap-6 w-full">
+      <div className="w-full">
+        <TabelDistribusi transaksiList={transaksiList} setTransaksiList={setTransaksiList} />
+      </div>
+      {userRole !== 'manajer' && (
+        <div className="w-full">
+          <FormManifest
+            formTransaksi={formTransaksi}
+            setFormTransaksi={setFormTransaksi}
+            // handleTransaksiSubmit={handleTransaksiSubmit}  // ← HAPUS BARIS INI!
+          />
+        </div>
+      )}
+    </div>
+  </div>
+} />
 
             {/* ROUTE LAPORAN - TANPA ICON DI STATUS */}
             <Route path="laporan" element={
