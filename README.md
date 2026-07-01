@@ -93,36 +93,29 @@ MySQL Server (misal XAMPP, MySQL Workbench, atau standalone)
 
 Langkah Instalasi
 bash
-### 1. Clone atau ekstrak proyek, lalu masuk ke direktori
+#### 1. Clone atau ekstrak proyek, lalu masuk ke direktori
 cd nyawit-hunter
-
-### 2. Install dependensi backend
+#### 2. Install dependensi backend
 cd backend
 npm install
-
-### 3. Install dependensi frontend
+#### 3. Install dependensi frontend
 cd ../frontend
 npm install
-
-### 4. (Opsional) Salin file .env.example menjadi .env di masing-masing folder
-###    dan isi sesuai kebutuhan — lihat bagian Environment Variables di bawah.
-
-### 5. Jalankan server backend (development)
+#### 4. (Opsional) Salin file .env.example menjadi .env di masing-masing folder
+####    dan isi sesuai kebutuhan — lihat bagian Environment Variables di bawah.
+#### 5. Jalankan server backend (development)
 cd ../backend
 npm run dev   # atau node server.js
-
-### 6. Jalankan aplikasi frontend (development)
+#### 6. Jalankan aplikasi frontend (development)
 cd ../frontend
 npm run dev
-
-### 7. Buka browser di alamat yang muncul (biasanya http://localhost:5173)
+#### 7. Buka browser di alamat yang muncul (biasanya http://localhost:5173)
 Build untuk produksi (jika diperlukan)
 bash
-### Build frontend
+#### Build frontend
 cd frontend
 npm run build
-
-### Jalankan server backend dalam mode produksi (sesuaikan)
+#### Jalankan server backend dalam mode produksi (sesuaikan)
 cd ../backend
 NODE_ENV=production node server.js
 4. Environment Variables
@@ -157,10 +150,8 @@ Catatan: Proyek ini menggunakan Vite sebagai bundler, sehingga variabel lingkung
 ## 5. Setting Up Database
 Pastikan MySQL server berjalan.
 
-Buka MySQL client (misal mysql -u root -p) atau gunakan phpMyAdmin.
-
-Buat database baru:
-
+- Buka MySQL client (misal mysql -u root -p) atau gunakan phpMyAdmin.
+- Buat database baru:
 sql
 CREATE DATABASE nyawit_hunter_db;
 Import struktur tabel dan data awal (jika tersedia) dari file nyawit_hunter.sql yang disertakan dalam proyek.
@@ -169,7 +160,7 @@ bash
 mysql -u root -p nyawit_hunter_db < path/to/nyawit_hunter.sql
 Periksa konfigurasi koneksi di backend/config/database.js sudah sesuai dengan .env yang dibuat.
 
-Jalankan backend, maka koneksi akan otomatis terbentuk.
+- Jalankan backend, maka koneksi akan otomatis terbentuk.
 
 ## 6. Deployment Note
 ⚠️ Proyek ini dikembangkan untuk keperluan lokal dan presentasi kelompok.
